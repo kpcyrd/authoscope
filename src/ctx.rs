@@ -114,4 +114,32 @@ mod tests {
         let result = script.run_once("foo", "bar").unwrap();
         assert!(result);
     }
+
+    #[test]
+    fn verify_basic_auth_correct() {
+        let script = Script::load_from(r#"
+        descr = "basic auth httpbin.org"
+
+        function verify(user, password)
+            return http_basic_auth("https://httpbin.org/basic-auth/foo/buzz", user, password)
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("foo", "buzz").unwrap();
+        assert!(result);
+    }
+
+    #[test]
+    fn verify_basic_auth_incorrect() {
+        let script = Script::load_from(r#"
+        descr = "basic auth httpbin.org"
+
+        function verify(user, password)
+            return http_basic_auth("https://httpbin.org/basic-auth/foo/buzz", user, password)
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("invalid", "wrong").unwrap();
+        assert!(!result);
+    }
 }
