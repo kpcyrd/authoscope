@@ -1,5 +1,6 @@
 use hlua;
 
+use reqwest;
 use mysql;
 
 use std::thread;
@@ -22,6 +23,23 @@ pub fn execve(lua: &mut hlua::Lua) {
                     .expect("TODO: failed to spawn is fatal");
 
         status.code().expect("TODO: termination by signal is fatal")
+    }))
+}
+
+pub fn http_basic_auth(lua: &mut hlua::Lua) {
+    lua.set("http_basic_auth", hlua::function3(move |url: String, user: String, password: String| -> bool {
+        let client = reqwest::Client::new();
+
+        let response = client.get(&url)
+                             .basic_auth(user, Some(password))
+                             .send().expect("TODO: http error is fatal");
+
+        // println!("{:?}", response);
+        // println!("{:?}", response.headers().get_raw("www-authenticate"));
+        // println!("{:?}", response.status());
+
+        response.headers().get_raw("www-authenticate").is_none() &&
+            response.status() != reqwest::StatusCode::Unauthorized
     }))
 }
 

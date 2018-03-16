@@ -4,6 +4,7 @@ extern crate threadpool;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
 
+extern crate reqwest;
 extern crate mysql;
 
 mod args;

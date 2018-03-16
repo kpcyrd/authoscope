@@ -20,6 +20,41 @@ single service and provide a `verify(user, password)` function that returns
 either true or false. Concurrency, progress indication and reporting is
 magically provided by the badtouch runtime.
 
+## Reference
+- [execve](#execve)
+- [http_basic_auth](#http_basic_auth)
+- [mysql_connect](#mysql_connect)
+- [sleep](#sleep)
+- [Examples](/scripts)
+- [Wrapping python scripts](#wrapping-python-scripts)
+
+### execve
+Execute an external program. Returns the exit code.
+```lua
+execve("myprog", {"arg1", "arg2", "--arg", "3"})
+```
+
+### http_basic_auth
+Sends a `GET` request with basic auth. Returns `true` if no `WWW-Authenticate`
+header is set and the status code is not `401`.
+```lua
+http_basic_auth("https://httpbin.org/basic-auth/foo/buzz", user, password)
+```
+
+### mysql_connect
+Connect to a mysql database and try to authenticate the the provided
+credentials. Returns `true` on success.
+```lua
+mysql_connect("127.0.0.1", 3306", user, password)
+```
+
+### sleep
+Pauses the thread for the specified number of seconds. This is mostly used to
+debug concurrency.
+```lua
+sleep(3)
+```
+
 ## Wrapping python scripts
 
 The badtouch runtime is still extremely bare bones, so you might have to shell
