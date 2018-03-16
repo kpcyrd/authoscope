@@ -1,10 +1,8 @@
 extern crate hlua;
 extern crate pbr;
-extern crate docopt;
 extern crate threadpool;
-extern crate serde;
-#[macro_use] extern crate serde_derive;
 #[macro_use] extern crate error_chain;
+#[macro_use] extern crate structopt;
 
 mod args;
 mod ctx;
@@ -78,11 +76,11 @@ fn pb_writeln<W: Write>(pb: &mut ProgressBar<W>, s: &str) {
 fn run() -> Result<()> {
     let args = args::parse();
 
-    let users = load_list(&args.arg_users).chain_err(|| "failed to load users")?;
+    let users = load_list(&args.users).chain_err(|| "failed to load users")?;
     println!("[+] loaded {} users", users.len());
-    let passwords = load_list(&args.arg_passwords).chain_err(|| "failed to load passwords")?;
+    let passwords = load_list(&args.passwords).chain_err(|| "failed to load passwords")?;
     println!("[+] loaded {} passwords", passwords.len());
-    let scripts = load_scripts(args.arg_scripts).chain_err(|| "failed to load scripts")?;
+    let scripts = load_scripts(args.scripts).chain_err(|| "failed to load scripts")?;
     println!("[+] loaded {} scripts", scripts.len());
 
     let attempts = users.len() * passwords.len() * scripts.len();

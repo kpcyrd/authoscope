@@ -46,6 +46,6 @@ else:
     exit(1)
 ```
 
-# LICENSE
+# License
 
 GPLv3+
