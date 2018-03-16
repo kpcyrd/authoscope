@@ -14,11 +14,11 @@ travis-ci = { repository = "kpcyrd/badtouch" }
 [dependencies]
 hlua = "0.4"
 pbr = "1.0"
-# pbr = { path = "../pb" }
 threadpool = "1.7"
+colored = "1.6"
+humantime = "1.1"
 structopt = "0.2"
 error-chain = "0.11"
-libc = "0.2"
 
 reqwest = "0.8"
 mysql = "12.2.0"

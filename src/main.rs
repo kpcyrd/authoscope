@@ -1,6 +1,9 @@
+#![warn(unused_extern_crates)]
 extern crate hlua;
 extern crate pbr;
 extern crate threadpool;
+extern crate colored;
+extern crate humantime;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
 
@@ -10,15 +13,16 @@ extern crate mysql;
 mod args;
 mod ctx;
 mod runtime;
-mod tty;
 
 use pbr::ProgressBar;
 use error_chain::ChainedError;
 use threadpool::ThreadPool;
+use colored::*;
 use std::sync::mpsc;
 use std::fs::{File};
 use std::sync::Arc;
 // use std::time::Duration;
+use std::time::Instant;
 use std::io;
 use std::io::BufReader;
 use std::io::prelude::*;
@@ -63,28 +67,29 @@ macro_rules! printfl {
 
 // replace this with pb.writeln after https://github.com/a8m/pb/pull/62
 fn pb_writeln<W: Write>(pb: &mut ProgressBar<W>, s: &str) {
-    let width = match tty::terminal_size() {
-        Some((width, _)) => width.0 as usize,
-        None => 80,
-    };
-
-    let mut out = format!("{}", s);
-    if s.len() < width {
-        out += &" ".repeat(width - s.len());
-    }
-    printfl!(io::stderr(), "\r{}\n", out);
+    printfl!(io::stderr(), "\r\x1B[2K{}\n", s);
     pb.tick();
+}
+
+#[inline]
+fn infof(prefix: &str, msg: String) -> String {
+    format!("{} {}", prefix.bold(), msg.dimmed())
+}
+
+#[inline]
+fn info(prefix: &str, msg: String) {
+    println!("{}", infof(prefix, msg));
 }
 
 fn run() -> Result<()> {
     let args = args::parse();
 
     let users = load_list(&args.users).chain_err(|| "failed to load users")?;
-    println!("[+] loaded {} users", users.len());
+    info("[+]", format!("loaded {} users", users.len()));
     let passwords = load_list(&args.passwords).chain_err(|| "failed to load passwords")?;
-    println!("[+] loaded {} passwords", passwords.len());
+    info("[+]", format!("loaded {} passwords", passwords.len()));
     let scripts = load_scripts(args.scripts).chain_err(|| "failed to load scripts")?;
-    println!("[+] loaded {} scripts", scripts.len());
+    info("[+]", format!("loaded {} scripts", scripts.len()));
 
     let attempts = users.len() * passwords.len() * scripts.len();
 
@@ -93,7 +98,8 @@ fn run() -> Result<()> {
 
     let (tx, rx) = mpsc::channel();
 
-    println!("[*] submitting {} jobs to threadpool with {} workers", attempts, n_workers);
+    info("[*]", format!("submitting {} jobs to threadpool with {} workers", attempts, n_workers));
+    let start = Instant::now();
     for user in &users {
         for password in &passwords {
             for script in &scripts {
@@ -117,19 +123,26 @@ fn run() -> Result<()> {
     pb.format("[#> ]");
     pb.tick();
 
+    let mut valid = 0;
     for (script, user, password, result) in rx.iter().take(attempts) {
         match result {
             Ok(valid) if !valid => (),
             Ok(_) => {
-                pb_writeln(&mut pb, &format!("[+] valid({}) => {:?}:{:?}", script.descr(), user, password));
+                pb_writeln(&mut pb, &format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(), script.descr().yellow(), user, password));
+                valid += 1;
             },
             Err(err) => {
-                pb_writeln(&mut pb, &format!("[!] error({}): {:?}", script.descr(), err));
+                pb_writeln(&mut pb, &format!("{} {}({}): {:?}", "[!]".bold(), "error".red(), script.descr().yellow(), err));
             }
         };
         pb.inc();
     }
-    pb.finish();
+
+    let elapsed = start.elapsed();
+    print!("\r\x1B[2K{}", infof("[+]",
+        format!("found {} valid credentials with {} attempts after {}\n",
+            valid, attempts,
+            humantime::format_duration(elapsed))));
 
     Ok(())
 }

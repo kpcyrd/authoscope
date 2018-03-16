@@ -42,7 +42,7 @@ http_basic_auth("https://httpbin.org/basic-auth/foo/buzz", user, password)
 ```
 
 ### mysql_connect
-Connect to a mysql database and try to authenticate the the provided
+Connect to a mysql database and try to authenticate with the provided
 credentials. Returns `true` on success.
 ```lua
 mysql_connect("127.0.0.1", 3306", user, password)
