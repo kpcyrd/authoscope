@@ -116,6 +116,21 @@ mod tests {
     }
 
     #[test]
+    fn verify_sleep() {
+        let script = Script::load_from(r#"
+        descr = "slow script"
+
+        function verify(user, password)
+            sleep(1)
+            return true
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("foo", "bar").unwrap();
+        assert!(result);
+    }
+
+    #[test]
     fn verify_basic_auth_correct() {
         let script = Script::load_from(r#"
         descr = "basic auth httpbin.org"

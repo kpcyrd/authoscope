@@ -64,7 +64,7 @@ pub fn mysql_connect(lua: &mut hlua::Lua) {
 }
 
 pub fn sleep(lua: &mut hlua::Lua) {
-    lua.set("sleep", hlua::function1(move |n: i32| -> i32 {
+    lua.set("sleep", hlua::function1(move |n: i32| {
         thread::sleep(Duration::from_secs(n as u64));
         0
     }))
