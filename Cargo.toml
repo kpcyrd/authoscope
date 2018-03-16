@@ -16,6 +16,7 @@ hlua = "0.4"
 pbr = "1.0"
 threadpool = "1.7"
 colored = "1.6"
+humantime = "1.1"
 structopt = "0.2"
 error-chain = "0.11"
 
