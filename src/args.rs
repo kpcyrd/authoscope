@@ -1,22 +1,15 @@
-use docopt::Docopt;
+use structopt::StructOpt;
+use structopt::clap::AppSettings;
 
-const USAGE: &'static str = "
-Foobar
-
-Usage:
-  badtouch <users> <passwords> <scripts> ...
-";
-
-#[derive(Debug, Deserialize)]
+#[derive(StructOpt, Debug)]
+#[structopt(author = "",
+            raw(global_settings = "&[AppSettings::ColoredHelp]"))]
 pub struct Args {
-    pub arg_users: String,
-    pub arg_passwords: String,
-    pub arg_scripts: Vec<String>,
+    pub users: String,
+    pub passwords: String,
+    pub scripts: Vec<String>,
 }
 
 pub fn parse() -> Args {
-    let args: Args = Docopt::new(USAGE)
-        .and_then(|d| d.deserialize())
-        .unwrap_or_else(|e| e.exit());
-    args
+    Args::from_args()
 }

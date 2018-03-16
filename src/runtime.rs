@@ -1,5 +1,7 @@
 use hlua;
 
+use mysql;
+
 use std::thread;
 use std::time::Duration;
 use std::process::Command;
@@ -20,6 +22,26 @@ pub fn execve(lua: &mut hlua::Lua) {
                     .expect("TODO: failed to spawn is fatal");
 
         status.code().expect("TODO: termination by signal is fatal")
+    }))
+}
+
+pub fn mysql_connect(lua: &mut hlua::Lua) {
+    lua.set("mysql_connect", hlua::function4(move |host: String, port: u16, user: String, password: String| -> bool {
+        let mut builder = mysql::OptsBuilder::new();
+        builder.ip_or_hostname(Some(host))
+               .tcp_port(port)
+               .prefer_socket(false)
+               .user(Some(user))
+               .pass(Some(password));
+
+        match mysql::Conn::new(builder) {
+            Ok(_) => true,
+            Err(_err) => {
+                // TODO: err
+                // println!("{:?}", _err);
+                false
+            },
+        }
     }))
 }
 
