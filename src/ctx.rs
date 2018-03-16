@@ -46,6 +46,7 @@ impl Script {
         let mut lua = hlua::Lua::new();
 
         runtime::execve(&mut lua);
+        runtime::http_basic_auth(&mut lua);
         runtime::mysql_connect(&mut lua);
         runtime::sleep(&mut lua);
 
