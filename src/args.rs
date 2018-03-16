@@ -2,7 +2,8 @@ use structopt::StructOpt;
 use structopt::clap::AppSettings;
 
 #[derive(StructOpt, Debug)]
-#[structopt(raw(global_settings = "&[AppSettings::ColoredHelp]"))]
+#[structopt(author = "",
+            raw(global_settings = "&[AppSettings::ColoredHelp]"))]
 pub struct Args {
     pub users: String,
     pub passwords: String,
