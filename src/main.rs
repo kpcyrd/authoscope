@@ -1,6 +1,8 @@
+#![warn(unused_extern_crates)]
 extern crate hlua;
 extern crate pbr;
 extern crate threadpool;
+extern crate colored;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
 
@@ -10,11 +12,11 @@ extern crate mysql;
 mod args;
 mod ctx;
 mod runtime;
-mod tty;
 
 use pbr::ProgressBar;
 use error_chain::ChainedError;
 use threadpool::ThreadPool;
+use colored::*;
 use std::sync::mpsc;
 use std::fs::{File};
 use std::sync::Arc;
@@ -63,16 +65,7 @@ macro_rules! printfl {
 
 // replace this with pb.writeln after https://github.com/a8m/pb/pull/62
 fn pb_writeln<W: Write>(pb: &mut ProgressBar<W>, s: &str) {
-    let width = match tty::terminal_size() {
-        Some((width, _)) => width.0 as usize,
-        None => 80,
-    };
-
-    let mut out = format!("{}", s);
-    if s.len() < width {
-        out += &" ".repeat(width - s.len());
-    }
-    printfl!(io::stderr(), "\r{}\n", out);
+    printfl!(io::stderr(), "\r\x1B[2K{}\n", s);
     pb.tick();
 }
 
@@ -121,10 +114,10 @@ fn run() -> Result<()> {
         match result {
             Ok(valid) if !valid => (),
             Ok(_) => {
-                pb_writeln(&mut pb, &format!("[+] valid({}) => {:?}:{:?}", script.descr(), user, password));
+                pb_writeln(&mut pb, &format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(), script.descr().yellow(), user, password));
             },
             Err(err) => {
-                pb_writeln(&mut pb, &format!("[!] error({}): {:?}", script.descr(), err));
+                pb_writeln(&mut pb, &format!("{} {}({}): {:?}", "[!]".bold(), "error".red(), script.descr().yellow(), err));
             }
         };
         pb.inc();
