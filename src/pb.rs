@@ -10,6 +10,7 @@
 // https://github.com/a8m/pb/pull/62
 
 use pbr;
+use atty;
 use std::fmt::Display;
 use std::io::prelude::*;
 use std::io::{self, Stdout};
@@ -28,6 +29,7 @@ pub struct ProgressBar {
     current: u64,
     last_refresh_time: SteadyTime,
     max_refresh_rate: Option<time::Duration>,
+    atty: bool,
 }
 
 impl ProgressBar {
@@ -38,17 +40,23 @@ impl ProgressBar {
 
         let now = SteadyTime::now();
         let refresh_rate = Duration::milliseconds(250);
+        let atty = atty::is(atty::Stream::Stdout);
 
         ProgressBar {
             pb,
             current: 0,
             last_refresh_time: now - refresh_rate,
             max_refresh_rate: Some(refresh_rate),
+            atty,
         }
     }
 
     #[inline]
     pub fn draw(&mut self) {
+        if !self.atty {
+            return;
+        }
+
         self.pb.tick()
     }
 
@@ -74,6 +82,10 @@ impl ProgressBar {
 
     #[inline]
     pub fn inc(&mut self) {
+        if !self.atty {
+            return;
+        }
+
         let now = SteadyTime::now();
         if let Some(mrr) = self.max_refresh_rate {
             if now - self.last_refresh_time < mrr {
@@ -89,6 +101,10 @@ impl ProgressBar {
 
     #[inline]
     pub fn finish_replace<T: Display>(&self, s: T) {
-        print!("\r\x1B[2K{}", s);
+        if self.atty {
+            print!("\r\x1B[2K{}", s);
+        } else {
+            print!("{}", s);
+        }
     }
 }

@@ -5,6 +5,7 @@ extern crate threadpool;
 extern crate colored;
 extern crate time;
 extern crate humantime;
+extern crate atty;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
 
@@ -70,6 +71,10 @@ fn info(prefix: &str, msg: String) {
 
 fn run() -> Result<()> {
     let args = args::parse();
+
+    if atty::isnt(atty::Stream::Stdout) {
+        colored::control::SHOULD_COLORIZE.set_override(false);
+    }
 
     let users = load_list(&args.users).chain_err(|| "failed to load users")?;
     info("[+]", format!("loaded {} users", users.len()));
