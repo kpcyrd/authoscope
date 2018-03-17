@@ -75,14 +75,20 @@ impl Script {
         let verify: Result<_> = lua.get("verify").ok_or("verify undefined".into());
         let mut verify: hlua::LuaFunction<_> = verify?;
 
-        let result: bool = match verify.call_with_args((user, password)) {
+        let result: hlua::AnyLuaValue = match verify.call_with_args((user, password)) {
             Ok(res) => res,
             Err(err) => {
                 let err = format!("execution failed: {:?}", err);
                 return Err(err.into())
             },
         };
-        Ok(result)
+
+        use hlua::AnyLuaValue::*;
+        match result {
+            LuaBoolean(x) => Ok(x),
+            LuaString(x) => Err(format!("error: {:?}", x).into()),
+            x => Err(format!("lua returned wrong type: {:?}", x).into()),
+        }
     }
 }
 
