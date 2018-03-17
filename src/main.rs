@@ -22,11 +22,10 @@ use error_chain::ChainedError;
 use threadpool::ThreadPool;
 use colored::*;
 use std::sync::mpsc;
-use std::fs::{File};
+use std::fs::{self, File};
 use std::sync::Arc;
 use std::time::Instant;
-use std::io;
-use std::io::BufReader;
+use std::io::{self, BufReader};
 use std::io::prelude::*;
 
 mod errors {
@@ -52,11 +51,25 @@ fn load_list(path: &str) -> Result<Vec<Arc<String>>> {
 }
 
 fn load_scripts(paths: Vec<String>) -> Result<Vec<Arc<ctx::Script>>> {
-    paths.iter()
-        .map(|path| {
-            ctx::Script::load(path).map(|x| Arc::new(x))
-        })
-        .collect()
+    let mut scripts = Vec::new();
+
+    for path in paths {
+        let meta = fs::metadata(&path)?;
+
+        if meta.is_dir() {
+            for path in fs::read_dir(path)? {
+                let path = path?.path();
+                let path = path.to_str().unwrap();
+                let script = Arc::new(ctx::Script::load(path)?);
+                scripts.push(script);
+            }
+        } else {
+            let script = Arc::new(ctx::Script::load(&path)?);
+            scripts.push(script);
+        }
+    }
+
+    Ok(scripts)
 }
 
 #[inline]
