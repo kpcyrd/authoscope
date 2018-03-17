@@ -34,7 +34,7 @@ impl ProgressBar {
     #[inline]
     pub fn new(total: u64) -> ProgressBar {
         let mut pb = pbr::ProgressBar::new(total);
-        pb.format("[#> ]");
+        pb.format("(=> )");
 
         let now = SteadyTime::now();
         let refresh_rate = Duration::milliseconds(250);
