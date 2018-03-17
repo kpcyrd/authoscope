@@ -6,6 +6,7 @@ extern crate colored;
 extern crate time;
 extern crate humantime;
 extern crate atty;
+extern crate rand;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
 
@@ -139,9 +140,11 @@ fn run() -> Result<()> {
     }
 
     let elapsed = start.elapsed();
-    pb.finish_replace(infof!("[+]", "found {} valid credentials with {} attempts after {}\n",
+    let average = elapsed / attempts as u32;
+    pb.finish_replace(infof!("[+]", "found {} valid credentials with {} attempts after {} and on average {} per attempt\n",
             valid, attempts,
-            humantime::format_duration(elapsed)));
+            humantime::format_duration(elapsed),
+            humantime::format_duration(average)));
 
     Ok(())
 }

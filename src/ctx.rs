@@ -48,6 +48,7 @@ impl Script {
         runtime::execve(&mut lua);
         runtime::http_basic_auth(&mut lua);
         runtime::mysql_connect(&mut lua);
+        runtime::rand(&mut lua);
         runtime::sleep(&mut lua);
 
         lua

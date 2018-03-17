@@ -64,6 +64,18 @@ credentials. Returns \fBtrue\fP on success.
 .fi
 .RE
 
+.SS rand
+.LP
+Returns a random \fBu32\fP with a minimum and maximum constraint. The return value
+can be greater or equal to the minimum boundary, and always lower than the
+maximum boundary. This function has not been reviewed for cryptographic
+security.
+.RS
+.nf
+\fBrand(0, 256)\fP
+.fi
+.RE
+
 .SS sleep
 .LP
 Pauses the thread for the specified number of seconds. This is mostly used to

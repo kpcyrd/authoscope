@@ -2,6 +2,8 @@ use hlua;
 
 use reqwest;
 use mysql;
+use rand;
+use rand::Rng;
 
 use std::thread;
 use std::time::Duration;
@@ -60,6 +62,13 @@ pub fn mysql_connect(lua: &mut hlua::Lua) {
                 false
             },
         }
+    }))
+}
+
+pub fn rand(lua: &mut hlua::Lua) {
+    lua.set("rand", hlua::function2(move |min: u32, max: u32| -> u32 {
+        let mut rng = rand::thread_rng();
+        (rng.next_u32() + min) % max
     }))
 }
 

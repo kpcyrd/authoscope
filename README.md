@@ -24,6 +24,7 @@ magically provided by the badtouch runtime.
 - [execve](#execve)
 - [http_basic_auth](#http_basic_auth)
 - [mysql_connect](#mysql_connect)
+- [rand](#rand)
 - [sleep](#sleep)
 - [Examples](/scripts)
 - [Wrapping python scripts](#wrapping-python-scripts)
@@ -46,6 +47,15 @@ Connect to a mysql database and try to authenticate with the provided
 credentials. Returns `true` on success.
 ```lua
 mysql_connect("127.0.0.1", 3306, user, password)
+```
+
+### rand
+Returns a random `u32` with a minimum and maximum constraint. The return value
+can be greater or equal to the minimum boundary, and always lower than the
+maximum boundary. This function has not been reviewed for cryptographic
+security.
+```lua
+rand(0, 256)
 ```
 
 ### sleep
