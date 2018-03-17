@@ -12,6 +12,7 @@ extern crate rand;
 
 extern crate reqwest;
 extern crate mysql;
+extern crate ldap3;
 
 mod args;
 mod ctx;

@@ -1,6 +1,7 @@
 use hlua;
 
 use reqwest;
+use ldap3;
 use mysql;
 use rand;
 use rand::Rng;
@@ -42,6 +43,23 @@ pub fn http_basic_auth(lua: &mut hlua::Lua) {
 
         response.headers().get_raw("www-authenticate").is_none() &&
             response.status() != reqwest::StatusCode::Unauthorized
+    }))
+}
+
+pub fn ldap_bind(lua: &mut hlua::Lua) {
+    lua.set("ldap_bind", hlua::function3(move |url: String, dn: String, password: String| -> bool {
+        let sock = ldap3::LdapConn::new(&url).expect("TODO: ldap error is fatal");
+
+        let result = sock.simple_bind(&dn, &password).expect("TODO: ldap error is fatal");
+        // println!("{:?}", result);
+
+        result.success().is_ok()
+    }))
+}
+
+pub fn ldap_escape(lua: &mut hlua::Lua) {
+    lua.set("ldap_escape", hlua::function1(move |s: String| -> String {
+        ldap3::dn_escape(s).to_string()
     }))
 }
 

@@ -25,3 +25,4 @@ rand = "0.4"
 
 reqwest = "0.8"
 mysql = "12.2.0"
+ldap3 = "0.5"

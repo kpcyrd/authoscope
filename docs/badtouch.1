@@ -54,6 +54,25 @@ Sends a \fBGET\fR request with basic auth. Returns \fBtrue\fR if no
 .fi
 .RE
 
+.SS ldap_bind
+.LP
+Connect to an ldap server and try to authenticate with the given user
+.RS
+.nf
+\fBldap_bind("ldaps://ldap.example.com/",
+    "cn=\\"" .. ldap_escape(user) .. "\\",ou=users,dc=example,dc=com", password)\fP
+.fi
+.RE
+
+.SS ldap_escape
+.LP
+Escape an attribute value in a relative distinguished name.
+.RS
+.nf
+\fBldap_escape(user)\fP
+.fi
+.RE
+
 .SS mysql_connect
 .LP
 Connect to a mysql database and try to authenticate with the provided
