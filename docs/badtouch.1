@@ -1,0 +1,89 @@
+.TH BADTOUCH "1" "March 2018" "badtouch 0.2.0" "User Commands"
+.SH NAME
+badtouch \- scriptable network authentication cracker
+
+.SH SYNOPSIS
+.B badtouch
+[\fB\-nVh\fR]
+<\fBusers\fR>
+<\fBpasswords\fR>
+[\fBscripts\fR]...
+
+.SH DESCRIPTION
+badtouch is a scriptable network authentication cracker. While the space for
+common service bruteforce is already very well saturated, you may still end up
+writing your own python scripts when testing credentials for web applications.
+
+The scope of badtouch is specifically cracking custom services. This is done by
+writing scripts that are loaded into a lua runtime. Those scripts represent a
+single service and provide a `verify(user, password)` function that returns
+either true or false. Concurrency, progress indication and reporting is
+magically provided by the badtouch runtime.
+
+.SH OPTIONS
+.TP
+\fB\-n\fR, \fB\-\-workers\fR <workers>
+The number of concurrent workers to run.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Prints help information.
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Prints version information.
+
+.SH RUNTIME REFERENCE
+The badtouch runtime provides a number of functions that can be used to test
+target systems.
+
+.SS execve
+.LP
+Execute an external program. Returns the exit code.
+.RS
+.nf
+\fBexecve("myprog", {"arg1", "arg2", "--arg", "3"})\fP
+.fi
+.RE
+
+.SS http_basic_auth
+.LP
+Sends a \fBGET\fR request with basic auth. Returns \fBtrue\fR if no
+\fBWWW-Authenticate\fR header is set and the status code is not \fB401\fR.
+.RS
+.nf
+\fBhttp_basic_auth("https://httpbin.org/basic-auth/foo/buzz", user, password)\fP
+.fi
+.RE
+
+.SS mysql_connect
+.LP
+Connect to a mysql database and try to authenticate with the provided
+credentials. Returns \fBtrue\fP on success.
+.RS
+.nf
+\fBmysql_connect("127.0.0.1", 3306, user, password)\fP
+.fi
+.RE
+
+.SS sleep
+.LP
+Pauses the thread for the specified number of seconds. This is mostly used to
+debug concurrency.
+.RS
+.nf
+\fBsleep(3)\fP
+.fi
+.RE
+
+.SH SECURITY
+To report a security issue please contact kpcyrd on ircs://irc.hackint.org.
+
+.SH "SEE ALSO"
+The documentation at lua.org.
+
+.SH AUTHORS
+This program was originally written and is currently maintained by kpcyrd.
+Bugs and patches are welcome on github:
+.LP
+.RS
+.I https://github.com/kpcyrd/badtouch
+.RE
