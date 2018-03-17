@@ -80,12 +80,10 @@ fn run() -> Result<()> {
 
     let attempts = users.len() * passwords.len() * scripts.len();
 
-    let n_workers = 128;
-    let pool = ThreadPool::new(n_workers);
-
+    let pool = ThreadPool::new(args.workers);
     let (tx, rx) = mpsc::channel();
 
-    info("[*]", format!("submitting {} jobs to threadpool with {} workers", attempts, n_workers));
+    info("[*]", format!("submitting {} jobs to threadpool with {} workers", attempts, args.workers));
     let start = Instant::now();
     for user in &users {
         for password in &passwords {
