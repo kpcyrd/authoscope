@@ -3,6 +3,7 @@ extern crate hlua;
 extern crate pbr;
 extern crate threadpool;
 extern crate colored;
+extern crate time;
 extern crate humantime;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
@@ -12,16 +13,16 @@ extern crate mysql;
 
 mod args;
 mod ctx;
+mod pb;
 mod runtime;
 
-use pbr::ProgressBar;
+use pb::ProgressBar;
 use error_chain::ChainedError;
 use threadpool::ThreadPool;
 use colored::*;
 use std::sync::mpsc;
 use std::fs::{File};
 use std::sync::Arc;
-// use std::time::Duration;
 use std::time::Instant;
 use std::io;
 use std::io::BufReader;
@@ -55,20 +56,6 @@ fn load_scripts(paths: Vec<String>) -> Result<Vec<Arc<ctx::Script>>> {
             ctx::Script::load(path).map(|x| Arc::new(x))
         })
         .collect()
-}
-
-// this macro was vendored until https://github.com/a8m/pb/pull/62 is fixed
-macro_rules! printfl {
-   ($w:expr, $($tt:tt)*) => {{
-        $w.write(&format!($($tt)*).as_bytes()).ok().expect("write() fail");
-        $w.flush().ok().expect("flush() fail");
-    }}
-}
-
-// replace this with pb.writeln after https://github.com/a8m/pb/pull/62
-fn pb_writeln<W: Write>(pb: &mut ProgressBar<W>, s: &str) {
-    printfl!(io::stderr(), "\r\x1B[2K{}\n", s);
-    pb.tick();
 }
 
 #[inline]
@@ -116,11 +103,6 @@ fn run() -> Result<()> {
     }
 
     let mut pb = ProgressBar::new(attempts as u64);
-    // we can't set this yet because we call .tick() in pb_writeln
-    // pb_writeln usually would call .draw to bypass this, but this function is private
-    // blocked by https://github.com/a8m/pb/pull/62
-    // pb.set_max_refresh_rate(Some(Duration::from_millis(250)));
-    pb.format("[#> ]");
     pb.tick();
 
     let mut valid = 0;
@@ -128,18 +110,18 @@ fn run() -> Result<()> {
         match result {
             Ok(valid) if !valid => (),
             Ok(_) => {
-                pb_writeln(&mut pb, &format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(), script.descr().yellow(), user, password));
+                pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(), script.descr().yellow(), user, password));
                 valid += 1;
             },
             Err(err) => {
-                pb_writeln(&mut pb, &format!("{} {}({}): {:?}", "[!]".bold(), "error".red(), script.descr().yellow(), err));
+                pb.writeln(format!("{} {}({}): {:?}", "[!]".bold(), "error".red(), script.descr().yellow(), err));
             }
         };
         pb.inc();
     }
 
     let elapsed = start.elapsed();
-    print!("\r\x1B[2K{}", infof("[+]",
+    pb.finish_replace(infof("[+]",
         format!("found {} valid credentials with {} attempts after {}\n",
             valid, attempts,
             humantime::format_duration(elapsed))));
