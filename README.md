@@ -23,7 +23,10 @@ magically provided by the badtouch runtime.
 ## Reference
 - [execve](#execve)
 - [http_basic_auth](#http_basic_auth)
+- [ldap_bind](#ldap_bind)
+- [ldap_escape](#ldap_escape)
 - [mysql_connect](#mysql_connect)
+- [rand](#rand)
 - [sleep](#sleep)
 - [Examples](/scripts)
 - [Wrapping python scripts](#wrapping-python-scripts)
@@ -41,11 +44,33 @@ header is set and the status code is not `401`.
 http_basic_auth("https://httpbin.org/basic-auth/foo/buzz", user, password)
 ```
 
+### ldap_bind
+Connect to an ldap server and try to authenticate with the given user
+```lua
+ldap_bind("ldaps://ldap.example.com/",
+    "cn=\"" .. ldap_escape(user) .. "\",ou=users,dc=example,dc=com", password)
+```
+
+### ldap_escape
+Escape an attribute value in a relative distinguished name.
+```lua
+ldap_escape(user)
+```
+
 ### mysql_connect
 Connect to a mysql database and try to authenticate with the provided
 credentials. Returns `true` on success.
 ```lua
 mysql_connect("127.0.0.1", 3306, user, password)
+```
+
+### rand
+Returns a random `u32` with a minimum and maximum constraint. The return value
+can be greater or equal to the minimum boundary, and always lower than the
+maximum boundary. This function has not been reviewed for cryptographic
+security.
+```lua
+rand(0, 256)
 ```
 
 ### sleep

@@ -6,11 +6,13 @@ extern crate colored;
 extern crate time;
 extern crate humantime;
 extern crate atty;
+extern crate rand;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
 
 extern crate reqwest;
 extern crate mysql;
+extern crate ldap3;
 
 mod args;
 mod ctx;
@@ -72,14 +74,16 @@ fn load_scripts(paths: Vec<String>) -> Result<Vec<Arc<ctx::Script>>> {
     Ok(scripts)
 }
 
-#[inline]
-fn infof(prefix: &str, msg: String) -> String {
-    format!("{} {}", prefix.bold(), msg.dimmed())
+macro_rules! infof {
+    ($arg1:tt, $fmt:expr, $($arg:tt)*) => (
+        $arg1.bold().to_string() + " " + &(format!($fmt, $($arg)*).dimmed().to_string())
+    );
 }
 
-#[inline]
-fn info(prefix: &str, msg: String) {
-    println!("{}", infof(prefix, msg));
+macro_rules! info {
+    ($arg1:tt, $fmt:expr, $($arg:tt)*) => (
+        println!("{}", infof!($arg1, $fmt, $($arg)*));
+    );
 }
 
 fn run() -> Result<()> {
@@ -90,18 +94,18 @@ fn run() -> Result<()> {
     }
 
     let users = load_list(&args.users).chain_err(|| "failed to load users")?;
-    info("[+]", format!("loaded {} users", users.len()));
+    info!("[+]", "loaded {} users", users.len());
     let passwords = load_list(&args.passwords).chain_err(|| "failed to load passwords")?;
-    info("[+]", format!("loaded {} passwords", passwords.len()));
+    info!("[+]", "loaded {} passwords", passwords.len());
     let scripts = load_scripts(args.scripts).chain_err(|| "failed to load scripts")?;
-    info("[+]", format!("loaded {} scripts", scripts.len()));
+    info!("[+]", "loaded {} scripts", scripts.len());
 
     let attempts = users.len() * passwords.len() * scripts.len();
 
     let pool = ThreadPool::new(args.workers);
     let (tx, rx) = mpsc::channel();
 
-    info("[*]", format!("submitting {} jobs to threadpool with {} workers", attempts, args.workers));
+    info!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, args.workers);
     let start = Instant::now();
     for user in &users {
         for password in &passwords {
@@ -137,10 +141,11 @@ fn run() -> Result<()> {
     }
 
     let elapsed = start.elapsed();
-    pb.finish_replace(infof("[+]",
-        format!("found {} valid credentials with {} attempts after {}\n",
+    let average = elapsed / attempts as u32;
+    pb.finish_replace(infof!("[+]", "found {} valid credentials with {} attempts after {} and on average {} per attempt\n",
             valid, attempts,
-            humantime::format_duration(elapsed))));
+            humantime::format_duration(elapsed),
+            humantime::format_duration(average)));
 
     Ok(())
 }
