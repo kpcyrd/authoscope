@@ -134,7 +134,7 @@ fn run() -> Result<()> {
                 valid += 1;
             },
             Err(err) => {
-                pb.writeln(format!("{} {}({}): {:?}", "[!]".bold(), "error".red(), script.descr().yellow(), err));
+                pb.writeln(format!("{} {}({}, {}): {:?}", "[!]".bold(), "error".red(), script.descr().yellow(), format!("{:?}:{:?}", user, password).dimmed(), err));
             }
         };
         pb.inc();
