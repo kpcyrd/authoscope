@@ -1,5 +1,6 @@
 use ctx::Script;
 use threadpool::ThreadPool;
+use keyboard;
 use errors::Result;
 use std::sync::mpsc;
 use std::sync::Arc;
@@ -24,13 +25,17 @@ impl Attempt {
     }
 
     #[inline]
-    pub fn run(self, tx: mpsc::Sender<(Attempt, Result<bool>)>) {
+    pub fn run(self, tx: mpsc::Sender<Msg>) {
         let result = self.script.run_once(&self.user, &self.password);
-        tx.send((self, result)).expect("failed to send result");
+        tx.send(Msg::Attempt(self, result)).expect("failed to send result");
     }
 }
 
-type Msg = (Attempt, Result<bool>);
+#[derive(Debug)]
+pub enum Msg {
+    Attempt(Attempt, Result<bool>),
+    Key(keyboard::Key),
+}
 
 pub struct Scheduler {
     pool: ThreadPool,
@@ -49,6 +54,11 @@ impl Scheduler {
             rx,
             inflight: 0,
         }
+    }
+
+    #[inline]
+    pub fn tx(&self) -> mpsc::Sender<Msg> {
+        self.tx.clone()
     }
 
     #[inline]
@@ -71,7 +81,7 @@ impl Scheduler {
     }
 
     #[inline]
-    pub fn recv(&mut self) -> (Attempt, Result<bool>) {
+    pub fn recv(&mut self) -> Msg {
         self.inflight -= 1;
         self.rx.recv().unwrap()
     }

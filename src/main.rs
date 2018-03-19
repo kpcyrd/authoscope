@@ -28,7 +28,7 @@ mod scheduler;
 use pb::ProgressBar;
 use error_chain::ChainedError;
 use colored::*;
-use scheduler::{Scheduler, Attempt};
+use scheduler::{Scheduler, Attempt, Msg};
 use keyboard::{Keyboard, Key};
 use std::thread;
 use std::fs::{self, File};
@@ -162,15 +162,12 @@ fn run() -> Result<()> {
         args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds)?,
     };
 
-    thread::spawn(|| {
+    let tx = pool.tx();
+    thread::spawn(move || {
         let kb = Keyboard::new();
         loop {
-            match kb.get() {
-                Key::P => println!("pause!"),
-                Key::R => println!("resume!"),
-                Key::Plus => println!("plus!"),
-                Key::Minus => println!("minu!"),
-            }
+            let key = kb.get();
+            tx.send(Msg::Key(key)).expect("failed to send key");
         }
     });
 
@@ -181,33 +178,44 @@ fn run() -> Result<()> {
     let mut retries = 0;
     let mut expired = 0;
     while pool.has_work() {
-        let (mut attempt, result) = pool.recv();
-
-        match result {
-            Ok(is_valid) => {
-                if is_valid {
-                    pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
-                        attempt.script.descr().yellow(), attempt.user, attempt.password));
-                    valid += 1;
+        match pool.recv() {
+            Msg::Key(key) => {
+                match key {
+                    Key::P => println!("pause!"),
+                    Key::R => println!("resume!"),
+                    Key::Plus => println!("plus!"),
+                    Key::Minus => println!("minu!"),
                 }
-                pb.inc();
+                pb.tick();
             },
-            Err(err) => {
-                pb.writeln(format!("{} {}({}, {}): {:?}", "[!]".bold(), "error".red(), attempt.script.descr().yellow(), format!("{:?}:{:?}", attempt.user, attempt.password).dimmed(), err));
+            Msg::Attempt(mut attempt, result) => {
+                match result {
+                    Ok(is_valid) => {
+                        if is_valid {
+                            pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
+                                attempt.script.descr().yellow(), attempt.user, attempt.password));
+                            valid += 1;
+                        }
+                        pb.inc();
+                    },
+                    Err(err) => {
+                        pb.writeln(format!("{} {}({}, {}): {:?}", "[!]".bold(), "error".red(), attempt.script.descr().yellow(), format!("{:?}:{:?}", attempt.user, attempt.password).dimmed(), err));
 
-                if attempt.ttl > 0 {
-                    // we have retries left
-                    retries += 1;
-                    attempt.ttl -= 1;
-                    pool.run(attempt);
-                    pb.tick();
-                } else {
-                    // giving up
-                    expired += 1;
-                    pb.inc();
-                }
-            }
-        };
+                        if attempt.ttl > 0 {
+                            // we have retries left
+                            retries += 1;
+                            attempt.ttl -= 1;
+                            pool.run(attempt);
+                            pb.tick();
+                        } else {
+                            // giving up
+                            expired += 1;
+                            pb.inc();
+                        }
+                    }
+                };
+            },
+        }
     }
 
     let elapsed = start.elapsed();
