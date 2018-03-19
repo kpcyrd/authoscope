@@ -18,11 +18,13 @@ mod args;
 mod ctx;
 mod pb;
 mod runtime;
+mod scheduler;
 
 use pb::ProgressBar;
 use error_chain::ChainedError;
 use threadpool::ThreadPool;
 use colored::*;
+use scheduler::Attempt;
 use std::sync::mpsc;
 use std::fs::{self, File};
 use std::sync::Arc;
@@ -110,13 +112,11 @@ fn run() -> Result<()> {
     for user in &users {
         for password in &passwords {
             for script in &scripts {
-                let user = user.clone();
-                let password = password.clone();
-                let script = script.clone();
+                let attempt = Attempt::new(user, password, script);
+
                 let tx = tx.clone();
                 pool.execute(move || {
-                    let result = script.run_once(&user, &password);
-                    tx.send((script, user, password, result)).expect("failed to send result");
+                    attempt.run(tx);
                 });
             }
         }
@@ -126,15 +126,24 @@ fn run() -> Result<()> {
     pb.tick();
 
     let mut valid = 0;
-    for (script, user, password, result) in rx.iter().take(attempts) {
+    let mut retries = 0;
+    while pool.active_count() > 0 || pool.queued_count() > 0 {
+        let (attempt, result) = rx.recv().unwrap();
+
         match result {
             Ok(valid) if !valid => (),
             Ok(_) => {
-                pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(), script.descr().yellow(), user, password));
+                pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(), attempt.script.descr().yellow(), attempt.user, attempt.password));
                 valid += 1;
             },
             Err(err) => {
-                pb.writeln(format!("{} {}({}, {}): {:?}", "[!]".bold(), "error".red(), script.descr().yellow(), format!("{:?}:{:?}", user, password).dimmed(), err));
+                pb.writeln(format!("{} {}({}, {}): {:?}", "[!]".bold(), "error".red(), attempt.script.descr().yellow(), format!("{:?}:{:?}", attempt.user, attempt.password).dimmed(), err));
+                retries += 1;
+
+                let tx = tx.clone();
+                pool.execute(move || {
+                    attempt.run(tx);
+                });
             }
         };
         pb.inc();
@@ -142,10 +151,11 @@ fn run() -> Result<()> {
 
     let elapsed = start.elapsed();
     let average = elapsed / attempts as u32;
-    pb.finish_replace(infof!("[+]", "found {} valid credentials with {} attempts after {} and on average {} per attempt\n",
-            valid, attempts,
+    pb.finish_replace(infof!("[+]", "found {} valid credentials with {} attempts and {} retries after {} and on average {} per attempt\n",
+            valid, attempts, retries,
             humantime::format_duration(elapsed),
-            humantime::format_duration(average)));
+            humantime::format_duration(average),
+    ));
 
     Ok(())
 }
