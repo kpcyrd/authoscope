@@ -68,7 +68,7 @@ dependencies = [
 
 [[package]]
 name = "badtouch"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "atty 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "colored 1.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
