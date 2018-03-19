@@ -1,9 +1,31 @@
 use hlua;
-use errors::Result;
+use errors::{Result, Error};
 use runtime;
 
 use std::fs::File;
+use std::sync::{Arc, Mutex};
 use std::io::prelude::*;
+
+
+#[derive(Debug, Clone)]
+pub struct State {
+    error: Arc<Mutex<Option<Error>>>,
+}
+
+impl State {
+    pub fn new() -> State {
+        State {
+            error: Arc::new(Mutex::new(None)),
+        }
+    }
+
+    pub fn set_error(&self, err: Error) -> Error {
+        let mut mtx = self.error.lock().unwrap();
+        let cp = err.to_string();
+        *mtx = Some(err);
+        return cp.into();
+    }
+}
 
 
 #[derive(Debug, Clone)]
@@ -22,7 +44,7 @@ impl Script {
         let mut code = String::new();
         src.read_to_string(&mut code)?;
 
-        let mut lua = Script::ctx();
+        let (mut lua, _) = Script::ctx();
         lua.execute::<()>(&code)?;
 
         let descr = {
@@ -42,18 +64,19 @@ impl Script {
         })
     }
 
-    fn ctx<'a>() -> hlua::Lua<'a> {
+    fn ctx<'a>() -> (hlua::Lua<'a>, State) {
         let mut lua = hlua::Lua::new();
+        let state = State::new();
 
-        runtime::execve(&mut lua);
-        runtime::http_basic_auth(&mut lua);
-        runtime::ldap_bind(&mut lua);
-        runtime::ldap_escape(&mut lua);
-        runtime::mysql_connect(&mut lua);
-        runtime::rand(&mut lua);
-        runtime::sleep(&mut lua);
+        runtime::execve(&mut lua, state.clone());
+        runtime::http_basic_auth(&mut lua, state.clone());
+        runtime::ldap_bind(&mut lua, state.clone());
+        runtime::ldap_escape(&mut lua, state.clone());
+        runtime::mysql_connect(&mut lua, state.clone());
+        runtime::rand(&mut lua, state.clone());
+        runtime::sleep(&mut lua, state.clone());
 
-        lua
+        (lua, state)
     }
 
     #[inline]
@@ -69,20 +92,30 @@ impl Script {
     */
 
     pub fn run_once(&self, user: &str, password: &str) -> Result<bool> {
-        let mut lua = Script::ctx();
+        let (mut lua, state) = Script::ctx();
         lua.execute::<()>(&self.code)?;
 
         let verify: Result<_> = lua.get("verify").ok_or("verify undefined".into());
         let mut verify: hlua::LuaFunction<_> = verify?;
 
-        let result: bool = match verify.call_with_args((user, password)) {
+        let result: hlua::AnyLuaValue = match verify.call_with_args((user, password)) {
             Ok(res) => res,
             Err(err) => {
                 let err = format!("execution failed: {:?}", err);
                 return Err(err.into())
             },
         };
-        Ok(result)
+
+        if let Some(err) = state.error.lock().unwrap().take() {
+            return Err(err);
+        }
+
+        use hlua::AnyLuaValue::*;
+        match result {
+            LuaBoolean(x) => Ok(x),
+            LuaString(x) => Err(format!("error: {:?}", x).into()),
+            x => Err(format!("lua returned wrong type: {:?}", x).into()),
+        }
     }
 }
 
