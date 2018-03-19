@@ -2,8 +2,10 @@ use ctx::Script;
 use threadpool::ThreadPool;
 use keyboard;
 use errors::Result;
-use std::sync::mpsc;
-use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
+use std::sync::{Arc, mpsc};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[derive(Debug)]
 pub struct Attempt {
@@ -42,6 +44,7 @@ pub struct Scheduler {
     tx: mpsc::Sender<Msg>,
     rx: mpsc::Receiver<Msg>,
     inflight: usize,
+    pause_trigger: Arc<AtomicBool>,
 }
 
 impl Scheduler {
@@ -53,7 +56,18 @@ impl Scheduler {
             tx,
             rx,
             inflight: 0,
+            pause_trigger: Arc::new(AtomicBool::new(false)),
         }
+    }
+
+    #[inline]
+    pub fn pause(&self) {
+        self.pause_trigger.store(true, Ordering::Relaxed);
+    }
+
+    #[inline]
+    pub fn resume(&self) {
+        self.pause_trigger.store(false, Ordering::Relaxed);
     }
 
     #[inline]
@@ -74,8 +88,13 @@ impl Scheduler {
     #[inline]
     pub fn run(&mut self, attempt: Attempt) {
         let tx = self.tx.clone();
+        let pause_trigger = self.pause_trigger.clone();
         self.inflight += 1;
+
         self.pool.execute(move || {
+            while pause_trigger.load(Ordering::Relaxed) {
+                thread::sleep(Duration::from_secs(1));
+            }
             attempt.run(tx);
         });
     }

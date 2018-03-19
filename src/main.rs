@@ -181,10 +181,20 @@ fn run() -> Result<()> {
         match pool.recv() {
             Msg::Key(key) => {
                 match key {
-                    Key::P => println!("pause!"),
-                    Key::R => println!("resume!"),
-                    Key::Plus => println!("plus!"),
-                    Key::Minus => println!("minu!"),
+                    Key::P => {
+                        pb.writeln(format!("{} {}", "[*]".bold(), "pausing threads".dimmed()));
+                        pool.pause();
+                    },
+                    Key::R => {
+                        pb.writeln(format!("{} {}", "[*]".bold(), "resuming threads".dimmed()));
+                        pool.resume();
+                    },
+                    Key::Plus => {
+                        println!("plus!");
+                    },
+                    Key::Minus => {
+                        println!("minus!");
+                    },
                 }
                 pb.tick();
             },
