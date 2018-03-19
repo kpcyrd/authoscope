@@ -194,10 +194,12 @@ fn run() -> Result<()> {
                         pool.resume();
                     },
                     Key::Plus => {
-                        println!("plus!");
+                        let num = pool.incr();
+                        pb.writeln(format!("{} {}", "[*]".bold(), format!("increased to {} threads", num).dimmed()));
                     },
                     Key::Minus => {
-                        println!("minus!");
+                        let num = pool.decr();
+                        pb.writeln(format!("{} {}", "[*]".bold(), format!("decreased to {} threads", num).dimmed()));
                     },
                 }
                 pb.tick();

@@ -43,6 +43,7 @@ pub struct Scheduler {
     pool: ThreadPool,
     tx: mpsc::Sender<Msg>,
     rx: mpsc::Receiver<Msg>,
+    num_threads: usize,
     inflight: usize,
     pause_trigger: Arc<AtomicBool>,
 }
@@ -55,6 +56,7 @@ impl Scheduler {
             pool: ThreadPool::new(workers),
             tx,
             rx,
+            num_threads: workers,
             inflight: 0,
             pause_trigger: Arc::new(AtomicBool::new(false)),
         }
@@ -68,6 +70,24 @@ impl Scheduler {
     #[inline]
     pub fn resume(&self) {
         self.pause_trigger.store(false, Ordering::Relaxed);
+    }
+
+    #[inline]
+    pub fn incr(&mut self) -> usize {
+        self.num_threads += 1;
+        self.pool.set_num_threads(self.num_threads);
+        self.num_threads
+    }
+
+    #[inline]
+    pub fn decr(&mut self) -> usize {
+        if self.num_threads == 1 {
+            return self.num_threads;
+        }
+
+        self.num_threads -= 1;
+        self.pool.set_num_threads(self.num_threads);
+        self.num_threads
     }
 
     #[inline]
