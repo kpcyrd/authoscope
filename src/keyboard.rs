@@ -26,6 +26,7 @@ impl Keyboard {
                 Ok(114) => return Key::R,
                 Ok(43)  => return Key::Plus,
                 Ok(45)  => return Key::Minus,
+                Ok(104) => return Key::H,
                 _ => (),
             }
         }
@@ -45,6 +46,7 @@ impl Keyboard {
 
 #[derive(Debug)]
 pub enum Key {
+    H,
     P,
     R,
     Plus,
