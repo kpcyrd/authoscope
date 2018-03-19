@@ -125,10 +125,13 @@ fn run() -> Result<()> {
         let (mut attempt, result) = pool.recv();
 
         match result {
-            Ok(valid) if !valid => (),
-            Ok(_) => {
-                pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(), attempt.script.descr().yellow(), attempt.user, attempt.password));
-                valid += 1;
+            Ok(is_valid) => {
+                if is_valid {
+                    pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
+                        attempt.script.descr().yellow(), attempt.user, attempt.password));
+                    valid += 1;
+                }
+                pb.inc();
             },
             Err(err) => {
                 pb.writeln(format!("{} {}({}, {}): {:?}", "[!]".bold(), "error".red(), attempt.script.descr().yellow(), format!("{:?}:{:?}", attempt.user, attempt.password).dimmed(), err));
@@ -138,13 +141,14 @@ fn run() -> Result<()> {
                     retries += 1;
                     attempt.ttl -= 1;
                     pool.run(attempt);
+                    pb.tick();
                 } else {
                     // giving up
                     expired += 1;
+                    pb.inc();
                 }
             }
         };
-        pb.inc();
     }
 
     let elapsed = start.elapsed();
