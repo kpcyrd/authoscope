@@ -17,7 +17,7 @@ impl Attempt {
             user: user.clone(),
             password: password.clone(),
             script: script.clone(),
-            ttl: 0,
+            ttl: 5,
         }
     }
 

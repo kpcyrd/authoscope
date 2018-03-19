@@ -127,8 +127,9 @@ fn run() -> Result<()> {
 
     let mut valid = 0;
     let mut retries = 0;
-    while pool.active_count() > 0 || pool.queued_count() > 0 {
-        let (attempt, result) = rx.recv().unwrap();
+    let mut expired = 0;
+    while pool.active_count() > 0 || pool.queued_count() > 0 { // there's a minor chance of racing, causing a deadlock
+        let (mut attempt, result) = rx.recv().unwrap();
 
         match result {
             Ok(valid) if !valid => (),
@@ -138,12 +139,19 @@ fn run() -> Result<()> {
             },
             Err(err) => {
                 pb.writeln(format!("{} {}({}, {}): {:?}", "[!]".bold(), "error".red(), attempt.script.descr().yellow(), format!("{:?}:{:?}", attempt.user, attempt.password).dimmed(), err));
-                retries += 1;
 
-                let tx = tx.clone();
-                pool.execute(move || {
-                    attempt.run(tx);
-                });
+                if attempt.ttl > 0 {
+                    // we have retries left
+                    retries += 1;
+                    attempt.ttl -= 1;
+                    let tx = tx.clone();
+                    pool.execute(move || {
+                        attempt.run(tx);
+                    });
+                } else {
+                    // giving up
+                    expired += 1;
+                }
             }
         };
         pb.inc();
@@ -151,10 +159,11 @@ fn run() -> Result<()> {
 
     let elapsed = start.elapsed();
     let average = elapsed / attempts as u32;
-    pb.finish_replace(infof!("[+]", "found {} valid credentials with {} attempts and {} retries after {} and on average {} per attempt\n",
+    pb.finish_replace(infof!("[+]", "found {} valid credentials with {} attempts and {} retries after {} and on average {} per attempt. {} attempts expired.\n",
             valid, attempts, retries,
             humantime::format_duration(elapsed),
             humantime::format_duration(average),
+            expired,
     ));
 
     Ok(())
