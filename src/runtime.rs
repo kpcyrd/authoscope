@@ -73,10 +73,9 @@ pub fn ldap_bind(lua: &mut hlua::Lua, state: State) {
         };
 
         let result = match sock.simple_bind(&dn, &password)
-                            .chain_err(|| "fatal error during simple_bind: {:?}") {
+                            .chain_err(|| "fatal error during simple_bind") {
             Ok(result) => result,
             Err(err) => return Err(state.set_error(err)),
-
         };
 
         // println!("{:?}", result);
@@ -88,6 +87,58 @@ pub fn ldap_bind(lua: &mut hlua::Lua, state: State) {
 pub fn ldap_escape(lua: &mut hlua::Lua, _: State) {
     lua.set("ldap_escape", hlua::function1(move |s: String| -> String {
         ldap3::dn_escape(s).to_string()
+    }))
+}
+
+pub fn ldap_search_bind(lua: &mut hlua::Lua, state: State) {
+    lua.set("ldap_search_bind", hlua::function6(move |url: String, search_user: String, search_pw: String, base_dn: String, user: String, password: String| -> Result<bool> {
+
+        let sock = match ldap3::LdapConn::new(&url)
+                        .chain_err(|| "ldap connection failed") {
+            Ok(sock) => sock,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
+        let result = match sock.simple_bind(&search_user, &search_pw)
+                            .chain_err(|| "fatal error during simple_bind with search user") {
+            Ok(result) => result,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
+        if !result.success().is_ok() {
+            return Err("login with search user failed".into());
+        }
+
+        let search = format!("uid={}", ldap3::dn_escape(user));
+        let result = match sock.search(&base_dn, ldap3::Scope::Subtree, &search, vec!["*"])
+                            .chain_err(|| "fatal error during ldap search") {
+            Ok(result) => result,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
+        let entries = match result.success()
+                            .chain_err(|| "ldap search failed") {
+            Ok(result) => result.0,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
+        // take the first result
+        if let Some(entry) = entries.into_iter().next() {
+            let entry = ldap3::SearchEntry::construct(entry);
+
+            // we got the DN, try to login
+            let result = match sock.simple_bind(&entry.dn, &password)
+                                .chain_err(|| "fatal error during simple_bind") {
+                Ok(result) => result,
+                Err(err) => return Err(state.set_error(err)),
+            };
+
+            // println!("{:?}", result);
+
+            Ok(result.success().is_ok())
+        } else {
+            return Ok(false);
+        }
     }))
 }
 

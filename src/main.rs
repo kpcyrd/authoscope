@@ -86,13 +86,7 @@ macro_rules! info {
     );
 }
 
-fn run() -> Result<()> {
-    let args = args::parse();
-
-    if atty::isnt(atty::Stream::Stdout) {
-        colored::control::SHOULD_COLORIZE.set_override(false);
-    }
-
+fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict) -> Result<(usize, Instant)> {
     let users = load_list(&args.users).chain_err(|| "failed to load users")?;
     info!("[+]", "loaded {} users", users.len());
     let passwords = load_list(&args.passwords).chain_err(|| "failed to load passwords")?;
@@ -101,11 +95,9 @@ fn run() -> Result<()> {
     info!("[+]", "loaded {} scripts", scripts.len());
 
     let attempts = users.len() * passwords.len() * scripts.len();
-
-    let mut pool = Scheduler::new(args.workers);
-
-    info!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, args.workers);
+    info!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, pool.max_count());
     let start = Instant::now();
+
     for user in &users {
         for password in &passwords {
             for script in &scripts {
@@ -114,6 +106,54 @@ fn run() -> Result<()> {
             }
         }
     }
+
+    Ok((attempts, start))
+}
+
+fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds) -> Result<(usize, Instant)> {
+    let creds = load_list(&args.creds)
+                    .chain_err(|| "failed to load creds")?
+                    .into_iter()
+                    .map(|x| {
+                        if let Some(idx) = x.find(":") {
+                            let (user, password) = x.split_at(idx);
+                            Ok((Arc::new(user.to_owned()), Arc::new(password[1..].to_owned())))
+                        } else {
+                            Err(format!("invalid list format: {:?}", x).into())
+                        }
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+    info!("[+]", "loaded {} credentials", creds.len());
+    let scripts = load_scripts(args.scripts).chain_err(|| "failed to load scripts")?;
+    info!("[+]", "loaded {} scripts", scripts.len());
+
+    let attempts = creds.len() * scripts.len();
+    info!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, pool.max_count());
+    let start = Instant::now();
+
+    for (user, password) in creds {
+        for script in &scripts {
+            let attempt = Attempt::new(&user, &password, script);
+            pool.run(attempt);
+        }
+    }
+
+    Ok((attempts, start))
+}
+
+fn run() -> Result<()> {
+    let args = args::parse();
+
+    if atty::isnt(atty::Stream::Stdout) {
+        colored::control::SHOULD_COLORIZE.set_override(false);
+    }
+
+    let mut pool = Scheduler::new(args.workers);
+
+    let (attempts, start) = match args.subcommand {
+        args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict)?,
+        args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds)?,
+    };
 
     let mut pb = ProgressBar::new(attempts as u64);
     pb.tick();
@@ -125,10 +165,13 @@ fn run() -> Result<()> {
         let (mut attempt, result) = pool.recv();
 
         match result {
-            Ok(valid) if !valid => (),
-            Ok(_) => {
-                pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(), attempt.script.descr().yellow(), attempt.user, attempt.password));
-                valid += 1;
+            Ok(is_valid) => {
+                if is_valid {
+                    pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
+                        attempt.script.descr().yellow(), attempt.user, attempt.password));
+                    valid += 1;
+                }
+                pb.inc();
             },
             Err(err) => {
                 pb.writeln(format!("{} {}({}, {}): {:?}", "[!]".bold(), "error".red(), attempt.script.descr().yellow(), format!("{:?}:{:?}", attempt.user, attempt.password).dimmed(), err));
@@ -138,13 +181,14 @@ fn run() -> Result<()> {
                     retries += 1;
                     attempt.ttl -= 1;
                     pool.run(attempt);
+                    pb.tick();
                 } else {
                     // giving up
                     expired += 1;
+                    pb.inc();
                 }
             }
         };
-        pb.inc();
     }
 
     let elapsed = start.elapsed();

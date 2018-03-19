@@ -4,6 +4,7 @@ use errors::Result;
 use std::sync::mpsc;
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct Attempt {
     pub user: Arc<String>,
     pub password: Arc<String>,
@@ -48,6 +49,11 @@ impl Scheduler {
             rx,
             inflight: 0,
         }
+    }
+
+    #[inline]
+    pub fn max_count(&self) -> usize {
+        self.pool.max_count()
     }
 
     #[inline]
