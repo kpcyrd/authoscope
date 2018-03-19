@@ -7,8 +7,12 @@ extern crate time;
 extern crate humantime;
 extern crate atty;
 extern crate rand;
+extern crate getch;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
+
+#[cfg(not(windows))]
+extern crate termios;
 
 extern crate reqwest;
 extern crate mysql;
@@ -16,6 +20,7 @@ extern crate ldap3;
 
 mod args;
 mod ctx;
+mod keyboard;
 mod pb;
 mod runtime;
 mod scheduler;
@@ -24,6 +29,8 @@ use pb::ProgressBar;
 use error_chain::ChainedError;
 use colored::*;
 use scheduler::{Scheduler, Attempt};
+use keyboard::{Keyboard, Key};
+use std::thread;
 use std::fs::{self, File};
 use std::sync::Arc;
 use std::time::Instant;
@@ -155,6 +162,18 @@ fn run() -> Result<()> {
         args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds)?,
     };
 
+    thread::spawn(|| {
+        let kb = Keyboard::new();
+        loop {
+            match kb.get() {
+                Key::P => println!("pause!"),
+                Key::R => println!("resume!"),
+                Key::Plus => println!("plus!"),
+                Key::Minus => println!("minu!"),
+            }
+        }
+    });
+
     let mut pb = ProgressBar::new(attempts as u64);
     pb.tick();
 
@@ -199,6 +218,8 @@ fn run() -> Result<()> {
             humantime::format_duration(average),
             expired,
     ));
+
+    Keyboard::reset();
 
     Ok(())
 }
