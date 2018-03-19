@@ -86,13 +86,7 @@ macro_rules! info {
     );
 }
 
-fn run() -> Result<()> {
-    let args = args::parse();
-
-    if atty::isnt(atty::Stream::Stdout) {
-        colored::control::SHOULD_COLORIZE.set_override(false);
-    }
-
+fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict) -> Result<usize> {
     let users = load_list(&args.users).chain_err(|| "failed to load users")?;
     info!("[+]", "loaded {} users", users.len());
     let passwords = load_list(&args.passwords).chain_err(|| "failed to load passwords")?;
@@ -102,10 +96,7 @@ fn run() -> Result<()> {
 
     let attempts = users.len() * passwords.len() * scripts.len();
 
-    let mut pool = Scheduler::new(args.workers);
-
-    info!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, args.workers);
-    let start = Instant::now();
+    info!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, pool.max_count());
     for user in &users {
         for password in &passwords {
             for script in &scripts {
@@ -114,6 +105,23 @@ fn run() -> Result<()> {
             }
         }
     }
+
+    Ok(attempts)
+}
+
+fn run() -> Result<()> {
+    let args = args::parse();
+
+    if atty::isnt(atty::Stream::Stdout) {
+        colored::control::SHOULD_COLORIZE.set_override(false);
+    }
+
+    let mut pool = Scheduler::new(args.workers);
+    let start = Instant::now();
+
+    let attempts = match args.subcommand {
+        args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict)?,
+    };
 
     let mut pb = ProgressBar::new(attempts as u64);
     pb.tick();

@@ -51,6 +51,11 @@ impl Scheduler {
     }
 
     #[inline]
+    pub fn max_count(&self) -> usize {
+        self.pool.max_count()
+    }
+
+    #[inline]
     pub fn has_work(&self) -> bool {
         self.inflight > 0
     }
