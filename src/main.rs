@@ -22,10 +22,8 @@ mod scheduler;
 
 use pb::ProgressBar;
 use error_chain::ChainedError;
-use threadpool::ThreadPool;
 use colored::*;
-use scheduler::Attempt;
-use std::sync::mpsc;
+use scheduler::{Scheduler, Attempt};
 use std::fs::{self, File};
 use std::sync::Arc;
 use std::time::Instant;
@@ -104,8 +102,7 @@ fn run() -> Result<()> {
 
     let attempts = users.len() * passwords.len() * scripts.len();
 
-    let pool = ThreadPool::new(args.workers);
-    let (tx, rx) = mpsc::channel();
+    let mut pool = Scheduler::new(args.workers);
 
     info!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, args.workers);
     let start = Instant::now();
@@ -113,11 +110,7 @@ fn run() -> Result<()> {
         for password in &passwords {
             for script in &scripts {
                 let attempt = Attempt::new(user, password, script);
-
-                let tx = tx.clone();
-                pool.execute(move || {
-                    attempt.run(tx);
-                });
+                pool.run(attempt);
             }
         }
     }
@@ -128,8 +121,8 @@ fn run() -> Result<()> {
     let mut valid = 0;
     let mut retries = 0;
     let mut expired = 0;
-    while pool.active_count() > 0 || pool.queued_count() > 0 { // there's a minor chance of racing, causing a deadlock
-        let (mut attempt, result) = rx.recv().unwrap();
+    while pool.has_work() {
+        let (mut attempt, result) = pool.recv();
 
         match result {
             Ok(valid) if !valid => (),
@@ -144,10 +137,7 @@ fn run() -> Result<()> {
                     // we have retries left
                     retries += 1;
                     attempt.ttl -= 1;
-                    let tx = tx.clone();
-                    pool.execute(move || {
-                        attempt.run(tx);
-                    });
+                    pool.run(attempt);
                 } else {
                     // giving up
                     expired += 1;
