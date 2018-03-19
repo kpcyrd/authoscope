@@ -57,6 +57,19 @@ Escape an attribute value in a relative distinguished name.
 ldap_escape(user)
 ```
 
+### ldap_search_bind
+Connect to an ldap server, log into a search user, search for the target user
+and then try to authenticate with the first DN that was returned by the search.
+```lua
+ldap_search_bind("ldaps://ldap.example.com/",
+    -- the user we use to find the correct DN
+    "cn=search_user,ou=users,dc=example,dc=com", "searchpw",
+    -- base DN we search in
+    "dc=example,dc=com",
+    -- the user we test
+    user, password)
+```
+
 ### mysql_connect
 Connect to a mysql database and try to authenticate with the provided
 credentials. Returns `true` on success.

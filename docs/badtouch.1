@@ -73,6 +73,22 @@ Escape an attribute value in a relative distinguished name.
 .fi
 .RE
 
+.SS ldap_search_bind
+.LP
+Connect to an ldap server, log into a search user, search for the target user
+and then try to authenticate with the first DN that was returned by the search.
+.RS
+.nf
+\fBldap_search_bind("ldaps://ldap.example.com/",
+    -- the user we use to find the correct DN
+    "cn=search_user,ou=users,dc=example,dc=com", "searchpw",
+    -- base DN we search in
+    "dc=example,dc=com",
+    -- the user we test
+    user, password)\fP
+.fi
+.RE
+
 .SS mysql_connect
 .LP
 Connect to a mysql database and try to authenticate with the provided
