@@ -4,10 +4,7 @@ badtouch \- scriptable network authentication cracker
 
 .SH SYNOPSIS
 .B badtouch
-[\fB\-nVh\fR]
-<\fBusers\fR>
-<\fBpasswords\fR>
-[\fBscripts\fR]...
+[\fB\-nVh\fR] command
 
 .SH DESCRIPTION
 badtouch is a scriptable network authentication cracker. While the space for
@@ -30,6 +27,29 @@ Prints help information.
 .TP
 \fB\-V\fR, \fB\-\-version\fR
 Prints version information.
+
+.SH SUBCOMMANDS
+Pick one of the following subcommands.
+
+.SS Dictionary attack
+.LP
+Try each password for each user with every script.
+.RS
+\fBbadtouch dict\fR
+<\fBusers\fR>
+<\fBpasswords\fR>
+[\fBscripts\fR]...
+.RE
+
+.SS Credential confirmation
+.LP
+Load a list of credentials with the format \fBuser:password\fR and verify them
+with every script.
+.RS
+\fBbadtouch creds\fR
+<\fBcredentials\fR>
+[\fBscripts\fR]...
+.RE
 
 .SH RUNTIME REFERENCE
 The badtouch runtime provides a number of functions that can be used to test
