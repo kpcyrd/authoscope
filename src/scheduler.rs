@@ -4,6 +4,7 @@ use errors::Result;
 use std::sync::mpsc;
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct Attempt {
     pub user: Arc<String>,
     pub password: Arc<String>,

@@ -109,6 +109,36 @@ fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict) -> Result<usi
     Ok(attempts)
 }
 
+fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds) -> Result<usize> {
+    let creds = load_list(&args.creds)
+                    .chain_err(|| "failed to load creds")?
+                    .into_iter()
+                    .map(|x| {
+                        if let Some(idx) = x.find(":") {
+                            let (user, password) = x.split_at(idx);
+                            Ok((Arc::new(user.to_owned()), Arc::new(password[1..].to_owned())))
+                        } else {
+                            Err(format!("invalid list format: {:?}", x).into())
+                        }
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+    info!("[+]", "loaded {} credentials", creds.len());
+    let scripts = load_scripts(args.scripts).chain_err(|| "failed to load scripts")?;
+    info!("[+]", "loaded {} scripts", scripts.len());
+
+    let attempts = creds.len() * scripts.len();
+
+    info!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, pool.max_count());
+    for (user, password) in creds {
+        for script in &scripts {
+            let attempt = Attempt::new(&user, &password, script);
+            pool.run(attempt);
+        }
+    }
+
+    Ok(attempts)
+}
+
 fn run() -> Result<()> {
     let args = args::parse();
 
@@ -121,6 +151,7 @@ fn run() -> Result<()> {
 
     let attempts = match args.subcommand {
         args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict)?,
+        args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds)?,
     };
 
     let mut pb = ProgressBar::new(attempts as u64);

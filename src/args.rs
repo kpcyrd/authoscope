@@ -18,6 +18,10 @@ pub enum SubCommand {
                 name="dict",
                 about="Dictionary attack")]
     Dict(Dict),
+    #[structopt(author = "",
+                name="creds",
+                about="Credential confirmation attack")]
+    Creds(Creds),
 }
 
 #[derive(StructOpt, Debug)]
@@ -26,6 +30,14 @@ pub struct Dict {
     pub users: String,
     #[structopt(help="Password list path")]
     pub passwords: String,
+    #[structopt(help="Scripts to run")]
+    pub scripts: Vec<String>,
+}
+
+#[derive(StructOpt, Debug)]
+pub struct Creds {
+    #[structopt(help="Credential list path")]
+    pub creds: String,
     #[structopt(help="Scripts to run")]
     pub scripts: Vec<String>,
 }
