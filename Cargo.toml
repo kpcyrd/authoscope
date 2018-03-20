@@ -23,8 +23,10 @@ time = "0.1.35"
 atty = "0.2"
 rand = "0.4"
 getch = "0.2"
-termios = "0.3"
 
 reqwest = "0.8"
 mysql = "12.2.0"
 ldap3 = "0.5"
+
+[target."cfg(unix)".dependencies]
+termios = "0.3"
