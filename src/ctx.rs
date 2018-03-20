@@ -69,6 +69,7 @@ impl Script {
         let state = State::new();
 
         runtime::execve(&mut lua, state.clone());
+        runtime::hex(&mut lua, state.clone());
         runtime::http_basic_auth(&mut lua, state.clone());
         runtime::ldap_bind(&mut lua, state.clone());
         runtime::ldap_escape(&mut lua, state.clone());
@@ -193,5 +194,35 @@ mod tests {
 
         let result = script.run_once("invalid", "wrong").unwrap();
         assert!(!result);
+    }
+
+    #[test]
+    fn verify_hex() {
+        let script = Script::load_from(r#"
+        descr = "hex test"
+
+        function verify(user, password)
+            x = hex({0x6F, 0x68, 0x61, 0x69, 0x0A, 0x00})
+            return x == "6f6861690a00"
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("x", "x").unwrap();
+        assert!(result);
+    }
+
+    #[test]
+    fn verify_hex_empty() {
+        let script = Script::load_from(r#"
+        descr = "hex test"
+
+        function verify(user, password)
+            x = hex({})
+            return x == ""
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("x", "x").unwrap();
+        assert!(result);
     }
 }
