@@ -2,10 +2,7 @@ use ctx::Script;
 use threadpool::ThreadPool;
 use keyboard;
 use errors::Result;
-use std::thread;
-use std::time::Duration;
-use std::sync::{Arc, mpsc};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc, Mutex, Condvar};
 
 #[derive(Debug)]
 pub struct Attempt {
@@ -45,7 +42,7 @@ pub struct Scheduler {
     rx: mpsc::Receiver<Msg>,
     num_threads: usize,
     inflight: usize,
-    pause_trigger: Arc<AtomicBool>,
+    pause_trigger: Arc<(Mutex<bool>, Condvar)>,
 }
 
 impl Scheduler {
@@ -58,18 +55,23 @@ impl Scheduler {
             rx,
             num_threads: workers,
             inflight: 0,
-            pause_trigger: Arc::new(AtomicBool::new(false)),
+            pause_trigger: Arc::new((Mutex::new(false), Condvar::new())),
         }
     }
 
     #[inline]
-    pub fn pause(&self) {
-        self.pause_trigger.store(true, Ordering::Relaxed);
+    pub fn pause(&mut self) {
+        let &(ref lock, _) = &*self.pause_trigger;
+        let mut paused = lock.lock().unwrap();
+        *paused = true;
     }
 
     #[inline]
-    pub fn resume(&self) {
-        self.pause_trigger.store(false, Ordering::Relaxed);
+    pub fn resume(&mut self) {
+        let &(ref lock, ref cvar) = &*self.pause_trigger;
+        let mut paused = lock.lock().unwrap();
+        *paused = false;
+        cvar.notify_all();
     }
 
     #[inline]
@@ -112,8 +114,14 @@ impl Scheduler {
         self.inflight += 1;
 
         self.pool.execute(move || {
-            while pause_trigger.load(Ordering::Relaxed) {
-                thread::sleep(Duration::from_secs(1));
+            // verify the pause trigger isn't enabled
+            // if it is locked, block until it is unlocked
+            let &(ref lock, ref cvar) = &*pause_trigger;
+            {
+                let mut paused = lock.lock().unwrap();
+                while *paused {
+                    paused = cvar.wait(paused).unwrap();
+                }
             }
             attempt.run(tx);
         });
