@@ -7,8 +7,12 @@ extern crate time;
 extern crate humantime;
 extern crate atty;
 extern crate rand;
+extern crate getch;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
+
+#[cfg(not(windows))]
+extern crate termios;
 
 extern crate reqwest;
 extern crate mysql;
@@ -16,6 +20,7 @@ extern crate ldap3;
 
 mod args;
 mod ctx;
+mod keyboard;
 mod pb;
 mod runtime;
 mod scheduler;
@@ -23,7 +28,9 @@ mod scheduler;
 use pb::ProgressBar;
 use error_chain::ChainedError;
 use colored::*;
-use scheduler::{Scheduler, Attempt};
+use scheduler::{Scheduler, Attempt, Msg};
+use keyboard::{Keyboard, Key};
+use std::thread;
 use std::fs::{self, File};
 use std::sync::Arc;
 use std::time::Instant;
@@ -155,40 +162,74 @@ fn run() -> Result<()> {
         args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds)?,
     };
 
+    let tx = pool.tx();
+    thread::spawn(move || {
+        let kb = Keyboard::new();
+        loop {
+            let key = kb.get();
+            tx.send(Msg::Key(key)).expect("failed to send key");
+        }
+    });
+
     let mut pb = ProgressBar::new(attempts as u64);
+    pb.print_help();
     pb.tick();
 
     let mut valid = 0;
     let mut retries = 0;
     let mut expired = 0;
     while pool.has_work() {
-        let (mut attempt, result) = pool.recv();
-
-        match result {
-            Ok(is_valid) => {
-                if is_valid {
-                    pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
-                        attempt.script.descr().yellow(), attempt.user, attempt.password));
-                    valid += 1;
+        match pool.recv() {
+            Msg::Key(key) => {
+                match key {
+                    Key::H => pb.print_help(),
+                    Key::P => {
+                        pb.writeln(format!("{} {}", "[*]".bold(), "pausing threads".dimmed()));
+                        pool.pause();
+                    },
+                    Key::R => {
+                        pb.writeln(format!("{} {}", "[*]".bold(), "resuming threads".dimmed()));
+                        pool.resume();
+                    },
+                    Key::Plus => {
+                        let num = pool.incr();
+                        pb.writeln(format!("{} {}", "[*]".bold(), format!("increased to {} threads", num).dimmed()));
+                    },
+                    Key::Minus => {
+                        let num = pool.decr();
+                        pb.writeln(format!("{} {}", "[*]".bold(), format!("decreased to {} threads", num).dimmed()));
+                    },
                 }
-                pb.inc();
+                pb.tick();
             },
-            Err(err) => {
-                pb.writeln(format!("{} {}({}, {}): {:?}", "[!]".bold(), "error".red(), attempt.script.descr().yellow(), format!("{:?}:{:?}", attempt.user, attempt.password).dimmed(), err));
+            Msg::Attempt(mut attempt, result) => {
+                match result {
+                    Ok(is_valid) => {
+                        if is_valid {
+                            pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
+                                attempt.script.descr().yellow(), attempt.user, attempt.password));
+                            valid += 1;
+                        }
+                        pb.inc();
+                    },
+                    Err(err) => {
+                        pb.writeln(format!("{} {}({}, {}): {:?}", "[!]".bold(), "error".red(), attempt.script.descr().yellow(), format!("{:?}:{:?}", attempt.user, attempt.password).dimmed(), err));
 
-                if attempt.ttl > 0 {
-                    // we have retries left
-                    retries += 1;
-                    attempt.ttl -= 1;
-                    pool.run(attempt);
-                    pb.tick();
-                } else {
-                    // giving up
-                    expired += 1;
-                    pb.inc();
-                }
-            }
-        };
+                        if attempt.ttl > 0 {
+                            // we have retries left
+                            retries += 1;
+                            attempt.ttl -= 1;
+                            pool.run(attempt);
+                            pb.tick();
+                        } else {
+                            // giving up
+                            expired += 1;
+                            pb.inc();
+                        }
+                    }
+                };
+            },
+        }
     }
 
     let elapsed = start.elapsed();
@@ -199,6 +240,8 @@ fn run() -> Result<()> {
             humantime::format_duration(average),
             expired,
     ));
+
+    Keyboard::reset();
 
     Ok(())
 }

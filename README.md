@@ -20,6 +20,8 @@ single service and provide a `verify(user, password)` function that returns
 either true or false. Concurrency, progress indication and reporting is
 magically provided by the badtouch runtime.
 
+[![asciicast](https://asciinema.org/a/Ke5rHVsz5sJePNUK1k0ASAvuZ.png)](https://asciinema.org/a/Ke5rHVsz5sJePNUK1k0ASAvuZ)
+
 ## Reference
 - [execve](#execve)
 - [http_basic_auth](#http_basic_auth)
