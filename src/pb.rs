@@ -11,6 +11,7 @@
 
 use pbr;
 use atty;
+use colored::Colorize;
 use std::fmt::Display;
 use std::io::prelude::*;
 use std::io::{self, Stdout};
@@ -58,6 +59,12 @@ impl ProgressBar {
         }
 
         self.pb.tick()
+    }
+
+    #[inline]
+    pub fn print_help(&mut self) {
+        self.writeln(format!("{} {}", "[+]".bold(),
+            "[h] help, [p] pause, [r] resume, [+] increase threads, [-] decrease threads".dimmed()));
     }
 
     #[inline]

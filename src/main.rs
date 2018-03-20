@@ -172,6 +172,7 @@ fn run() -> Result<()> {
     });
 
     let mut pb = ProgressBar::new(attempts as u64);
+    pb.print_help();
     pb.tick();
 
     let mut valid = 0;
@@ -181,10 +182,7 @@ fn run() -> Result<()> {
         match pool.recv() {
             Msg::Key(key) => {
                 match key {
-                    Key::H => {
-                        pb.writeln(format!("{} {}", "[+]".bold(),
-                            "[h] help, [p] pause, [r] resume, [+] increase threads, [-] decrease threads".dimmed()));
-                    },
+                    Key::H => pb.print_help(),
                     Key::P => {
                         pb.writeln(format!("{} {}", "[*]".bold(), "pausing threads".dimmed()));
                         pool.pause();
