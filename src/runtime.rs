@@ -84,6 +84,15 @@ pub fn http_basic_auth(lua: &mut hlua::Lua, state: State) {
     }))
 }
 
+pub fn last_err(lua: &mut hlua::Lua, state: State) {
+    lua.set("last_err", hlua::function0(move || -> AnyLuaValue {
+        match state.last_error() {
+            Some(err) => AnyLuaValue::LuaString(err),
+            None => AnyLuaValue::LuaNil,
+        }
+    }))
+}
+
 pub fn ldap_bind(lua: &mut hlua::Lua, state: State) {
     lua.set("ldap_bind", hlua::function3(move |url: String, dn: String, password: String| -> Result<bool> {
         let sock = match ldap3::LdapConn::new(&url)

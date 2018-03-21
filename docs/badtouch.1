@@ -74,6 +74,15 @@ Sends a \fBGET\fR request with basic auth. Returns \fBtrue\fR if no
 .fi
 .RE
 
+.SS last_err
+.LP
+Returns \fBnil\fR if no error has been recorded, returns a string otherwise.
+.RS
+.nf
+\fBif last_err() then return end\fP
+.fi
+.RE
+
 .SS ldap_bind
 .LP
 Connect to an ldap server and try to authenticate with the given user

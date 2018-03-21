@@ -25,6 +25,7 @@ magically provided by the badtouch runtime.
 ## Reference
 - [execve](#execve)
 - [http_basic_auth](#http_basic_auth)
+- [last_err](#last_err)
 - [ldap_bind](#ldap_bind)
 - [ldap_escape](#ldap_escape)
 - [mysql_connect](#mysql_connect)
@@ -44,6 +45,12 @@ Sends a `GET` request with basic auth. Returns `true` if no `WWW-Authenticate`
 header is set and the status code is not `401`.
 ```lua
 http_basic_auth("https://httpbin.org/basic-auth/foo/buzz", user, password)
+```
+
+### last_err
+Returns `nil` if no error has been recorded, returns a string otherwise.
+```lua
+if last_err() then return end
 ```
 
 ### ldap_bind

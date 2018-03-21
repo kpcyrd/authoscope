@@ -19,6 +19,14 @@ impl State {
         }
     }
 
+    pub fn last_error(&self) -> Option<String> {
+        let lock = self.error.lock().unwrap();
+        match *lock {
+            Some(ref err) => Some(err.to_string()),
+            None => None,
+        }
+    }
+
     pub fn set_error(&self, err: Error) -> Error {
         let mut mtx = self.error.lock().unwrap();
         let cp = err.to_string();
@@ -71,6 +79,7 @@ impl Script {
         runtime::execve(&mut lua, state.clone());
         runtime::hex(&mut lua, state.clone());
         runtime::http_basic_auth(&mut lua, state.clone());
+        runtime::last_err(&mut lua, state.clone());
         runtime::ldap_bind(&mut lua, state.clone());
         runtime::ldap_escape(&mut lua, state.clone());
         runtime::ldap_search_bind(&mut lua, state.clone());
