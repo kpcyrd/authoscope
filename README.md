@@ -111,7 +111,14 @@ out to your regular python script occasionally. Your wrapper my look like this:
 descr = "example.com"
 
 function verify(user, password)
-    return execve("./docs/test.sh", {user, password}) == 0
+    ret = execve("./docs/test.sh", {user, password})
+    if last_err() then return end
+
+    if ret == 2 then
+        return "script signaled an exception"
+    end
+
+    return ret == 0
 end
 ```
 
@@ -120,12 +127,17 @@ Your python script may look like this:
 ```python
 import sys
 
-if sys.argv[1] == "foo" and sys.argv[2] == "bar":
-    # correct credentials
-    exit(0)
-else:
-    # incorrect credentials
-    exit(1)
+try:
+    if sys.argv[1] == "foo" and sys.argv[2] == "bar":
+        # correct credentials
+        exit(0)
+    else:
+        # incorrect credentials
+        exit(1)
+except:
+    # signal an exception
+    # this requeues the attempt instead of discarding it
+    exit(2)
 ```
 
 # License
