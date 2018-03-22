@@ -41,6 +41,26 @@ pub fn execve(lua: &mut hlua::Lua, state: State) {
     }))
 }
 
+pub fn hex(lua: &mut hlua::Lua, _state: State) {
+    lua.set("hex", hlua::function1(move |bytes: Vec<AnyLuaValue>| -> Result<String> {
+        let mut out = String::new();
+
+        for num in bytes {
+            match num {
+                AnyLuaValue::LuaNumber(num) => {
+                    if num > 255.0 || num < 0.0 {
+                        return Err(format!("number is out of range: {:?}", num).into());
+                    }
+                    out += &format!("{:02x}", num as u8);
+                },
+                _ => return Err(format!("unexpected type: {:?}", num).into()),
+            }
+        }
+
+        Ok(out)
+    }))
+}
+
 pub fn http_basic_auth(lua: &mut hlua::Lua, state: State) {
     lua.set("http_basic_auth", hlua::function3(move |url: String, user: String, password: String| -> Result<bool> {
         let client = reqwest::Client::new();
@@ -61,6 +81,15 @@ pub fn http_basic_auth(lua: &mut hlua::Lua, state: State) {
             response.status() != reqwest::StatusCode::Unauthorized;
 
         Ok(authorized)
+    }))
+}
+
+pub fn last_err(lua: &mut hlua::Lua, state: State) {
+    lua.set("last_err", hlua::function0(move || -> AnyLuaValue {
+        match state.last_error() {
+            Some(err) => AnyLuaValue::LuaString(err),
+            None => AnyLuaValue::LuaNil,
+        }
     }))
 }
 

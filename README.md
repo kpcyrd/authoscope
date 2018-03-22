@@ -25,6 +25,7 @@ magically provided by the badtouch runtime.
 ## Reference
 - [execve](#execve)
 - [http_basic_auth](#http_basic_auth)
+- [last_err](#last_err)
 - [ldap_bind](#ldap_bind)
 - [ldap_escape](#ldap_escape)
 - [mysql_connect](#mysql_connect)
@@ -44,6 +45,12 @@ Sends a `GET` request with basic auth. Returns `true` if no `WWW-Authenticate`
 header is set and the status code is not `401`.
 ```lua
 http_basic_auth("https://httpbin.org/basic-auth/foo/buzz", user, password)
+```
+
+### last_err
+Returns `nil` if no error has been recorded, returns a string otherwise.
+```lua
+if last_err() then return end
 ```
 
 ### ldap_bind
@@ -104,7 +111,14 @@ out to your regular python script occasionally. Your wrapper my look like this:
 descr = "example.com"
 
 function verify(user, password)
-    return execve("./docs/test.sh", {user, password}) == 0
+    ret = execve("./docs/test.sh", {user, password})
+    if last_err() then return end
+
+    if ret == 2 then
+        return "script signaled an exception"
+    end
+
+    return ret == 0
 end
 ```
 
@@ -113,12 +127,17 @@ Your python script may look like this:
 ```python
 import sys
 
-if sys.argv[1] == "foo" and sys.argv[2] == "bar":
-    # correct credentials
-    exit(0)
-else:
-    # incorrect credentials
-    exit(1)
+try:
+    if sys.argv[1] == "foo" and sys.argv[2] == "bar":
+        # correct credentials
+        exit(0)
+    else:
+        # incorrect credentials
+        exit(1)
+except:
+    # signal an exception
+    # this requeues the attempt instead of discarding it
+    exit(2)
 ```
 
 # License
