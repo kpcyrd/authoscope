@@ -9,6 +9,8 @@ extern crate atty;
 extern crate rand;
 extern crate getch;
 extern crate serde_json;
+extern crate hyper;
+#[macro_use] extern crate serde_derive;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
 
@@ -21,11 +23,13 @@ extern crate ldap3;
 
 mod args;
 mod ctx;
+mod http;
 mod json;
 mod keyboard;
 mod pb;
 mod runtime;
 mod scheduler;
+mod structs;
 
 use pb::ProgressBar;
 use error_chain::ChainedError;
@@ -42,11 +46,17 @@ use std::io::prelude::*;
 mod errors {
     use std;
     use hlua;
+    use serde_json;
+    use reqwest;
+    use hyper;
 
     error_chain! {
         foreign_links {
             Io(std::io::Error);
             Lua(hlua::LuaError);
+            Json(serde_json::Error);
+            Reqwest(reqwest::Error);
+            Hyper(hyper::error::Error);
         }
     }
 }
