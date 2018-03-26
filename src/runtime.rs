@@ -191,6 +191,14 @@ pub fn mysql_connect(lua: &mut hlua::Lua, _state: State) {
     }))
 }
 
+pub fn print(lua: &mut hlua::Lua, _: State) {
+    // this function doesn't print to the terminal safely
+    // only use this for debugging
+    lua.set("print", hlua::function1(move |val: AnyLuaValue| {
+        println!("{:?}", val);
+    }))
+}
+
 pub fn rand(lua: &mut hlua::Lua, _: State) {
     lua.set("rand", hlua::function2(move |min: u32, max: u32| -> u32 {
         let mut rng = rand::thread_rng();

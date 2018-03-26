@@ -84,6 +84,7 @@ impl Script {
         runtime::ldap_escape(&mut lua, state.clone());
         runtime::ldap_search_bind(&mut lua, state.clone());
         runtime::mysql_connect(&mut lua, state.clone());
+        runtime::print(&mut lua, state.clone());
         runtime::rand(&mut lua, state.clone());
         runtime::sleep(&mut lua, state.clone());
 
