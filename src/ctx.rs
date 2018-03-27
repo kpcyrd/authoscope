@@ -79,6 +79,8 @@ impl Script {
         runtime::execve(&mut lua, state.clone());
         runtime::hex(&mut lua, state.clone());
         runtime::http_basic_auth(&mut lua, state.clone());
+        runtime::json_decode(&mut lua, state.clone());
+        runtime::json_encode(&mut lua, state.clone());
         runtime::last_err(&mut lua, state.clone());
         runtime::ldap_bind(&mut lua, state.clone());
         runtime::ldap_escape(&mut lua, state.clone());

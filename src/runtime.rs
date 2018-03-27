@@ -2,6 +2,7 @@ use hlua;
 use hlua::AnyLuaValue;
 use hlua::AnyLuaValue::LuaString;
 use errors::{Result, ResultExt};
+use json;
 
 use reqwest;
 use ldap3;
@@ -81,6 +82,24 @@ pub fn http_basic_auth(lua: &mut hlua::Lua, state: State) {
             response.status() != reqwest::StatusCode::Unauthorized;
 
         Ok(authorized)
+    }))
+}
+
+pub fn json_decode(lua: &mut hlua::Lua, state: State) {
+    lua.set("json_decode", hlua::function1(move |x: String| -> Result<AnyLuaValue> {
+        match json::decode(&x) {
+            Ok(x) => Ok(x),
+            Err(err) => Err(state.set_error(err)),
+        }
+    }))
+}
+
+pub fn json_encode(lua: &mut hlua::Lua, state: State) {
+    lua.set("json_encode", hlua::function1(move |x: AnyLuaValue| -> Result<String> {
+        match json::encode(x) {
+            Ok(x) => Ok(x),
+            Err(err) => Err(state.set_error(err)),
+        }
     }))
 }
 
