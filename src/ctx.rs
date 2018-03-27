@@ -147,7 +147,7 @@ mod tests {
         end
         "#.as_bytes()).unwrap();
 
-        let result = script.run_once("foo", "bar").unwrap();
+        let result = script.run_once("foo", "bar").expect("test script failed");
         assert!(!result);
     }
 
@@ -161,7 +161,7 @@ mod tests {
         end
         "#.as_bytes()).unwrap();
 
-        let result = script.run_once("foo", "bar").unwrap();
+        let result = script.run_once("foo", "bar").expect("test script failed");
         assert!(result);
     }
 
@@ -176,7 +176,7 @@ mod tests {
         end
         "#.as_bytes()).unwrap();
 
-        let result = script.run_once("foo", "bar").unwrap();
+        let result = script.run_once("foo", "bar").expect("test script failed");
         assert!(result);
     }
 
@@ -190,7 +190,7 @@ mod tests {
         end
         "#.as_bytes()).unwrap();
 
-        let result = script.run_once("foo", "buzz").unwrap();
+        let result = script.run_once("foo", "buzz").expect("test script failed");
         assert!(result);
     }
 
@@ -204,7 +204,7 @@ mod tests {
         end
         "#.as_bytes()).unwrap();
 
-        let result = script.run_once("invalid", "wrong").unwrap();
+        let result = script.run_once("invalid", "wrong").expect("test script failed");
         assert!(!result);
     }
 
@@ -219,7 +219,7 @@ mod tests {
         end
         "#.as_bytes()).unwrap();
 
-        let result = script.run_once("x", "x").unwrap();
+        let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);
     }
 
@@ -234,7 +234,87 @@ mod tests {
         end
         "#.as_bytes()).unwrap();
 
-        let result = script.run_once("x", "x").unwrap();
+        let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);
+    }
+
+    #[test]
+    fn verify_json_encode() {
+        let script = Script::load_from(r#"
+        descr = "json"
+
+        function verify(user, password)
+            json_encode({
+                hello="world",
+                almost_one=0.9999,
+                list={1,3,3,7},
+                data={
+                    user=user,
+                    password=password,
+                    empty=nil
+                }
+            })
+            return true
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("x", "x").expect("test script failed");
+        assert!(result);
+    }
+
+    #[test]
+    fn verify_json_encode_decode() {
+        let script = Script::load_from(r#"
+        descr = "json"
+
+        function verify(user, password)
+            x = json_encode({
+                hello="world",
+                almost_one=0.9999,
+                list={1,3,3,7},
+                data={
+                    user=user,
+                    password=password,
+                    empty=nil
+                }
+            })
+            json_decode(x)
+
+            return true
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("x", "x").expect("test script failed");
+        assert!(result);
+    }
+
+    #[test]
+    fn verify_json_decode_valid() {
+        let script = Script::load_from(r#"
+        descr = "json"
+
+        function verify(user, password)
+            json_decode("{\"almost_one\":0.9999,\"data\":{\"password\":\"fizz\",\"user\":\"bar\"},\"hello\":\"world\",\"list\":[1,3,3,7]}")
+            return true
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("x", "x").expect("test script failed");
+        assert!(result);
+    }
+
+    #[test]
+    fn verify_json_decode_invalid() {
+        let script = Script::load_from(r#"
+        descr = "json"
+
+        function verify(user, password)
+            json_decode("{\"almost_one\":0.9999,\"data\":{\"password\":\"fizz\",\"user\":\"bar\"}}}}}}}}}")
+            return true
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("x", "x");
+        assert!(result.is_err());
     }
 }
