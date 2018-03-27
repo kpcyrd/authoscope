@@ -30,6 +30,16 @@ impl LuaMap {
     }
 }
 
+impl From<HashMap<String, String>> for LuaMap {
+    fn from(x: HashMap<String, String>) -> LuaMap {
+        let mut map = LuaMap::new();
+        for (k, v) in x {
+            map.insert_str(k, v);
+        }
+        map
+    }
+}
+
 impl From<HashMap<AnyHashableLuaValue, AnyLuaValue>> for LuaMap {
     fn from(x: HashMap<AnyHashableLuaValue, AnyLuaValue>) -> LuaMap {
         LuaMap(x)
