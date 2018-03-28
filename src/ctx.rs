@@ -1,21 +1,30 @@
 use hlua;
 use errors::{Result, Error};
+use structs::LuaMap;
 use runtime;
 
 use std::fs::File;
 use std::sync::{Arc, Mutex};
 use std::io::prelude::*;
+use std::collections::HashMap;
+use http::HttpSession;
+use http::HttpRequest;
+use http::RequestOptions;
 
 
 #[derive(Debug, Clone)]
 pub struct State {
     error: Arc<Mutex<Option<Error>>>,
+    http_sessions: Arc<Mutex<HashMap<String, HttpSession>>>,
+    http_requests: Arc<Mutex<HashMap<String, HttpRequest>>>,
 }
 
 impl State {
     pub fn new() -> State {
         State {
             error: Arc::new(Mutex::new(None)),
+            http_sessions: Arc::new(Mutex::new(HashMap::new())),
+            http_requests: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -32,6 +41,39 @@ impl State {
         let cp = err.to_string();
         *mtx = Some(err);
         return cp.into();
+    }
+
+    pub fn register_in_jar(&self, session: &String, cookies: Vec<(String, String)>) {
+        let mut mtx = self.http_sessions.lock().unwrap();
+        if let Some(session) = mtx.get_mut(session) {
+            session.cookies.register_in_jar(cookies);
+        }
+    }
+
+    pub fn http_mksession(&self) -> String {
+        let mut mtx = self.http_sessions.lock().unwrap();
+        let (id, session) = HttpSession::new();
+        mtx.insert(id.clone(), session);
+        id
+    }
+
+    // TODO: this should return a hashmap
+    pub fn http_request(&self, session_id: &str, method: String, url: String, options: RequestOptions) -> String {
+        let mtx = self.http_sessions.lock().unwrap();
+        let session = mtx.get(session_id).expect("invalid session reference"); // TODO
+
+        let (id, request) = HttpRequest::new(&session, method, url, options);
+        // println!("{:?}", request);
+        let mut mtx = self.http_requests.lock().unwrap();
+        mtx.insert(id.clone(), request);
+
+        id
+    }
+
+    pub fn http_send(&self, request: String) -> Result<LuaMap> {
+        let mut mtx = self.http_requests.lock().unwrap();
+        let req = mtx.get_mut(&request).expect("invalid request reference"); // TODO
+        req.send(&self)
     }
 }
 
@@ -78,7 +120,10 @@ impl Script {
 
         runtime::execve(&mut lua, state.clone());
         runtime::hex(&mut lua, state.clone());
-        runtime::http_basic_auth(&mut lua, state.clone());
+        runtime::http_basic_auth(&mut lua, state.clone()); // TODO: deprecate?
+        runtime::http_mksession(&mut lua, state.clone());
+        runtime::http_request(&mut lua, state.clone());
+        runtime::http_send(&mut lua, state.clone());
         runtime::json_decode(&mut lua, state.clone());
         runtime::json_encode(&mut lua, state.clone());
         runtime::last_err(&mut lua, state.clone());

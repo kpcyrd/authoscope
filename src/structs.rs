@@ -24,20 +24,6 @@ impl LuaMap {
         self.0.insert(AnyHashableLuaValue::LuaString(k.into()), AnyLuaValue::LuaNumber(v));
     }
 
-    pub fn remove_str<K: Into<String>>(&mut self, k: K) -> Option<String> {
-        match self.0.remove(&AnyHashableLuaValue::LuaString(k.into())) {
-            Some(AnyLuaValue::LuaString(x)) => Some(x),
-            _ => None,
-        }
-    }
-
-    pub fn remove_map<K: Into<String>>(&mut self, k: K) -> Option<LuaMap> {
-        match self.0.remove(&AnyHashableLuaValue::LuaString(k.into())) {
-            Some(AnyLuaValue::LuaArray(x)) => Some(LuaMap::from(x)),
-            _ => None,
-        }
-    }
-
     // TODO: use trait instead
     pub fn into_iter(self) -> collections::hash_map::IntoIter<AnyHashableLuaValue, AnyLuaValue> {
         self.0.into_iter()

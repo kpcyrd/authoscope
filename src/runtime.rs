@@ -1,5 +1,5 @@
 use hlua;
-use hlua::AnyLuaValue;
+use hlua::{AnyLuaValue, AnyHashableLuaValue};
 use hlua::AnyLuaValue::LuaString;
 use errors::{Result, ResultExt};
 use json;
@@ -13,7 +13,9 @@ use rand::Rng;
 use std::thread;
 use std::time::Duration;
 use std::process::Command;
+use std::collections::HashMap;
 use ctx::State;
+use http::RequestOptions;
 
 
 pub fn execve(lua: &mut hlua::Lua, state: State) {
@@ -82,6 +84,35 @@ pub fn http_basic_auth(lua: &mut hlua::Lua, state: State) {
             response.status() != reqwest::StatusCode::Unauthorized;
 
         Ok(authorized)
+    }))
+}
+
+pub fn http_mksession(lua: &mut hlua::Lua, state: State) {
+    lua.set("http_mksession", hlua::function0(move || -> String {
+        state.http_mksession()
+    }))
+}
+
+pub fn http_request(lua: &mut hlua::Lua, state: State) {
+    lua.set("http_request", hlua::function4(move |session: String, method: String, url: String, options: AnyLuaValue| -> Result<String> {
+        let options = match RequestOptions::try_from(options)
+                                .chain_err(|| "invalid request options") {
+            Ok(options) => options,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
+        let id = state.http_request(&session, method, url, options);
+        Ok(id)
+    }))
+}
+
+pub fn http_send(lua: &mut hlua::Lua, state: State) {
+    lua.set("http_send", hlua::function1(move |request: String| -> Result<HashMap<AnyHashableLuaValue, AnyLuaValue>> {
+        let resp = match state.http_send(request) {
+            Ok(resp) => resp,
+            Err(err) => return Err(state.set_error(err)),
+        };
+        Ok(resp.into())
     }))
 }
 

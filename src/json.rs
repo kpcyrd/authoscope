@@ -29,10 +29,12 @@ pub fn lua_array_is_list(array: &Vec<(AnyLuaValue, AnyLuaValue)>) -> bool {
             false
         }
     } else {
-        true
+        // true // TODO: this breaks unserialize
+        false
     }
 }
 
+#[derive(Debug)]
 pub enum LuaJsonValue {
     Null,
     Bool(bool),
