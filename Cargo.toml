@@ -12,7 +12,9 @@ readme = "README.md"
 travis-ci = { repository = "kpcyrd/badtouch" }
 
 [dependencies]
-hlua = "0.4"
+#hlua = "0.4"
+#hlua-badtouch = { path="../hlua/hlua" }
+hlua-badtouch = "0.4.2"
 pbr = "1.0"
 threadpool = "1.7"
 colored = "1.6"

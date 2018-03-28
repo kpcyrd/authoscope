@@ -74,7 +74,7 @@ dependencies = [
  "colored 1.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "getch 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "hlua 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hlua-badtouch 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "humantime 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "ldap3 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "mysql 12.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -313,8 +313,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "hlua"
-version = "0.4.1"
+name = "hlua-badtouch"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.39 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1452,7 +1452,7 @@ dependencies = [
 "checksum futures-cpupool 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)" = "ab90cde24b3319636588d0c35fe03b1333857621051837ed769faefb4c2162e4"
 "checksum gcc 0.3.54 (registry+https://github.com/rust-lang/crates.io-index)" = "5e33ec290da0d127825013597dbdfc28bee4964690c7ce1166cbc2a7bd08b1bb"
 "checksum getch 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a5d74884542f30bafa33aa6615b63d6f430f57546e60e3bd59895d5459d776ab"
-"checksum hlua 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "ed9db71fff2e55b83d24bbbdd9ad13f0d1ff79bc265f544370f39ee0825d54e4"
+"checksum hlua-badtouch 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "d7508a0706ab5bdb0382bb080eb2041d6289d371f59799fd5953d4143fbd5977"
 "checksum httparse 1.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "c2f407128745b78abc95c0ffbe4e5d37427fdc0d45470710cfef8c44522a2e37"
 "checksum humantime 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "0484fda3e7007f2a4a0d9c3a703ca38c71c54c55602ce4660c419fd32e188c9e"
 "checksum hyper 0.11.22 (registry+https://github.com/rust-lang/crates.io-index)" = "d595f999e90624f64d2c4bc74c72adb0f3e0f773dc5692ca91338363b3568fa0"
