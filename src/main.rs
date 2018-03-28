@@ -24,6 +24,7 @@ extern crate ldap3;
 
 mod args;
 mod ctx;
+mod fsck;
 mod html;
 mod http;
 mod json;
@@ -59,6 +60,7 @@ mod errors {
             Json(serde_json::Error);
             Reqwest(reqwest::Error);
             Hyper(hyper::error::Error);
+            BufWrite(std::io::IntoInnerError<std::io::BufWriter<std::io::Stdout>>);
         }
     }
 }
@@ -199,6 +201,7 @@ fn run() -> Result<()> {
     let (attempts, start) = match args.subcommand {
         args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict)?,
         args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds)?,
+        args::SubCommand::Fsck(fsck) => return fsck::run_fsck(fsck),
     };
 
     let tx = pool.tx();
