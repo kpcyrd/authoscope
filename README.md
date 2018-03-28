@@ -24,11 +24,20 @@ magically provided by the badtouch runtime.
 
 ## Reference
 - [execve](#execve)
+- [hex](#hex)
+- [html_select](#html_select)
+- [html_select_list](#html_select_list)
 - [http_basic_auth](#http_basic_auth)
+- [http_mksession](#http_mksession)
+- [http_request](#http_request)
+- [http_send](#http_send)
+- [json_decode](#json_decode)
+- [json_encode](#json_encode)
 - [last_err](#last_err)
 - [ldap_bind](#ldap_bind)
 - [ldap_escape](#ldap_escape)
 - [mysql_connect](#mysql_connect)
+- [print](#print)
 - [rand](#rand)
 - [sleep](#sleep)
 - [Examples](/scripts)
@@ -40,11 +49,110 @@ Execute an external program. Returns the exit code.
 execve("myprog", {"arg1", "arg2", "--arg", "3"})
 ```
 
+### hex
+**Experimental**. Hex encode a list of bytes.
+```lua
+hex({0x6F, 0x68, 0x61, 0x69, 0x0A, 0x00})
+```
+
+### html_select
+Parses an html document and returns the first element that matches the css
+selector. The return value is a table with `text` being the inner text and
+`attrs` being a table of the elements attributes.
+```lua
+csrf = html_select_list(html, 'input[name="csrf"]')
+token = csrf["attrs"]["value"]
+```
+
+### html_select_list
+Same as [`html_select`](#html_select) but returns all matches instead of the
+first one.
+```lua
+html_select_list(html, 'input[name="csrf"]')
+```
+
 ### http_basic_auth
 Sends a `GET` request with basic auth. Returns `true` if no `WWW-Authenticate`
 header is set and the status code is not `401`.
 ```lua
 http_basic_auth("https://httpbin.org/basic-auth/foo/buzz", user, password)
+```
+
+### http_mksession
+Create a session object. This is similar to `requests.Session` in
+python-requests and keeps track of cookies.
+```lua
+session = http_mksession()
+```
+
+### http_request
+Prepares an http request. The first argument is the session reference and
+cookies from that session are copied into the request. After the request has
+been sent, the cookies from the response are copied back into the session.
+
+The next arguments are the `method`, the `url` and additional options. Please
+note that you still need to specify an empty table `{}` even if no options are
+set. The following options are available:
+
+- `query` - a map of query parameters that should be set on the url
+- `headers` - (unimplemented) a map of headers that should be set
+- `basic_auth` - (unimplemented) configure the basic auth header with `{"user, "password"}`
+- `json` - the request body that should be json encoded
+- `form` - the request body that should be form encoded
+- `body` - the raw request body as string
+
+```lua
+req = http_request(session, 'POST', 'https://httpbin.org/post', {
+    json={
+        user=user,
+        password=password,
+    }
+})
+resp = http_send(req)
+if last_err() then return end
+if resp["status"] ~= 200 then return "invalid status code" end
+```
+
+### http_send
+Send the request that has been built with [`http_request`](#http_request).
+Returns a table with the following keys:
+
+- `status` - the http status code
+- `headers` - a table of headers
+- `text` - the response body as string
+
+```lua
+req = http_request(session, 'POST', 'https://httpbin.org/post', {
+    json={
+        user=user,
+        password=password,
+    }
+})
+resp = http_send(req)
+if last_err() then return end
+if resp["status"] ~= 200 then return "invalid status code" end
+```
+
+### json_decode
+Decode a lua value from a json string.
+```lua
+json_decode("{\"data\":{\"password\":\"fizz\",\"user\":\"bar\"},\"list\":[1,3,3,7]}")
+```
+
+### json_encode
+Encode a lua value to a json string. Note that empty tables are encoded to an
+empty object `{}` instead of an empty list `[]`.
+```lua
+x = json_encode({
+    hello="world",
+    almost_one=0.9999,
+    list={1,3,3,7},
+    data={
+        user=user,
+        password=password,
+        empty=nil
+    }
+})
 ```
 
 ### last_err
@@ -86,6 +194,18 @@ credentials. Returns `true` on success.
 mysql_connect("127.0.0.1", 3306, user, password)
 ```
 
+### print
+Prints the value of a variable. Please not that this bypasses the regular
+writer and may interfer with the progress bar. Only use this for debugging.
+```lua
+print({
+    data={
+        user=user,
+        password=password
+    }
+})
+```
+
 ### rand
 Returns a random `u32` with a minimum and maximum constraint. The return value
 can be greater or equal to the minimum boundary, and always lower than the
@@ -104,7 +224,7 @@ sleep(3)
 
 ## Wrapping python scripts
 
-The badtouch runtime is still extremely bare bones, so you might have to shell
+The badtouch runtime is still very bare bones, so you might have to shell
 out to your regular python script occasionally. Your wrapper my look like this:
 
 ```lua
