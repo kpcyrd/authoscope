@@ -33,6 +33,7 @@ reqwest = "0.8"
 hyper = "0.11.22"
 mysql = "12.2.0"
 ldap3 = "0.5"
+kuchiki = "0.7"
 
 [target."cfg(unix)".dependencies]
 termios = "0.3"

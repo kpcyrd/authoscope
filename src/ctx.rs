@@ -120,6 +120,8 @@ impl Script {
 
         runtime::execve(&mut lua, state.clone());
         runtime::hex(&mut lua, state.clone());
+        runtime::html_select(&mut lua, state.clone());
+        runtime::html_select_list(&mut lua, state.clone());
         runtime::http_basic_auth(&mut lua, state.clone()); // TODO: deprecate?
         runtime::http_mksession(&mut lua, state.clone());
         runtime::http_request(&mut lua, state.clone());

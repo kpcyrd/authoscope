@@ -16,6 +16,7 @@ use std::process::Command;
 use std::collections::HashMap;
 use ctx::State;
 use http::RequestOptions;
+use html;
 
 
 pub fn execve(lua: &mut hlua::Lua, state: State) {
@@ -61,6 +62,24 @@ pub fn hex(lua: &mut hlua::Lua, _state: State) {
         }
 
         Ok(out)
+    }))
+}
+
+pub fn html_select(lua: &mut hlua::Lua, state: State) {
+    lua.set("html_select", hlua::function2(move |html: String, selector: String| -> Result<AnyLuaValue> {
+        match html::html_select(&html, &selector) {
+            Ok(x) => Ok(x.into()),
+            Err(err) => Err(state.set_error(err)),
+        }
+    }))
+}
+
+pub fn html_select_list(lua: &mut hlua::Lua, state: State) {
+    lua.set("html_select_list", hlua::function2(move |html: String, selector: String| -> Result<Vec<AnyLuaValue>> {
+        match html::html_select_list(&html, &selector) {
+            Ok(x) => Ok(x.into_iter().map(|x| x.into()).collect()),
+            Err(err) => Err(state.set_error(err)),
+        }
     }))
 }
 

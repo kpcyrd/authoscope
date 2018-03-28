@@ -10,6 +10,7 @@ extern crate rand;
 extern crate getch;
 extern crate serde_json;
 extern crate hyper;
+extern crate kuchiki;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
@@ -23,6 +24,7 @@ extern crate ldap3;
 
 mod args;
 mod ctx;
+mod html;
 mod http;
 mod json;
 mod keyboard;
