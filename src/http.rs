@@ -3,6 +3,7 @@ use structs::LuaMap;
 
 use reqwest;
 use reqwest::header::Cookie;
+use reqwest::header::UserAgent;
 use hlua::AnyLuaValue;
 use serde_json;
 use json::LuaJsonValue;
@@ -33,6 +34,7 @@ pub struct RequestOptions {
     query: Option<HashMap<String, String>>,
     headers: Option<HashMap<String, String>>,
     basic_auth: Option<(String, String)>,
+    user_agent: Option<String>,
     json: Option<serde_json::Value>,
     form: Option<serde_json::Value>,
     body: Option<String>,
@@ -56,6 +58,7 @@ pub struct HttpRequest {
     query: Option<HashMap<String, String>>,
     headers: Option<HashMap<String, String>>,
     basic_auth: Option<(String, String)>,
+    user_agent: Option<String>,
     body: Option<Body>,
 }
 
@@ -72,6 +75,7 @@ impl HttpRequest {
             query: options.query,
             headers: options.headers,
             basic_auth: options.basic_auth,
+            user_agent: options.user_agent,
             body: None,
         };
 
@@ -103,6 +107,10 @@ impl HttpRequest {
             cookie.append(key.clone(), value.clone());
         }
         req.header(cookie);
+
+        if let Some(ref agent) = self.user_agent {
+            req.header(UserAgent::new(agent.clone()));
+        }
 
         if let Some(ref query) = self.query {
             req.query(query);
