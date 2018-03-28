@@ -95,7 +95,7 @@ note that you still need to specify an empty table `{}` even if no options are
 set. The following options are available:
 
 - `query` - a map of query parameters that should be set on the url
-- `headers` - (unimplemented) a map of headers that should be set
+- `headers` - a map of headers that should be set
 - `basic_auth` - (unimplemented) configure the basic auth header with `{"user, "password"}`
 - `json` - the request body that should be json encoded
 - `form` - the request body that should be form encoded

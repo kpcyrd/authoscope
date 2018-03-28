@@ -2,6 +2,7 @@ use errors::Result;
 use structs::LuaMap;
 
 use reqwest;
+use reqwest::header::Headers;
 use reqwest::header::Cookie;
 use reqwest::header::UserAgent;
 use hlua::AnyLuaValue;
@@ -110,6 +111,14 @@ impl HttpRequest {
 
         if let Some(ref agent) = self.user_agent {
             req.header(UserAgent::new(agent.clone()));
+        }
+
+        if let Some(ref headers) = self.headers {
+            let mut hdrs = Headers::new();
+            for (k, v) in headers {
+                hdrs.set_raw(k.clone(), v.clone());
+            }
+            req.headers(hdrs);
         }
 
         if let Some(ref query) = self.query {
