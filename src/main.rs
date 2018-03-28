@@ -1,5 +1,5 @@
 #![warn(unused_extern_crates)]
-extern crate hlua;
+extern crate hlua_badtouch as hlua;
 extern crate pbr;
 extern crate threadpool;
 extern crate colored;
