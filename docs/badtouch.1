@@ -80,7 +80,7 @@ selector. The return value is a table with \fBtext\fR being the inner text and
 \fBattrs\fR being a table of the elements attributes.
 .RS
 .nf
-\fBcsrf = html_select_list(html, 'input[name="csrf"]')
+\fBcsrf = html_select(html, 'input[name="csrf"]')
 token = csrf["attrs"]["value"]\fP
 .fi
 .RE

@@ -95,6 +95,29 @@ fn load_scripts(paths: Vec<String>) -> Result<Vec<Arc<ctx::Script>>> {
     Ok(scripts)
 }
 
+enum Report {
+    Some(File),
+    None
+}
+
+impl Report {
+    pub fn open(path: Option<String>) -> Result<Report> {
+        match path {
+            Some(path) => Ok(Report::Some(File::create(path)?)),
+            None => Ok(Report::None),
+        }
+    }
+
+    pub fn write(&mut self, attempt: &Attempt) -> Result<()> {
+        match *self {
+            Report::Some(ref mut f) => {
+                Ok(writeln!(f, "{}:{}:{}", attempt.script.descr(), attempt.user, attempt.password)?)
+            },
+            Report::None => Ok(()),
+        }
+    }
+}
+
 macro_rules! infof {
     ($arg1:tt, $fmt:expr, $($arg:tt)*) => (
         $arg1.bold().to_string() + " " + &(format!($fmt, $($arg)*).dimmed().to_string())
@@ -171,6 +194,8 @@ fn run() -> Result<()> {
 
     let mut pool = Scheduler::new(args.workers);
 
+    let mut report = Report::open(args.output)?;
+
     let (attempts, start) = match args.subcommand {
         args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict)?,
         args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds)?,
@@ -222,6 +247,7 @@ fn run() -> Result<()> {
                         if is_valid {
                             pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
                                 attempt.script.descr().yellow(), attempt.user, attempt.password));
+                            report.write(&attempt)?;
                             valid += 1;
                         }
                         pb.inc();

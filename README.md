@@ -60,7 +60,7 @@ Parses an html document and returns the first element that matches the css
 selector. The return value is a table with `text` being the inner text and
 `attrs` being a table of the elements attributes.
 ```lua
-csrf = html_select_list(html, 'input[name="csrf"]')
+csrf = html_select(html, 'input[name="csrf"]')
 token = csrf["attrs"]["value"]
 ```
 
