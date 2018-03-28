@@ -9,7 +9,7 @@ use std::io::prelude::*;
 use std::str;
 
 
-fn validate_file(path: &str) -> Result<()> {
+fn validate_file(path: &str, args: &Fsck) -> Result<()> {
     let f = File::open(path)?;
     let file = BufReader::new(&f);
     let mut out = BufWriter::new(io::stdout());
@@ -19,7 +19,17 @@ fn validate_file(path: &str) -> Result<()> {
         let line = line?;
         // TODO: filter empty lines(?)
         match str::from_utf8(&line) {
-            Ok(line) => writeln!(&mut out, "{}", line)?,
+            Ok(line) => {
+                if line.find(":").is_some() || !args.require_colon {
+                    if !args.quiet {
+                        writeln!(&mut out, "{}", line)?;
+                    }
+                } else {
+                    eprintln!("Invalid(line {}): {:?}",
+                        i,
+                        line);
+                }
+            },
             Err(_) => {
                 eprintln!("Invalid(line {}): {:?} {:?}",
                     i,
@@ -37,8 +47,8 @@ fn validate_file(path: &str) -> Result<()> {
 }
 
 pub fn run_fsck(args: Fsck) -> Result<()> {
-    for path in args.paths {
-        validate_file(&path)?;
+    for path in &args.paths {
+        validate_file(path, &args)?;
     }
     Ok(())
 }

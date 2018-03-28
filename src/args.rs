@@ -54,6 +54,9 @@ pub struct Fsck {
     #[structopt(short = "q", long = "quiet",
                 help="Quiet output")]
     pub quiet: bool,
+    #[structopt(short = "c", long = "colon",
+                help="Require one colon per line")]
+    pub require_colon: bool,
     #[structopt(help="Files to read")]
     pub paths: Vec<String>,
 }
