@@ -118,6 +118,11 @@ impl HttpRequest {
             req.header(UserAgent::new(agent.clone()));
         }
 
+        if let Some(ref auth) = self.basic_auth {
+            let &(ref user, ref password) = auth;
+            req.basic_auth(user.clone(), Some(password.clone()));
+        }
+
         if let Some(ref headers) = self.headers {
             let mut hdrs = Headers::new();
             for (k, v) in headers {
