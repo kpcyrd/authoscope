@@ -8,6 +8,9 @@ pub struct Args {
     #[structopt(short = "n", long = "workers", default_value = "16",
                 help="Concurrent workers")]
     pub workers: usize,
+    #[structopt(short = "o", long = "output",
+                help="Write results to file")]
+    pub output: Option<String>,
     #[structopt(subcommand)]
     pub subcommand: SubCommand,
 }
