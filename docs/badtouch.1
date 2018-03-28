@@ -64,6 +64,36 @@ Execute an external program. Returns the exit code.
 .fi
 .RE
 
+.SS hex
+.LP
+**Experimental**. Hex encode a list of bytes.
+.RS
+.nf
+\fBhex({0x6F, 0x68, 0x61, 0x69, 0x0A, 0x00})\fR
+.fi
+.RE
+
+.SS html_select
+.LP
+Parses an html document and returns the first element that matches the css
+selector. The return value is a table with \fBtext\fR being the inner text and
+\fBattrs\fR being a table of the elements attributes.
+.RS
+.nf
+\fBcsrf = html_select_list(html, 'input[name="csrf"]')
+token = csrf["attrs"]["value"]\fP
+.fi
+.RE
+
+.SS html_select_list
+.LP
+Same as \fBhtml_select\fP but returns all matches instead of the first one.
+.RS
+.nf
+\fBhtml_select_list(html, 'input[name="csrf"]')\fP
+.fi
+.RE
+
 .SS http_basic_auth
 .LP
 Sends a \fBGET\fR request with basic auth. Returns \fBtrue\fR if no
@@ -71,6 +101,100 @@ Sends a \fBGET\fR request with basic auth. Returns \fBtrue\fR if no
 .RS
 .nf
 \fBhttp_basic_auth("https://httpbin.org/basic-auth/foo/buzz", user, password)\fP
+.fi
+.RE
+
+.SS http_mksession
+.LP
+Create a session object. This is similar to \fBrequests.Session\fR in
+python-requests and keeps track of cookies.
+.RS
+.nf
+\fBsession = http_mksession()\fP
+.fi
+.RE
+
+.SS http_request
+.LP
+Prepares an http request. The first argument is the session reference and
+cookies from that session are copied into the request. After the request has
+been sent, the cookies from the response are copied back into the session.
+
+The next arguments are the \fBmethod\fR, the \fBurl\fR and additional options. Please
+note that you still need to specify an empty table \fB{}\fR even if no options are
+set. The following options are available:
+
+.nf
+- \fBquery\fR - a map of query parameters that should be set on the url
+- \fBheaders\fR - (unimplemented) a map of headers that should be set
+- \fBbasic_auth\fR - (unimplemented) configure the basic auth header with \fB{"user, "password"}\fR
+- \fBjson\fR - the request body that should be json encoded
+- \fBform\fR - the request body that should be form encoded
+- \fBbody\fR - the raw request body as string
+.fi
+.RS
+.nf
+\fBreq = http_request(session, 'POST', 'https://httpbin.org/post', {
+    json={
+        user=user,
+        password=password,
+    }
+})
+resp = http_send(req)
+if last_err() then return end
+if resp["status"] ~= 200 then return "invalid status code" end\fP
+.fi
+.RE
+
+.SS http_send
+.LP
+Send the request that has been built with \fBhttp_request\fR.
+Returns a table with the following keys:
+
+.nf
+- \fBstatus\fR - the http status code
+- \fBheaders\fR - a table of headers
+- \fBtext\fR - the response body as string
+.fi
+.RS
+.nf
+\fBreq = http_request(session, 'POST', 'https://httpbin.org/post', {
+    json={
+        user=user,
+        password=password,
+    }
+})
+resp = http_send(req)
+if last_err() then return end
+if resp["status"] ~= 200 then return "invalid status code" end\fP
+.fi
+.RE
+
+.SS json_decode
+.LP
+Decode a lua value from a json string.
+.RS
+.nf
+\fBjson_decode("{\\"data\\":{\\"password\\":\\"fizz\\",\\"user\\":\\"bar\\"},\\"list\\":[1,3,3,7]}")\fP
+.fi
+.RE
+
+.SS json_encode
+.LP
+Encode a lua value to a json string. Note that empty tables are encoded to an
+empty object \fB{}\fR instead of an empty list \fB[]\fR.
+.RS
+.nf
+\fBx = json_encode({
+    hello="world",
+    almost_one=0.9999,
+    list={1,3,3,7},
+    data={
+        user=user,
+        password=password,
+        empty=nil
+    }
+})\fP
 .fi
 .RE
 
@@ -125,6 +249,21 @@ credentials. Returns \fBtrue\fP on success.
 .RS
 .nf
 \fBmysql_connect("127.0.0.1", 3306, user, password)\fP
+.fi
+.RE
+
+.SS print
+.LP
+Prints the value of a variable. Please not that this bypasses the regular
+writer and may interfer with the progress bar. Only use this for debugging.
+.RS
+.nf
+\fBprint({
+    data={
+        user=user,
+        password=password
+    }
+})\fP
 .fi
 .RE
 
