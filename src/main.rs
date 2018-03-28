@@ -8,6 +8,7 @@ extern crate humantime;
 extern crate atty;
 extern crate rand;
 extern crate getch;
+extern crate serde_json;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
 
@@ -20,6 +21,7 @@ extern crate ldap3;
 
 mod args;
 mod ctx;
+mod json;
 mod keyboard;
 mod pb;
 mod runtime;
