@@ -138,6 +138,7 @@ impl Script {
         runtime::mysql_connect(&mut lua, state.clone());
         runtime::print(&mut lua, state.clone());
         runtime::rand(&mut lua, state.clone());
+        runtime::randombytes(&mut lua, state.clone());
         runtime::sha1(&mut lua, state.clone());
         runtime::sha2_256(&mut lua, state.clone());
         runtime::sha2_512(&mut lua, state.clone());

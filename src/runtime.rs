@@ -371,6 +371,15 @@ pub fn rand(lua: &mut hlua::Lua, _: State) {
     }))
 }
 
+pub fn randombytes(lua: &mut hlua::Lua, _: State) {
+    lua.set("randombytes", hlua::function1(move |num: u32| -> AnyLuaValue {
+        let mut x = vec![0; num as usize];
+        let mut rng = rand::thread_rng();
+        rng.fill_bytes(x.as_mut_slice());
+        lua_bytes(&x)
+    }))
+}
+
 pub fn sha1(lua: &mut hlua::Lua, state: State) {
     lua.set("sha1", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
         let bytes = match byte_array(bytes) {
