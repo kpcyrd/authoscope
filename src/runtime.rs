@@ -1,8 +1,14 @@
 use hlua;
-use hlua::{AnyLuaValue, AnyHashableLuaValue};
+use hlua::{AnyLuaValue, AnyHashableLuaValue, AnyLuaString};
 use hlua::AnyLuaValue::LuaString;
 use errors::{Result, ResultExt};
 use json;
+
+use md5;
+use sha1;
+use sha2;
+use sha3::{self, Digest};
+use base64;
 
 use reqwest;
 use ldap3;
@@ -18,6 +24,53 @@ use ctx::State;
 use http::RequestOptions;
 use html;
 
+
+fn byte_array(bytes: AnyLuaValue) -> Result<Vec<u8>> {
+    match bytes {
+        AnyLuaValue::LuaAnyString(bytes) => Ok(bytes.0),
+        AnyLuaValue::LuaString(bytes) => Ok(bytes.into_bytes()),
+        AnyLuaValue::LuaArray(bytes) => {
+            Ok(bytes.into_iter()
+                .map(|num| match num.1 {
+                    AnyLuaValue::LuaNumber(num) if num <= 255.0 && num >= 0.0 && (num % 1.0 == 0.0) =>
+                            Ok(num as u8),
+                    AnyLuaValue::LuaNumber(num) =>
+                            Err(format!("number is out of range: {:?}", num).into()),
+                    _ => Err(format!("unexpected type: {:?}", num).into()),
+                })
+                .collect::<Result<_>>()?)
+        },
+        _ => return Err(format!("invalid type: {:?}", bytes).into()),
+    }
+}
+
+pub fn lua_bytes(bytes: &[u8]) -> AnyLuaValue {
+    let bytes = AnyLuaString(bytes.to_vec());
+    AnyLuaValue::LuaAnyString(bytes)
+}
+
+
+pub fn base64_decode(lua: &mut hlua::Lua, state: State) {
+    lua.set("base64_decode", hlua::function1(move |bytes: String| -> Result<AnyLuaValue> {
+        let bytes = match base64::decode(&bytes) {
+            Ok(bytes) => bytes,
+            Err(err) => return Err(state.set_error(err.into())),
+        };
+
+        Ok(lua_bytes(&bytes))
+    }))
+}
+
+pub fn base64_encode(lua: &mut hlua::Lua, state: State) {
+    lua.set("base64_encode", hlua::function1(move |bytes: AnyLuaValue| -> Result<String> {
+        let bytes = match byte_array(bytes) {
+            Ok(bytes) => bytes,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
+        Ok(base64::encode(&bytes))
+    }))
+}
 
 pub fn execve(lua: &mut hlua::Lua, state: State) {
     lua.set("execve", hlua::function2(move |prog: String, args: Vec<AnyLuaValue>| -> Result<i32> {
@@ -45,20 +98,17 @@ pub fn execve(lua: &mut hlua::Lua, state: State) {
     }))
 }
 
-pub fn hex(lua: &mut hlua::Lua, _state: State) {
-    lua.set("hex", hlua::function1(move |bytes: Vec<AnyLuaValue>| -> Result<String> {
+pub fn hex(lua: &mut hlua::Lua, state: State) {
+    lua.set("hex", hlua::function1(move |bytes: AnyLuaValue| -> Result<String> {
+        let bytes = match byte_array(bytes) {
+            Ok(bytes) => bytes,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
         let mut out = String::new();
 
-        for num in bytes {
-            match num {
-                AnyLuaValue::LuaNumber(num) => {
-                    if num > 255.0 || num < 0.0 {
-                        return Err(format!("number is out of range: {:?}", num).into());
-                    }
-                    out += &format!("{:02x}", num as u8);
-                },
-                _ => return Err(format!("unexpected type: {:?}", num).into()),
-            }
+        for b in bytes {
+            out += &format!("{:02x}", b);
         }
 
         Ok(out)
@@ -240,6 +290,17 @@ pub fn ldap_search_bind(lua: &mut hlua::Lua, state: State) {
     }))
 }
 
+pub fn md5(lua: &mut hlua::Lua, state: State) {
+    lua.set("md5", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
+        let bytes = match byte_array(bytes) {
+            Ok(bytes) => bytes,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
+        Ok(lua_bytes(&md5::Md5::digest(&bytes)))
+    }))
+}
+
 pub fn mysql_connect(lua: &mut hlua::Lua, _state: State) {
     lua.set("mysql_connect", hlua::function4(move |host: String, port: u16, user: String, password: String| -> Result<bool> {
         let mut builder = mysql::OptsBuilder::new();
@@ -307,6 +368,70 @@ pub fn rand(lua: &mut hlua::Lua, _: State) {
     lua.set("rand", hlua::function2(move |min: u32, max: u32| -> u32 {
         let mut rng = rand::thread_rng();
         (rng.next_u32() + min) % max
+    }))
+}
+
+pub fn randombytes(lua: &mut hlua::Lua, _: State) {
+    lua.set("randombytes", hlua::function1(move |num: u32| -> AnyLuaValue {
+        let mut x = vec![0; num as usize];
+        let mut rng = rand::thread_rng();
+        rng.fill_bytes(x.as_mut_slice());
+        lua_bytes(&x)
+    }))
+}
+
+pub fn sha1(lua: &mut hlua::Lua, state: State) {
+    lua.set("sha1", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
+        let bytes = match byte_array(bytes) {
+            Ok(bytes) => bytes,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
+        Ok(lua_bytes(&sha1::Sha1::digest(&bytes)))
+    }))
+}
+
+pub fn sha2_256(lua: &mut hlua::Lua, state: State) {
+    lua.set("sha2_256", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
+        let bytes = match byte_array(bytes) {
+            Ok(bytes) => bytes,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
+        Ok(lua_bytes(&sha2::Sha256::digest(&bytes)))
+    }))
+}
+
+pub fn sha2_512(lua: &mut hlua::Lua, state: State) {
+    lua.set("sha2_512", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
+        let bytes = match byte_array(bytes) {
+            Ok(bytes) => bytes,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
+        Ok(lua_bytes(&sha2::Sha512::digest(&bytes)))
+    }))
+}
+
+pub fn sha3_256(lua: &mut hlua::Lua, state: State) {
+    lua.set("sha3_256", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
+        let bytes = match byte_array(bytes) {
+            Ok(bytes) => bytes,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
+        Ok(lua_bytes(&sha3::Sha3_256::digest(&bytes)))
+    }))
+}
+
+pub fn sha3_512(lua: &mut hlua::Lua, state: State) {
+    lua.set("sha3_512", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
+        let bytes = match byte_array(bytes) {
+            Ok(bytes) => bytes,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
+        Ok(lua_bytes(&sha3::Sha3_512::digest(&bytes)))
     }))
 }
 

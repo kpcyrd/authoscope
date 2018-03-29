@@ -15,6 +15,12 @@ extern crate kuchiki;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
 
+extern crate md5;
+extern crate sha1;
+extern crate sha2;
+extern crate sha3;
+extern crate base64;
+
 #[cfg(not(windows))]
 extern crate termios;
 
@@ -52,6 +58,7 @@ mod errors {
     use serde_json;
     use reqwest;
     use hyper;
+    use base64;
 
     error_chain! {
         foreign_links {
@@ -61,6 +68,7 @@ mod errors {
             Reqwest(reqwest::Error);
             Hyper(hyper::error::Error);
             BufWrite(std::io::IntoInnerError<std::io::BufWriter<std::io::Stdout>>);
+            Base64Decode(base64::DecodeError);
         }
     }
 }
