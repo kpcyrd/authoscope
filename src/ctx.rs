@@ -118,6 +118,8 @@ impl Script {
         let mut lua = hlua::Lua::new();
         let state = State::new();
 
+        runtime::base64_decode(&mut lua, state.clone());
+        runtime::base64_encode(&mut lua, state.clone());
         runtime::execve(&mut lua, state.clone());
         runtime::hex(&mut lua, state.clone());
         runtime::html_select(&mut lua, state.clone());
@@ -132,9 +134,15 @@ impl Script {
         runtime::ldap_bind(&mut lua, state.clone());
         runtime::ldap_escape(&mut lua, state.clone());
         runtime::ldap_search_bind(&mut lua, state.clone());
+        runtime::md5(&mut lua, state.clone());
         runtime::mysql_connect(&mut lua, state.clone());
         runtime::print(&mut lua, state.clone());
         runtime::rand(&mut lua, state.clone());
+        runtime::sha1(&mut lua, state.clone());
+        runtime::sha2_256(&mut lua, state.clone());
+        runtime::sha2_512(&mut lua, state.clone());
+        runtime::sha3_256(&mut lua, state.clone());
+        runtime::sha3_512(&mut lua, state.clone());
         runtime::sleep(&mut lua, state.clone());
 
         (lua, state)
