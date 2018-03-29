@@ -25,6 +25,10 @@ pub enum SubCommand {
                 name="creds",
                 about="Credential confirmation attack")]
     Creds(Creds),
+    #[structopt(author = "",
+                name="fsck",
+                about="Verify and fix encoding of a list")]
+    Fsck(Fsck),
 }
 
 #[derive(StructOpt, Debug)]
@@ -43,6 +47,18 @@ pub struct Creds {
     pub creds: String,
     #[structopt(help="Scripts to run")]
     pub scripts: Vec<String>,
+}
+
+#[derive(StructOpt, Debug)]
+pub struct Fsck {
+    #[structopt(short = "q", long = "quiet",
+                help="Quiet output")]
+    pub quiet: bool,
+    #[structopt(short = "c", long = "colon",
+                help="Require one colon per line")]
+    pub require_colon: bool,
+    #[structopt(help="Files to read")]
+    pub paths: Vec<String>,
 }
 
 pub fn parse() -> Args {

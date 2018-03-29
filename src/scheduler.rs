@@ -55,7 +55,7 @@ impl Scheduler {
             rx,
             num_threads: workers,
             inflight: 0,
-            pause_trigger: Arc::new((Mutex::new(false), Condvar::new())),
+            pause_trigger: Arc::new((Mutex::new(true), Condvar::new())),
         }
     }
 

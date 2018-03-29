@@ -24,6 +24,7 @@ extern crate ldap3;
 
 mod args;
 mod ctx;
+mod fsck;
 mod html;
 mod http;
 mod json;
@@ -59,6 +60,7 @@ mod errors {
             Json(serde_json::Error);
             Reqwest(reqwest::Error);
             Hyper(hyper::error::Error);
+            BufWrite(std::io::IntoInnerError<std::io::BufWriter<std::io::Stdout>>);
         }
     }
 }
@@ -130,7 +132,7 @@ macro_rules! info {
     );
 }
 
-fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict) -> Result<(usize, Instant)> {
+fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict) -> Result<usize> {
     let users = load_list(&args.users).chain_err(|| "failed to load users")?;
     info!("[+]", "loaded {} users", users.len());
     let passwords = load_list(&args.passwords).chain_err(|| "failed to load passwords")?;
@@ -140,7 +142,6 @@ fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict) -> Result<(us
 
     let attempts = users.len() * passwords.len() * scripts.len();
     info!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, pool.max_count());
-    let start = Instant::now();
 
     for user in &users {
         for password in &passwords {
@@ -151,10 +152,10 @@ fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict) -> Result<(us
         }
     }
 
-    Ok((attempts, start))
+    Ok(attempts)
 }
 
-fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds) -> Result<(usize, Instant)> {
+fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds) -> Result<usize> {
     let creds = load_list(&args.creds)
                     .chain_err(|| "failed to load creds")?
                     .into_iter()
@@ -173,7 +174,6 @@ fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds) -> Res
 
     let attempts = creds.len() * scripts.len();
     info!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, pool.max_count());
-    let start = Instant::now();
 
     for (user, password) in creds {
         for script in &scripts {
@@ -182,7 +182,7 @@ fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds) -> Res
         }
     }
 
-    Ok((attempts, start))
+    Ok(attempts)
 }
 
 fn run() -> Result<()> {
@@ -196,9 +196,10 @@ fn run() -> Result<()> {
 
     let mut report = Report::open(args.output)?;
 
-    let (attempts, start) = match args.subcommand {
+    let attempts = match args.subcommand {
         args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict)?,
         args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds)?,
+        args::SubCommand::Fsck(fsck) => return fsck::run_fsck(fsck),
     };
 
     let tx = pool.tx();
@@ -213,6 +214,9 @@ fn run() -> Result<()> {
     let mut pb = ProgressBar::new(attempts as u64);
     pb.print_help();
     pb.tick();
+
+    pool.resume();
+    let start = Instant::now();
 
     let mut valid = 0;
     let mut retries = 0;
