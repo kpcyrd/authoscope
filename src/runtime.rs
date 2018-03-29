@@ -19,6 +19,26 @@ use http::RequestOptions;
 use html;
 
 
+fn byte_array(bytes: AnyLuaValue) -> Result<Vec<u8>> {
+    match bytes {
+        AnyLuaValue::LuaAnyString(bytes) => Ok(bytes.0),
+        AnyLuaValue::LuaString(bytes) => Ok(bytes.into_bytes()),
+        AnyLuaValue::LuaArray(bytes) => {
+            Ok(bytes.into_iter()
+                .map(|num| match num.1 {
+                    AnyLuaValue::LuaNumber(num) if num <= 255.0 && num >= 0.0 && (num % 1.0 == 0.0) =>
+                            Ok(num as u8),
+                    AnyLuaValue::LuaNumber(num) =>
+                            Err(format!("number is out of range: {:?}", num).into()),
+                    _ => Err(format!("unexpected type: {:?}", num).into()),
+                })
+                .collect::<Result<_>>()?)
+        },
+        _ => return Err(format!("invalid type: {:?}", bytes).into()),
+    }
+}
+
+
 pub fn execve(lua: &mut hlua::Lua, state: State) {
     lua.set("execve", hlua::function2(move |prog: String, args: Vec<AnyLuaValue>| -> Result<i32> {
         let args: Vec<_> = args.into_iter()
@@ -45,20 +65,17 @@ pub fn execve(lua: &mut hlua::Lua, state: State) {
     }))
 }
 
-pub fn hex(lua: &mut hlua::Lua, _state: State) {
-    lua.set("hex", hlua::function1(move |bytes: Vec<AnyLuaValue>| -> Result<String> {
+pub fn hex(lua: &mut hlua::Lua, state: State) {
+    lua.set("hex", hlua::function1(move |bytes: AnyLuaValue| -> Result<String> {
+        let bytes = match byte_array(bytes) {
+            Ok(bytes) => bytes,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
         let mut out = String::new();
 
-        for num in bytes {
-            match num {
-                AnyLuaValue::LuaNumber(num) => {
-                    if num > 255.0 || num < 0.0 {
-                        return Err(format!("number is out of range: {:?}", num).into());
-                    }
-                    out += &format!("{:02x}", num as u8);
-                },
-                _ => return Err(format!("unexpected type: {:?}", num).into()),
-            }
+        for b in bytes {
+            out += &format!("{:02x}", b);
         }
 
         Ok(out)
