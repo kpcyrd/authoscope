@@ -116,6 +116,7 @@ impl Script {
 
     fn ctx<'a>() -> (hlua::Lua<'a>, State) {
         let mut lua = hlua::Lua::new();
+        lua.open_string();
         let state = State::new();
 
         runtime::base64_decode(&mut lua, state.clone());
