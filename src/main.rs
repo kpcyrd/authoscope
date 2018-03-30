@@ -19,6 +19,8 @@ extern crate md5;
 extern crate sha1;
 extern crate sha2;
 extern crate sha3;
+extern crate digest;
+extern crate hmac;
 extern crate base64;
 
 #[cfg(not(windows))]

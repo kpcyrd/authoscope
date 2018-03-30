@@ -8,6 +8,9 @@ use md5;
 use sha1;
 use sha2;
 use sha3::{self, Digest};
+use digest::{Input, BlockInput, FixedOutput};
+use digest::generic_array::ArrayLength;
+use hmac::{Hmac, Mac};
 use base64;
 
 use reqwest;
@@ -112,6 +115,77 @@ pub fn hex(lua: &mut hlua::Lua, state: State) {
         }
 
         Ok(out)
+    }))
+}
+
+fn hmac<D>(secret: AnyLuaValue, msg: AnyLuaValue) -> Result<AnyLuaValue>
+    where
+        D: Input + BlockInput + FixedOutput + Default,
+        D::BlockSize: ArrayLength<u8>,
+{
+    let secret = byte_array(secret)?;
+    let msg = byte_array(msg)?;
+
+    let mut mac = match Hmac::<D>::new(&secret){
+        Ok(mac) => mac,
+        Err(_) => return Err("invalid key length".into()),
+    };
+    mac.input(&msg);
+    let result = mac.result();
+    Ok(lua_bytes(&result.code()))
+}
+
+pub fn hmac_md5(lua: &mut hlua::Lua, state: State) {
+    lua.set("hmac_md5", hlua::function2(move |secret: AnyLuaValue, msg: AnyLuaValue| -> Result<AnyLuaValue> {
+        match hmac::<md5::Md5>(secret, msg) {
+            Ok(mac)  => Ok(mac),
+            Err(err) => Err(state.set_error(err)),
+        }
+    }))
+}
+
+pub fn hmac_sha1(lua: &mut hlua::Lua, state: State) {
+    lua.set("hmac_sha1", hlua::function2(move |secret: AnyLuaValue, msg: AnyLuaValue| -> Result<AnyLuaValue> {
+        match hmac::<sha1::Sha1>(secret, msg) {
+            Ok(mac)  => Ok(mac),
+            Err(err) => Err(state.set_error(err)),
+        }
+    }))
+}
+
+pub fn hmac_sha2_256(lua: &mut hlua::Lua, state: State) {
+    lua.set("hmac_sha2_256", hlua::function2(move |secret: AnyLuaValue, msg: AnyLuaValue| -> Result<AnyLuaValue> {
+        match hmac::<sha2::Sha256>(secret, msg) {
+            Ok(mac)  => Ok(mac),
+            Err(err) => Err(state.set_error(err)),
+        }
+    }))
+}
+
+pub fn hmac_sha2_512(lua: &mut hlua::Lua, state: State) {
+    lua.set("hmac_sha2_512", hlua::function2(move |secret: AnyLuaValue, msg: AnyLuaValue| -> Result<AnyLuaValue> {
+        match hmac::<sha2::Sha512>(secret, msg) {
+            Ok(mac)  => Ok(mac),
+            Err(err) => Err(state.set_error(err)),
+        }
+    }))
+}
+
+pub fn hmac_sha3_256(lua: &mut hlua::Lua, state: State) {
+    lua.set("hmac_sha3_256", hlua::function2(move |secret: AnyLuaValue, msg: AnyLuaValue| -> Result<AnyLuaValue> {
+        match hmac::<sha3::Sha3_256>(secret, msg) {
+            Ok(mac)  => Ok(mac),
+            Err(err) => Err(state.set_error(err)),
+        }
+    }))
+}
+
+pub fn hmac_sha3_512(lua: &mut hlua::Lua, state: State) {
+    lua.set("hmac_sha3_512", hlua::function2(move |secret: AnyLuaValue, msg: AnyLuaValue| -> Result<AnyLuaValue> {
+        match hmac::<sha3::Sha3_512>(secret, msg) {
+            Ok(mac)  => Ok(mac),
+            Err(err) => Err(state.set_error(err)),
+        }
     }))
 }
 
