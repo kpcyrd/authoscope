@@ -55,6 +55,24 @@ with every script.
 The badtouch runtime provides a number of functions that can be used to test
 target systems.
 
+.SS base64_decode
+.LP
+Decode a base64 string.
+.RS
+.nf
+\fBbase64_decode("ww==")\fP
+.fi
+.RE
+
+.SS base64_encode
+.LP
+Encode a binary array with base64.
+.RS
+.nf
+\fBbase64_encode("\\x00\\xff")\fP
+.fi
+.RE
+
 .SS execve
 .LP
 Execute an external program. Returns the exit code.
@@ -66,10 +84,64 @@ Execute an external program. Returns the exit code.
 
 .SS hex
 .LP
-**Experimental**. Hex encode a list of bytes.
+Hex encode a list of bytes.
 .RS
 .nf
 \fBhex({0x6F, 0x68, 0x61, 0x69, 0x0A, 0x00})\fR
+.fi
+.RE
+
+.SS hmac_md5
+.LP
+Calculate an hmac with md5. Returns a binary array.
+.RS
+.nf
+\fBhmac_md5("secret", "my authenticated message")\fR
+.fi
+.RE
+
+.SS hmac_sha1
+.LP
+Calculate an hmac with sha1. Returns a binary array.
+.RS
+.nf
+\fBhmac_sha1("secret", "my authenticated message")\fR
+.fi
+.RE
+
+.SS hmac_sha2_256
+.LP
+Calculate an hmac with sha2_256. Returns a binary array.
+.RS
+.nf
+\fBhmac_sha2_256("secret", "my authenticated message")\fR
+.fi
+.RE
+
+.SS hmac_sha2_512
+.LP
+Calculate an hmac with sha2_512. Returns a binary array.
+.RS
+.nf
+\fBhmac_sha2_512("secret", "my authenticated message")\fR
+.fi
+.RE
+
+.SS hmac_sha3_256
+.LP
+Calculate an hmac with sha3_256. Returns a binary array.
+.RS
+.nf
+\fBhmac_sha3_256("secret", "my authenticated message")\fR
+.fi
+.RE
+
+.SS hmac_sha3_512
+.LP
+Calculate an hmac with sha3_512. Returns a binary array.
+.RS
+.nf
+\fBhmac_sha3_512("secret", "my authenticated message")\fR
 .fi
 .RE
 
@@ -242,6 +314,15 @@ and then try to authenticate with the first DN that was returned by the search.
 .fi
 .RE
 
+.SS md5
+.LP
+Hash a byte array with md5 and return the results as bytes.
+.RS
+.nf
+\fBhex(md5("\\x00\\xff"))\fP
+.fi
+.RE
+
 .SS mysql_connect
 .LP
 Connect to a mysql database and try to authenticate with the provided
@@ -276,6 +357,60 @@ security.
 .RS
 .nf
 \fBrand(0, 256)\fP
+.fi
+.RE
+
+.SS randombytes
+.LP
+Generate the specified number of random bytes.
+.RS
+.nf
+\fBrandombytes(16)\fP
+.fi
+.RE
+
+.SS sha1
+.LP
+Hash a byte array with sha1 and return the results as bytes.
+.RS
+.nf
+\fBhex(sha1("\\x00\\xff"))\fP
+.fi
+.RE
+
+.SS sha2_256
+.LP
+Hash a byte array with sha2_256 and return the results as bytes.
+.RS
+.nf
+\fBhex(sha2_256("\\x00\\xff"))\fP
+.fi
+.RE
+
+.SS sha2_512
+.LP
+Hash a byte array with sha2_512 and return the results as bytes.
+.RS
+.nf
+\fBhex(sha2_512("\\x00\\xff"))\fP
+.fi
+.RE
+
+.SS sha3_256
+.LP
+Hash a byte array with sha3_256 and return the results as bytes.
+.RS
+.nf
+\fBhex(sha3_256("\\x00\\xff"))\fP
+.fi
+.RE
+
+.SS sha3_512
+.LP
+Hash a byte array with sha3_512 and return the results as bytes.
+.RS
+.nf
+\fBhex(sha3_512("\\x00\\xff"))\fP
 .fi
 .RE
 
