@@ -23,8 +23,16 @@ magically provided by the badtouch runtime.
 [![asciicast](https://asciinema.org/a/Ke5rHVsz5sJePNUK1k0ASAvuZ.png)](https://asciinema.org/a/Ke5rHVsz5sJePNUK1k0ASAvuZ)
 
 ## Reference
+- [base64_decode](#base64_decode)
+- [base64_encode](#base64_encode)
 - [execve](#execve)
 - [hex](#hex)
+- [hmac_md5](#hmac_md5)
+- [hmac_sha1](#hmac_sha1)
+- [hmac_sha2_256](#hmac_sha2_256)
+- [hmac_sha2_512](#hmac_sha2_512)
+- [hmac_sha3_256](#hmac_sha3_256)
+- [hmac_sha3_512](#hmac_sha3_512)
 - [html_select](#html_select)
 - [html_select_list](#html_select_list)
 - [http_basic_auth](#http_basic_auth)
@@ -36,12 +44,32 @@ magically provided by the badtouch runtime.
 - [last_err](#last_err)
 - [ldap_bind](#ldap_bind)
 - [ldap_escape](#ldap_escape)
+- [ldap_search_bind](#ldap_search_bind)
+- [md5](#md5)
 - [mysql_connect](#mysql_connect)
 - [print](#print)
 - [rand](#rand)
+- [randombytes](#randombytes)
+- [sha1](#sha1)
+- [sha2_256](#sha2_256)
+- [sha2_512](#sha2_512)
+- [sha3_256](#sha3_256)
+- [sha3_512](#sha3_512)
 - [sleep](#sleep)
 - [Examples](/scripts)
 - [Wrapping python scripts](#wrapping-python-scripts)
+
+### base64_decode
+Decode a base64 string.
+```lua
+base64_decode("ww==")
+```
+
+### base64_encode
+Encode a binary array with base64.
+```lua
+base64_encode("\x00\xff")
+```
 
 ### execve
 Execute an external program. Returns the exit code.
@@ -50,9 +78,45 @@ execve("myprog", {"arg1", "arg2", "--arg", "3"})
 ```
 
 ### hex
-**Experimental**. Hex encode a list of bytes.
+Hex encode a list of bytes.
 ```lua
-hex({0x6F, 0x68, 0x61, 0x69, 0x0A, 0x00})
+hex("\x6F\x68\x61\x69\x0A\x00")
+```
+
+### hmac_md5
+Calculate an hmac with md5. Returns a binary array.
+```lua
+hmac_md5("secret", "my authenticated message")
+```
+
+### hmac_sha1
+Calculate an hmac with sha1. Returns a binary array.
+```lua
+hmac_sha1("secret", "my authenticated message")
+```
+
+### hmac_sha2_256
+Calculate an hmac with sha2_256. Returns a binary array.
+```lua
+hmac_sha2_256("secret", "my authenticated message")
+```
+
+### hmac_sha2_512
+Calculate an hmac with sha2_512. Returns a binary array.
+```lua
+hmac_sha2_512("secret", "my authenticated message")
+```
+
+### hmac_sha3_256
+Calculate an hmac with sha3_256. Returns a binary array.
+```lua
+hmac_sha3_256("secret", "my authenticated message")
+```
+
+### hmac_sha3_512
+Calculate an hmac with sha3_512. Returns a binary array.
+```lua
+hmac_sha3_512("secret", "my authenticated message")
 ```
 
 ### html_select
@@ -97,6 +161,7 @@ set. The following options are available:
 - `query` - a map of query parameters that should be set on the url
 - `headers` - a map of headers that should be set
 - `basic_auth` - (unimplemented) configure the basic auth header with `{"user, "password"}`
+- `user_agent` - overwrite the default user agent with a string
 - `json` - the request body that should be json encoded
 - `form` - the request body that should be form encoded
 - `body` - the raw request body as string
@@ -162,7 +227,7 @@ if last_err() then return end
 ```
 
 ### ldap_bind
-Connect to an ldap server and try to authenticate with the given user
+Connect to an ldap server and try to authenticate with the given user.
 ```lua
 ldap_bind("ldaps://ldap.example.com/",
     "cn=\"" .. ldap_escape(user) .. "\",ou=users,dc=example,dc=com", password)
@@ -185,6 +250,12 @@ ldap_search_bind("ldaps://ldap.example.com/",
     "dc=example,dc=com",
     -- the user we test
     user, password)
+```
+
+### md5
+Hash a byte array with md5 and return the results as bytes.
+```lua
+hex(md5("\x00\xff"))
 ```
 
 ### mysql_connect
@@ -213,6 +284,42 @@ maximum boundary. This function has not been reviewed for cryptographic
 security.
 ```lua
 rand(0, 256)
+```
+
+### randombytes
+Generate the specified number of random bytes.
+```lua
+randombytes(16)
+```
+
+### sha1
+Hash a byte array with sha1 and return the results as bytes.
+```lua
+hex(sha1("\x00\xff"))
+```
+
+### sha2_256
+Hash a byte array with sha2_256 and return the results as bytes.
+```lua
+hex(sha2_256("\x00\xff"))
+```
+
+### sha2_512
+Hash a byte array with sha2_512 and return the results as bytes.
+```lua
+hex(sha2_512("\x00\xff"))
+```
+
+### sha3_256
+Hash a byte array with sha3_256 and return the results as bytes.
+```lua
+hex(sha3_256("\x00\xff"))
+```
+
+### sha3_512
+Hash a byte array with sha3_512 and return the results as bytes.
+```lua
+hex(sha3_512("\x00\xff"))
 ```
 
 ### sleep
