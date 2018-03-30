@@ -122,6 +122,12 @@ impl Script {
         runtime::base64_encode(&mut lua, state.clone());
         runtime::execve(&mut lua, state.clone());
         runtime::hex(&mut lua, state.clone());
+        runtime::hmac_md5(&mut lua, state.clone());
+        runtime::hmac_sha1(&mut lua, state.clone());
+        runtime::hmac_sha2_256(&mut lua, state.clone());
+        runtime::hmac_sha2_512(&mut lua, state.clone());
+        runtime::hmac_sha3_256(&mut lua, state.clone());
+        runtime::hmac_sha3_512(&mut lua, state.clone());
         runtime::html_select(&mut lua, state.clone());
         runtime::html_select_list(&mut lua, state.clone());
         runtime::http_basic_auth(&mut lua, state.clone()); // TODO: deprecate?

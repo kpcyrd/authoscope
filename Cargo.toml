@@ -33,6 +33,8 @@ md-5 = "0.7"
 sha-1 = "0.7"
 sha2 = "0.7"
 sha3 = "0.7"
+digest = "0.7"
+hmac = "0.5"
 base64 = "0.9"
 
 reqwest = "0.8"

@@ -8,6 +8,9 @@ use md5;
 use sha1;
 use sha2;
 use sha3::{self, Digest};
+use digest::{Input, BlockInput, FixedOutput};
+use digest::generic_array::ArrayLength;
+use hmac::{Hmac, Mac};
 use base64;
 
 use reqwest;
@@ -115,21 +118,78 @@ pub fn hex(lua: &mut hlua::Lua, state: State) {
     }))
 }
 
+fn hmac<D>(secret: AnyLuaValue, msg: AnyLuaValue) -> Result<AnyLuaValue>
+    where
+        D: Input + BlockInput + FixedOutput + Default,
+        D::BlockSize: ArrayLength<u8>,
+{
+    let secret = byte_array(secret)?;
+    let msg = byte_array(msg)?;
+
+    let mut mac = match Hmac::<D>::new(&secret){
+        Ok(mac) => mac,
+        Err(_) => return Err("invalid key length".into()),
+    };
+    mac.input(&msg);
+    let result = mac.result();
+    Ok(lua_bytes(&result.code()))
+}
+
+pub fn hmac_md5(lua: &mut hlua::Lua, state: State) {
+    lua.set("hmac_md5", hlua::function2(move |secret: AnyLuaValue, msg: AnyLuaValue| -> Result<AnyLuaValue> {
+        hmac::<md5::Md5>(secret, msg)
+            .map_err(|err| state.set_error(err))
+    }))
+}
+
+pub fn hmac_sha1(lua: &mut hlua::Lua, state: State) {
+    lua.set("hmac_sha1", hlua::function2(move |secret: AnyLuaValue, msg: AnyLuaValue| -> Result<AnyLuaValue> {
+        hmac::<sha1::Sha1>(secret, msg)
+            .map_err(|err| state.set_error(err))
+    }))
+}
+
+pub fn hmac_sha2_256(lua: &mut hlua::Lua, state: State) {
+    lua.set("hmac_sha2_256", hlua::function2(move |secret: AnyLuaValue, msg: AnyLuaValue| -> Result<AnyLuaValue> {
+        hmac::<sha2::Sha256>(secret, msg)
+            .map_err(|err| state.set_error(err))
+    }))
+}
+
+pub fn hmac_sha2_512(lua: &mut hlua::Lua, state: State) {
+    lua.set("hmac_sha2_512", hlua::function2(move |secret: AnyLuaValue, msg: AnyLuaValue| -> Result<AnyLuaValue> {
+        hmac::<sha2::Sha512>(secret, msg)
+            .map_err(|err| state.set_error(err))
+    }))
+}
+
+pub fn hmac_sha3_256(lua: &mut hlua::Lua, state: State) {
+    lua.set("hmac_sha3_256", hlua::function2(move |secret: AnyLuaValue, msg: AnyLuaValue| -> Result<AnyLuaValue> {
+        hmac::<sha3::Sha3_256>(secret, msg)
+            .map_err(|err| state.set_error(err))
+    }))
+}
+
+pub fn hmac_sha3_512(lua: &mut hlua::Lua, state: State) {
+    lua.set("hmac_sha3_512", hlua::function2(move |secret: AnyLuaValue, msg: AnyLuaValue| -> Result<AnyLuaValue> {
+        hmac::<sha3::Sha3_512>(secret, msg)
+            .map_err(|err| state.set_error(err))
+    }))
+}
+
 pub fn html_select(lua: &mut hlua::Lua, state: State) {
     lua.set("html_select", hlua::function2(move |html: String, selector: String| -> Result<AnyLuaValue> {
-        match html::html_select(&html, &selector) {
-            Ok(x) => Ok(x.into()),
-            Err(err) => Err(state.set_error(err)),
-        }
+        html::html_select(&html, &selector)
+            .map(|x| x.into())
+            .map_err(|err| state.set_error(err))
     }))
 }
 
 pub fn html_select_list(lua: &mut hlua::Lua, state: State) {
     lua.set("html_select_list", hlua::function2(move |html: String, selector: String| -> Result<Vec<AnyLuaValue>> {
-        match html::html_select_list(&html, &selector) {
-            Ok(x) => Ok(x.into_iter().map(|x| x.into()).collect()),
-            Err(err) => Err(state.set_error(err)),
-        }
+        html::html_select_list(&html, &selector)
+            .map(|x| x.into_iter().map(|x| x.into()).collect())
+            .map_err(|err| state.set_error(err))
     }))
 }
 
@@ -177,29 +237,23 @@ pub fn http_request(lua: &mut hlua::Lua, state: State) {
 
 pub fn http_send(lua: &mut hlua::Lua, state: State) {
     lua.set("http_send", hlua::function1(move |request: String| -> Result<HashMap<AnyHashableLuaValue, AnyLuaValue>> {
-        let resp = match state.http_send(request) {
-            Ok(resp) => resp,
-            Err(err) => return Err(state.set_error(err)),
-        };
-        Ok(resp.into())
+        state.http_send(request)
+            .map(|resp| resp.into())
+            .map_err(|err| state.set_error(err))
     }))
 }
 
 pub fn json_decode(lua: &mut hlua::Lua, state: State) {
     lua.set("json_decode", hlua::function1(move |x: String| -> Result<AnyLuaValue> {
-        match json::decode(&x) {
-            Ok(x) => Ok(x),
-            Err(err) => Err(state.set_error(err)),
-        }
+        json::decode(&x)
+            .map_err(|err| state.set_error(err))
     }))
 }
 
 pub fn json_encode(lua: &mut hlua::Lua, state: State) {
     lua.set("json_encode", hlua::function1(move |x: AnyLuaValue| -> Result<String> {
-        match json::encode(x) {
-            Ok(x) => Ok(x),
-            Err(err) => Err(state.set_error(err)),
-        }
+        json::encode(x)
+            .map_err(|err| state.set_error(err))
     }))
 }
 
@@ -292,12 +346,9 @@ pub fn ldap_search_bind(lua: &mut hlua::Lua, state: State) {
 
 pub fn md5(lua: &mut hlua::Lua, state: State) {
     lua.set("md5", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
-        let bytes = match byte_array(bytes) {
-            Ok(bytes) => bytes,
-            Err(err) => return Err(state.set_error(err)),
-        };
-
-        Ok(lua_bytes(&md5::Md5::digest(&bytes)))
+        byte_array(bytes)
+            .map(|bytes| lua_bytes(&md5::Md5::digest(&bytes)))
+            .map_err(|err| state.set_error(err))
     }))
 }
 
@@ -382,56 +433,41 @@ pub fn randombytes(lua: &mut hlua::Lua, _: State) {
 
 pub fn sha1(lua: &mut hlua::Lua, state: State) {
     lua.set("sha1", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
-        let bytes = match byte_array(bytes) {
-            Ok(bytes) => bytes,
-            Err(err) => return Err(state.set_error(err)),
-        };
-
-        Ok(lua_bytes(&sha1::Sha1::digest(&bytes)))
+        byte_array(bytes)
+            .map(|bytes| lua_bytes(&sha1::Sha1::digest(&bytes)))
+            .map_err(|err| state.set_error(err))
     }))
 }
 
 pub fn sha2_256(lua: &mut hlua::Lua, state: State) {
     lua.set("sha2_256", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
-        let bytes = match byte_array(bytes) {
-            Ok(bytes) => bytes,
-            Err(err) => return Err(state.set_error(err)),
-        };
-
-        Ok(lua_bytes(&sha2::Sha256::digest(&bytes)))
+        byte_array(bytes)
+            .map(|bytes| lua_bytes(&sha2::Sha256::digest(&bytes)))
+            .map_err(|err| state.set_error(err))
     }))
 }
 
 pub fn sha2_512(lua: &mut hlua::Lua, state: State) {
     lua.set("sha2_512", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
-        let bytes = match byte_array(bytes) {
-            Ok(bytes) => bytes,
-            Err(err) => return Err(state.set_error(err)),
-        };
-
-        Ok(lua_bytes(&sha2::Sha512::digest(&bytes)))
+        byte_array(bytes)
+            .map(|bytes| lua_bytes(&sha2::Sha512::digest(&bytes)))
+            .map_err(|err| state.set_error(err))
     }))
 }
 
 pub fn sha3_256(lua: &mut hlua::Lua, state: State) {
     lua.set("sha3_256", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
-        let bytes = match byte_array(bytes) {
-            Ok(bytes) => bytes,
-            Err(err) => return Err(state.set_error(err)),
-        };
-
-        Ok(lua_bytes(&sha3::Sha3_256::digest(&bytes)))
+        byte_array(bytes)
+            .map(|bytes| lua_bytes(&sha3::Sha3_256::digest(&bytes)))
+            .map_err(|err| state.set_error(err))
     }))
 }
 
 pub fn sha3_512(lua: &mut hlua::Lua, state: State) {
     lua.set("sha3_512", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
-        let bytes = match byte_array(bytes) {
-            Ok(bytes) => bytes,
-            Err(err) => return Err(state.set_error(err)),
-        };
-
-        Ok(lua_bytes(&sha3::Sha3_512::digest(&bytes)))
+        byte_array(bytes)
+            .map(|bytes| lua_bytes(&sha3::Sha3_512::digest(&bytes)))
+            .map_err(|err| state.set_error(err))
     }))
 }
 
