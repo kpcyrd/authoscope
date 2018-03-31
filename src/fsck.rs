@@ -14,30 +14,31 @@ fn validate_file(path: &str, args: &Fsck) -> Result<()> {
     let file = BufReader::new(&f);
     let mut out = BufWriter::new(io::stdout());
 
-    let mut i = 1;
-    for line in file.split(b'\n') {
+    for (i, line) in file.split(b'\n').enumerate() {
         let line = line?;
         // TODO: filter empty lines(?)
         match str::from_utf8(&line) {
             Ok(line) => {
-                if line.find(":").is_some() || !args.require_colon {
-                    if !args.quiet {
-                        writeln!(&mut out, "{}", line)?;
+                if !args.require_colon || line.find(":").is_some() {
+                    if !args.silent {
+                        out.write(line.as_bytes())?;
+                        out.write(b"\n")?;
                     }
-                } else {
+                } else if !args.quiet {
                     eprintln!("Invalid(line {}): {:?}",
                         i,
                         line);
                 }
             },
             Err(_) => {
-                eprintln!("Invalid(line {}): {:?} {:?}",
-                    i,
-                    String::from_utf8_lossy(&line),
-                    line);
+                if !args.quiet {
+                    eprintln!("Invalid(line {}): {:?} {:?}",
+                        i,
+                        String::from_utf8_lossy(&line),
+                        line);
+                }
             },
         };
-        i += 1;
     }
 
     // Close the BufWriter to flush it

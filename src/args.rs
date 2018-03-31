@@ -52,8 +52,11 @@ pub struct Creds {
 #[derive(StructOpt, Debug)]
 pub struct Fsck {
     #[structopt(short = "q", long = "quiet",
-                help="Quiet output")]
+                help="Do not show invalid lines")]
     pub quiet: bool,
+    #[structopt(short = "s", long = "silent",
+                help="Do not show valid lines")]
+    pub silent: bool,
     #[structopt(short = "c", long = "colon",
                 help="Require one colon per line")]
     pub require_colon: bool,
