@@ -1,46 +1,16 @@
 #![warn(unused_extern_crates)]
-extern crate hlua_badtouch as hlua;
-extern crate pbr;
-extern crate threadpool;
+extern crate badtouch;
 extern crate colored;
-extern crate time;
 extern crate humantime;
 extern crate atty;
-extern crate rand;
-extern crate getch;
-extern crate serde_json;
-extern crate hyper;
-extern crate kuchiki;
-#[macro_use] extern crate serde_derive;
-#[macro_use] extern crate error_chain;
-#[macro_use] extern crate structopt;
+extern crate error_chain;
 
-extern crate md5;
-extern crate sha1;
-extern crate sha2;
-extern crate sha3;
-extern crate digest;
-extern crate hmac;
-extern crate base64;
-
-#[cfg(not(windows))]
-extern crate termios;
-
-extern crate reqwest;
-extern crate mysql;
-extern crate ldap3;
-
-mod args;
-mod ctx;
-mod fsck;
-mod html;
-mod http;
-mod json;
-mod keyboard;
-mod pb;
-mod runtime;
-mod scheduler;
-mod structs;
+use badtouch::args;
+use badtouch::ctx;
+use badtouch::fsck;
+use badtouch::keyboard;
+use badtouch::pb;
+use badtouch::scheduler;
 
 use pb::ProgressBar;
 use error_chain::ChainedError;
@@ -53,28 +23,8 @@ use std::sync::Arc;
 use std::time::Instant;
 use std::io::{self, BufReader};
 use std::io::prelude::*;
+use badtouch::errors::{Result, ResultExt};
 
-mod errors {
-    use std;
-    use hlua;
-    use serde_json;
-    use reqwest;
-    use hyper;
-    use base64;
-
-    error_chain! {
-        foreign_links {
-            Io(std::io::Error);
-            Lua(hlua::LuaError);
-            Json(serde_json::Error);
-            Reqwest(reqwest::Error);
-            Hyper(hyper::error::Error);
-            BufWrite(std::io::IntoInnerError<std::io::BufWriter<std::io::Stdout>>);
-            Base64Decode(base64::DecodeError);
-        }
-    }
-}
-use errors::{Result, ResultExt};
 
 fn load_list(path: &str) -> Result<Vec<Arc<String>>> {
     let f = File::open(path)?;
