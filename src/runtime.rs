@@ -120,13 +120,13 @@ pub fn hex(lua: &mut hlua::Lua, state: State) {
 
 fn hmac<D>(secret: AnyLuaValue, msg: AnyLuaValue) -> Result<AnyLuaValue>
     where
-        D: Input + BlockInput + FixedOutput + Default,
+        D: Input + BlockInput + FixedOutput + Default + Clone,
         D::BlockSize: ArrayLength<u8>,
 {
     let secret = byte_array(secret)?;
     let msg = byte_array(msg)?;
 
-    let mut mac = match Hmac::<D>::new(&secret){
+    let mut mac = match Hmac::<D>::new_varkey(&secret) {
         Ok(mac) => mac,
         Err(_) => return Err("invalid key length".into()),
     };
