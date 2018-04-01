@@ -21,9 +21,8 @@ impl Creds {
             Creds::Bytes(ref bytes) => {
                 // we already know it's valid
 
-                let line = str::from_utf8(bytes).unwrap();
                 let idx = bytes.iter().position(|x| *x == b':').unwrap();
-                line.split_at(idx).0
+                str::from_utf8(&bytes[..idx]).unwrap()
             },
         }
     }
@@ -35,9 +34,8 @@ impl Creds {
             Creds::Bytes(ref bytes) => {
                 // we already know it's valid
 
-                let line = str::from_utf8(bytes).unwrap();
                 let idx = bytes.iter().position(|x| *x == b':').unwrap();
-                &line.split_at(idx).1[1..]
+                str::from_utf8(&bytes[idx+1..]).unwrap()
             }
         }
     }
