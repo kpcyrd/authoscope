@@ -380,4 +380,100 @@ mod tests {
         let result = script.run_once("x", "x");
         assert!(result.is_err());
     }
+
+    #[test]
+    fn verify_hmac_md5() {
+        let script = Script::load_from(r#"
+        descr = "hmac_md5"
+
+        function verify(user, password)
+            x = hex(hmac_md5("foo", "bar"))
+            -- print('md5: ' .. x)
+            return x == "0c7a250281315ab863549f66cd8a3a53"
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("x", "x").expect("test script failed");
+        assert!(result);
+    }
+
+    #[test]
+    fn verify_hmac_sha1() {
+        let script = Script::load_from(r#"
+        descr = "hmac_sha1"
+
+        function verify(user, password)
+            x = hex(hmac_sha1("foo", "bar"))
+            -- print('sha1: ' .. x)
+            return x == "46b4ec586117154dacd49d664e5d63fdc88efb51"
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("x", "x").expect("test script failed");
+        assert!(result);
+    }
+
+    #[test]
+    fn verify_hmac_sha2_256() {
+        let script = Script::load_from(r#"
+        descr = "hmac_sha2_256"
+
+        function verify(user, password)
+            x = hex(hmac_sha2_256("foo", "bar"))
+            -- print('sha2_256: ' .. x)
+            return x == "f9320baf0249169e73850cd6156ded0106e2bb6ad8cab01b7bbbebe6d1065317"
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("x", "x").expect("test script failed");
+        assert!(result);
+    }
+
+    #[test]
+    fn verify_hmac_sha2_512() {
+        let script = Script::load_from(r#"
+        descr = "hmac_sha2_512"
+
+        function verify(user, password)
+            x = hex(hmac_sha2_512("foo", "bar"))
+            -- print('sha2_512: ' .. x)
+            return x == "114682914c5d017dfe59fdc804118b56a3a652a0b8870759cf9e792ed7426b08197076bf7d01640b1b0684df79e4b67e37485669e8ce98dbab60445f0db94fce"
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("x", "x").expect("test script failed");
+        assert!(result);
+    }
+
+    #[test]
+    fn verify_hmac_sha3_256() {
+        let script = Script::load_from(r#"
+        descr = "hmac_sha3_256"
+
+        function verify(user, password)
+            x = hex(hmac_sha3_256("foo", "bar"))
+            -- print('sha3_256: ' .. x)
+            return x == "a7dc3fbbd45078239f0cb321e6902375d22b505f2c48722eb7009e7da2574893"
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("x", "x").expect("test script failed");
+        assert!(result);
+    }
+
+    #[test]
+    fn verify_hmac_sha3_512() {
+        let script = Script::load_from(r#"
+        descr = "hmac_sha3_512"
+
+        function verify(user, password)
+            x = hex(hmac_sha3_512("foo", "bar"))
+            -- print('sha3_512: ' .. x)
+            return x == "2da91b8227d106199fd06c5d8a6752796cf3c84dde5a427bd2aca384f0cffc19997e2584ed15c55542c2cb8918b987e2bcd9e77a9f3fdbb4dbea8a3d0136da2f"
+        end
+        "#.as_bytes()).unwrap();
+
+        let result = script.run_once("x", "x").expect("test script failed");
+        assert!(result);
+    }
 }

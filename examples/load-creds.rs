@@ -1,0 +1,22 @@
+extern crate badtouch;
+extern crate humantime;
+
+use std::env;
+use std::time::Instant;
+
+fn main() {
+    let path = env::args().skip(1).next().expect("missing argument");
+
+    let start = Instant::now();
+
+    let creds = badtouch::utils::load_creds(&path)
+                                    .expect("failed to load creds");
+
+    let elapsed = start.elapsed();
+    let average = elapsed / creds.len() as u32;
+    println!("loaded {} records in {}, on average {}",
+            creds.len(),
+            humantime::format_duration(elapsed),
+            humantime::format_duration(average),
+    );
+}

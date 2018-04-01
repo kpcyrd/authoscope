@@ -1,3 +1,4 @@
+use std::str;
 use ctx::Script;
 use threadpool::ThreadPool;
 use keyboard;
@@ -5,9 +6,44 @@ use errors::Result;
 use std::sync::{mpsc, Arc, Mutex, Condvar};
 
 #[derive(Debug)]
+pub enum Creds {
+    Tuple((Arc<String>, Arc<String>)),
+    Bytes(Arc<Vec<u8>>),
+}
+
+impl Creds {
+    // BEWARE: these functions are somewhat hot
+
+    #[inline]
+    pub fn user(&self) -> &str {
+        match *self {
+            Creds::Tuple((ref user, ref _password)) => user.as_str(),
+            Creds::Bytes(ref bytes) => {
+                // we already know it's valid
+
+                let idx = bytes.iter().position(|x| *x == b':').unwrap();
+                str::from_utf8(&bytes[..idx]).unwrap()
+            },
+        }
+    }
+
+    #[inline]
+    pub fn password(&self) -> &str {
+        match *self {
+            Creds::Tuple((ref _user, ref password)) => password.as_str(),
+            Creds::Bytes(ref bytes) => {
+                // we already know it's valid
+
+                let idx = bytes.iter().position(|x| *x == b':').unwrap();
+                str::from_utf8(&bytes[idx+1..]).unwrap()
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Attempt {
-    pub user: Arc<String>,
-    pub password: Arc<String>,
+    pub creds: Creds,
     pub script: Arc<Script>,
     pub ttl: u8,
 }
@@ -16,16 +52,34 @@ impl Attempt {
     #[inline]
     pub fn new(user: &Arc<String>, password: &Arc<String>, script: &Arc<Script>) -> Attempt {
         Attempt {
-            user: user.clone(),
-            password: password.clone(),
+            creds: Creds::Tuple((user.clone(), password.clone())),
             script: script.clone(),
             ttl: 5,
         }
     }
 
     #[inline]
+    pub fn bytes(bytes: &Arc<Vec<u8>>, script: &Arc<Script>) -> Attempt {
+        Attempt {
+            creds: Creds::Bytes(bytes.clone()),
+            script: script.clone(),
+            ttl: 5,
+        }
+    }
+
+    #[inline]
+    pub fn user(&self) -> &str {
+        self.creds.user()
+    }
+
+    #[inline]
+    pub fn password(&self) -> &str {
+        self.creds.password()
+    }
+
+    #[inline]
     pub fn run(self, tx: mpsc::Sender<Msg>) {
-        let result = self.script.run_once(&self.user, &self.password);
+        let result = self.script.run_once(self.user(), self.password());
         tx.send(Msg::Attempt(self, result)).expect("failed to send result");
     }
 }

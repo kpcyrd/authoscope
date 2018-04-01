@@ -1,4 +1,5 @@
 language: rust
 script:
 - cargo build --verbose --all
+- cargo build --verbose --examples
 - cargo test --verbose --all
