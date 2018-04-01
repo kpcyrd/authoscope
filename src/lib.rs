@@ -40,6 +40,7 @@ pub mod pb;
 pub mod runtime;
 pub mod scheduler;
 pub mod structs;
+pub mod utils;
 
 
 pub mod errors {
