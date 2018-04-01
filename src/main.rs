@@ -34,10 +34,10 @@ impl Report {
         }
     }
 
-    pub fn write(&mut self, attempt: &Attempt) -> Result<()> {
+    pub fn write(&mut self, user: &str, password: &str, script: &str) -> Result<()> {
         match *self {
             Report::Some(ref mut f) => {
-                Ok(writeln!(f, "{}:{}:{}", attempt.script.descr(), attempt.user, attempt.password)?)
+                Ok(writeln!(f, "{}:{}:{}", script, user, password)?)
             },
             Report::None => Ok(()),
         }
@@ -88,9 +88,10 @@ fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds) -> Res
     let attempts = creds.len() * scripts.len();
     info!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, pool.max_count());
 
-    for (user, password) in creds {
+    for cred in creds {
+        // TODO: optimization if we only have once script
         for script in &scripts {
-            let attempt = Attempt::new(&user, &password, script);
+            let attempt = Attempt::bytes(cred.0, &cred.1, script);
             pool.run(attempt);
         }
     }
@@ -162,15 +163,19 @@ fn run() -> Result<()> {
                 match result {
                     Ok(is_valid) => {
                         if is_valid {
+                            let user = attempt.user();
+                            let password = attempt.password();
+                            let script = attempt.script.descr();
+
                             pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
-                                attempt.script.descr().yellow(), attempt.user, attempt.password));
-                            report.write(&attempt)?;
+                                script.yellow(), user, password));
+                            report.write(user, password, script)?;
                             valid += 1;
                         }
                         pb.inc();
                     },
                     Err(err) => {
-                        pb.writeln(format!("{} {}({}, {}): {:?}", "[!]".bold(), "error".red(), attempt.script.descr().yellow(), format!("{:?}:{:?}", attempt.user, attempt.password).dimmed(), err));
+                        pb.writeln(format!("{} {}({}, {}): {:?}", "[!]".bold(), "error".red(), attempt.script.descr().yellow(), format!("{:?}:{:?}", attempt.user(), attempt.password()).dimmed(), err));
 
                         if attempt.ttl > 0 {
                             // we have retries left

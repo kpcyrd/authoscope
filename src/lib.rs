@@ -58,6 +58,7 @@ pub mod errors {
             Json(serde_json::Error);
             Reqwest(reqwest::Error);
             Hyper(hyper::error::Error);
+            Utf8(std::str::Utf8Error);
             BufWrite(std::io::IntoInnerError<std::io::BufWriter<std::io::Stdout>>);
             Base64Decode(base64::DecodeError);
         }

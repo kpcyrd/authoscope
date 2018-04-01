@@ -1,8 +1,9 @@
+use std::str;
 use std::fs::{self, File};
 use std::sync::Arc;
 use std::io::{self, BufReader};
 use std::io::prelude::*;
-use errors::{Result, ResultExt};
+use errors::Result;
 
 use ctx;
 
@@ -16,19 +17,32 @@ pub fn load_list(path: &str) -> Result<Vec<Arc<String>>> {
     Ok(lines?)
 }
 
-pub fn load_creds(path: &str) -> Result<Vec<(Arc<String>, Arc<String>)>> {
-    let creds = load_list(&path)
-                    .chain_err(|| "failed to load creds")?
-                    .into_iter()
-                    .map(|x| {
-                        if let Some(idx) = x.find(":") {
-                            let (user, password) = x.split_at(idx);
-                            Ok((Arc::new(user.to_owned()), Arc::new(password[1..].to_owned())))
-                        } else {
-                            Err(format!("invalid list format: {:?}", x).into())
-                        }
-                    })
-                    .collect::<Result<Vec<_>>>()?;
+pub fn load_creds(path: &str) -> Result<Vec<(usize, Arc<Vec<u8>>)>> {
+    let f = File::open(path)?;
+    let mut file = BufReader::new(&f);
+
+    let mut creds = Vec::new();
+
+    let mut buf = Vec::new();
+    const DELIM: u8 = b'\n';
+
+    while 0 < file.read_until(DELIM, &mut buf)? {
+        if buf[buf.len() - 1] == DELIM {
+            buf.pop();
+        }
+
+        // ensure line is valid utf8
+        str::from_utf8(&buf)?;
+
+        if let Some(idx) = buf.iter().position(|x| *x == b':') {
+            creds.push((idx, Arc::new(buf.clone())));
+        } else {
+            return Err(format!("invalid list format: {:?}", buf).into())
+        }
+
+        buf.clear();
+    }
+
     Ok(creds)
 }
 
