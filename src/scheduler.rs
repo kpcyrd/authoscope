@@ -8,7 +8,7 @@ use std::sync::{mpsc, Arc, Mutex, Condvar};
 #[derive(Debug)]
 pub enum Creds {
     Tuple((Arc<String>, Arc<String>)),
-    Bytes((usize, Arc<Vec<u8>>)),
+    Bytes(Arc<Vec<u8>>),
 }
 
 impl Creds {
@@ -18,11 +18,12 @@ impl Creds {
     pub fn user(&self) -> &str {
         match *self {
             Creds::Tuple((ref user, ref _password)) => user.as_str(),
-            Creds::Bytes((ref idx, ref bytes)) => {
+            Creds::Bytes(ref bytes) => {
                 // we already know it's valid
 
                 let line = str::from_utf8(bytes).unwrap();
-                line.split_at(*idx).0
+                let idx = bytes.iter().position(|x| *x == b':').unwrap();
+                line.split_at(idx).0
             },
         }
     }
@@ -31,11 +32,12 @@ impl Creds {
     pub fn password(&self) -> &str {
         match *self {
             Creds::Tuple((ref _user, ref password)) => password.as_str(),
-            Creds::Bytes((ref idx, ref bytes)) => {
+            Creds::Bytes(ref bytes) => {
                 // we already know it's valid
 
                 let line = str::from_utf8(bytes).unwrap();
-                &line.split_at(*idx).1[1..]
+                let idx = bytes.iter().position(|x| *x == b':').unwrap();
+                &line.split_at(idx).1[1..]
             }
         }
     }
@@ -59,9 +61,9 @@ impl Attempt {
     }
 
     #[inline]
-    pub fn bytes(idx: usize, bytes: &Arc<Vec<u8>>, script: &Arc<Script>) -> Attempt {
+    pub fn bytes(bytes: &Arc<Vec<u8>>, script: &Arc<Script>) -> Attempt {
         Attempt {
-            creds: Creds::Bytes((idx, bytes.clone())),
+            creds: Creds::Bytes(bytes.clone()),
             script: script.clone(),
             ttl: 5,
         }

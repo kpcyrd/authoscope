@@ -17,7 +17,7 @@ pub fn load_list(path: &str) -> Result<Vec<Arc<String>>> {
     Ok(lines?)
 }
 
-pub fn load_creds(path: &str) -> Result<Vec<(usize, Arc<Vec<u8>>)>> {
+pub fn load_creds(path: &str) -> Result<Vec<Arc<Vec<u8>>>> {
     let f = File::open(path)?;
     let mut file = BufReader::new(&f);
 
@@ -34,8 +34,8 @@ pub fn load_creds(path: &str) -> Result<Vec<(usize, Arc<Vec<u8>>)>> {
         // ensure line is valid utf8
         str::from_utf8(&buf)?;
 
-        if let Some(idx) = buf.iter().position(|x| *x == b':') {
-            creds.push((idx, Arc::new(buf.clone())));
+        if buf.iter().any(|x| *x == b':') {
+            creds.push(Arc::new(buf.clone()));
         } else {
             return Err(format!("invalid list format: {:?}", buf).into())
         }

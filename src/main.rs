@@ -91,7 +91,7 @@ fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds) -> Res
     for cred in creds {
         // TODO: optimization if we only have once script
         for script in &scripts {
-            let attempt = Attempt::bytes(cred.0, &cred.1, script);
+            let attempt = Attempt::bytes(&cred, script);
             pool.run(attempt);
         }
     }
