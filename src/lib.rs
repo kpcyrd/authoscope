@@ -11,6 +11,9 @@ extern crate serde_json;
 extern crate hyper;
 extern crate kuchiki;
 extern crate toml;
+extern crate nix;
+extern crate libc;
+#[macro_use] extern crate log;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
@@ -42,6 +45,7 @@ pub mod pb;
 pub mod runtime;
 pub mod scheduler;
 pub mod structs;
+pub mod ulimit;
 pub mod utils;
 
 
@@ -53,6 +57,7 @@ pub mod errors {
     use hyper;
     use base64;
     use toml;
+    use nix;
 
     error_chain! {
         foreign_links {
@@ -65,6 +70,7 @@ pub mod errors {
             BufWrite(std::io::IntoInnerError<std::io::BufWriter<std::io::Stdout>>);
             Base64Decode(base64::DecodeError);
             Toml(toml::de::Error);
+            Nix(nix::Error);
         }
     }
 }
