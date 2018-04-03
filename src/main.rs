@@ -8,6 +8,7 @@ extern crate error_chain;
 use badtouch::args;
 use badtouch::fsck;
 use badtouch::utils;
+use badtouch::config::Config;
 use badtouch::pb::ProgressBar;
 use badtouch::scheduler::{Scheduler, Attempt, Msg};
 use badtouch::keyboard::{Keyboard, Key};
@@ -16,6 +17,7 @@ use error_chain::ChainedError;
 use colored::*;
 use std::thread;
 use std::fs::File;
+use std::sync::Arc;
 use std::time::Instant;
 use std::io::prelude::*;
 use badtouch::errors::{Result, ResultExt};
@@ -56,12 +58,12 @@ macro_rules! info {
     );
 }
 
-fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict) -> Result<usize> {
+fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict, config: &Arc<Config>) -> Result<usize> {
     let users = utils::load_list(&args.users).chain_err(|| "failed to load users")?;
     info!("[+]", "loaded {} users", users.len());
     let passwords = utils::load_list(&args.passwords).chain_err(|| "failed to load passwords")?;
     info!("[+]", "loaded {} passwords", passwords.len());
-    let scripts = utils::load_scripts(args.scripts).chain_err(|| "failed to load scripts")?;
+    let scripts = utils::load_scripts(args.scripts, &config).chain_err(|| "failed to load scripts")?;
     info!("[+]", "loaded {} scripts", scripts.len());
 
     let attempts = users.len() * passwords.len() * scripts.len();
@@ -79,10 +81,10 @@ fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict) -> Result<usi
     Ok(attempts)
 }
 
-fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds) -> Result<usize> {
+fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds, config: &Arc<Config>) -> Result<usize> {
     let creds = utils::load_creds(&args.creds)?;
     info!("[+]", "loaded {} credentials", creds.len());
-    let scripts = utils::load_scripts(args.scripts).chain_err(|| "failed to load scripts")?;
+    let scripts = utils::load_scripts(args.scripts, &config).chain_err(|| "failed to load scripts")?;
     info!("[+]", "loaded {} scripts", scripts.len());
 
     let attempts = creds.len() * scripts.len();
@@ -106,13 +108,15 @@ fn run() -> Result<()> {
         colored::control::SHOULD_COLORIZE.set_override(false);
     }
 
+    let config = Arc::new(Config::load()?);
+
     let mut pool = Scheduler::new(args.workers);
 
     let mut report = Report::open(args.output)?;
 
     let attempts = match args.subcommand {
-        args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict)?,
-        args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds)?,
+        args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict, &config)?,
+        args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds, &config)?,
         args::SubCommand::Fsck(fsck) => return fsck::run_fsck(fsck),
     };
 

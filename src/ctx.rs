@@ -10,18 +10,21 @@ use std::collections::HashMap;
 use http::HttpSession;
 use http::HttpRequest;
 use http::RequestOptions;
+use config::Config;
 
 
 #[derive(Debug, Clone)]
 pub struct State {
+    config: Arc<Config>,
     error: Arc<Mutex<Option<Error>>>,
     http_sessions: Arc<Mutex<HashMap<String, HttpSession>>>,
     http_requests: Arc<Mutex<HashMap<String, HttpRequest>>>,
 }
 
 impl State {
-    pub fn new() -> State {
+    pub fn new(config: Arc<Config>) -> State {
         State {
+            config,
             error: Arc::new(Mutex::new(None)),
             http_sessions: Arc::new(Mutex::new(HashMap::new())),
             http_requests: Arc::new(Mutex::new(HashMap::new())),
@@ -62,7 +65,7 @@ impl State {
         let mtx = self.http_sessions.lock().unwrap();
         let session = mtx.get(session_id).expect("invalid session reference"); // TODO
 
-        let (id, request) = HttpRequest::new(&session, method, url, options);
+        let (id, request) = HttpRequest::new(&self.config, &session, method, url, options);
         // println!("{:?}", request);
         let mut mtx = self.http_requests.lock().unwrap();
         mtx.insert(id.clone(), request);
@@ -82,19 +85,20 @@ impl State {
 pub struct Script {
     descr: String,
     code: String,
+    config: Arc<Config>,
 }
 
 impl Script {
-    pub fn load(path: &str) -> Result<Script> {
+    pub fn load(path: &str, config: Arc<Config>) -> Result<Script> {
         let mut file = File::open(path)?;
-        Script::load_from(&mut file)
+        Script::load_from(&mut file, config)
     }
 
-    pub fn load_from<R: Read>(mut src: R) -> Result<Script> {
+    pub fn load_from<R: Read>(mut src: R, config: Arc<Config>) -> Result<Script> {
         let mut code = String::new();
         src.read_to_string(&mut code)?;
 
-        let (mut lua, _) = Script::ctx();
+        let (mut lua, _) = Script::ctx(&config);
         lua.execute::<()>(&code)?;
 
         let descr = {
@@ -111,13 +115,14 @@ impl Script {
         Ok(Script {
             descr,
             code,
+            config: config,
         })
     }
 
-    fn ctx<'a>() -> (hlua::Lua<'a>, State) {
+    fn ctx<'a>(config: &Arc<Config>) -> (hlua::Lua<'a>, State) {
         let mut lua = hlua::Lua::new();
         lua.open_string();
-        let state = State::new();
+        let state = State::new(config.clone());
 
         runtime::base64_decode(&mut lua, state.clone());
         runtime::base64_encode(&mut lua, state.clone());
@@ -169,7 +174,7 @@ impl Script {
     */
 
     pub fn run_once(&self, user: &str, password: &str) -> Result<bool> {
-        let (mut lua, state) = Script::ctx();
+        let (mut lua, state) = Script::ctx(&self.config);
         lua.execute::<()>(&self.code)?;
 
         let verify: Result<_> = lua.get("verify").ok_or("verify undefined".into());
@@ -200,6 +205,10 @@ impl Script {
 mod tests {
     use super::*;
 
+    fn empty_config() -> Arc<Config> {
+        Arc::new(Config::default())
+    }
+
     #[test]
     fn verify_false() {
         let script = Script::load_from(r#"
@@ -208,7 +217,7 @@ mod tests {
         function verify(user, password)
             return false
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("foo", "bar").expect("test script failed");
         assert!(!result);
@@ -222,7 +231,7 @@ mod tests {
         function verify(user, password)
             return true
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("foo", "bar").expect("test script failed");
         assert!(result);
@@ -237,7 +246,7 @@ mod tests {
             sleep(1)
             return true
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("foo", "bar").expect("test script failed");
         assert!(result);
@@ -251,7 +260,7 @@ mod tests {
         function verify(user, password)
             return http_basic_auth("https://httpbin.org/basic-auth/foo/buzz", user, password)
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("foo", "buzz").expect("test script failed");
         assert!(result);
@@ -265,7 +274,7 @@ mod tests {
         function verify(user, password)
             return http_basic_auth("https://httpbin.org/basic-auth/foo/buzz", user, password)
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("invalid", "wrong").expect("test script failed");
         assert!(!result);
@@ -280,7 +289,7 @@ mod tests {
             x = hex({0x6F, 0x68, 0x61, 0x69, 0x0A, 0x00})
             return x == "6f6861690a00"
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);
@@ -295,7 +304,7 @@ mod tests {
             x = hex({})
             return x == ""
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);
@@ -319,7 +328,7 @@ mod tests {
             })
             return true
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);
@@ -345,7 +354,7 @@ mod tests {
 
             return true
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);
@@ -360,7 +369,7 @@ mod tests {
             json_decode("{\"almost_one\":0.9999,\"data\":{\"password\":\"fizz\",\"user\":\"bar\"},\"hello\":\"world\",\"list\":[1,3,3,7]}")
             return true
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);
@@ -375,7 +384,7 @@ mod tests {
             json_decode("{\"almost_one\":0.9999,\"data\":{\"password\":\"fizz\",\"user\":\"bar\"}}}}}}}}}")
             return true
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("x", "x");
         assert!(result.is_err());
@@ -391,7 +400,7 @@ mod tests {
             -- print('md5: ' .. x)
             return x == "0c7a250281315ab863549f66cd8a3a53"
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);
@@ -407,7 +416,7 @@ mod tests {
             -- print('sha1: ' .. x)
             return x == "46b4ec586117154dacd49d664e5d63fdc88efb51"
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);
@@ -423,7 +432,7 @@ mod tests {
             -- print('sha2_256: ' .. x)
             return x == "f9320baf0249169e73850cd6156ded0106e2bb6ad8cab01b7bbbebe6d1065317"
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);
@@ -439,7 +448,7 @@ mod tests {
             -- print('sha2_512: ' .. x)
             return x == "114682914c5d017dfe59fdc804118b56a3a652a0b8870759cf9e792ed7426b08197076bf7d01640b1b0684df79e4b67e37485669e8ce98dbab60445f0db94fce"
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);
@@ -455,7 +464,7 @@ mod tests {
             -- print('sha3_256: ' .. x)
             return x == "a7dc3fbbd45078239f0cb321e6902375d22b505f2c48722eb7009e7da2574893"
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);
@@ -471,7 +480,7 @@ mod tests {
             -- print('sha3_512: ' .. x)
             return x == "2da91b8227d106199fd06c5d8a6752796cf3c84dde5a427bd2aca384f0cffc19997e2584ed15c55542c2cb8918b987e2bcd9e77a9f3fdbb4dbea8a3d0136da2f"
         end
-        "#.as_bytes()).unwrap();
+        "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);

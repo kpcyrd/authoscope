@@ -10,6 +10,7 @@ extern crate getch;
 extern crate serde_json;
 extern crate hyper;
 extern crate kuchiki;
+extern crate toml;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;
@@ -30,6 +31,7 @@ extern crate mysql;
 extern crate ldap3;
 
 pub mod args;
+pub mod config;
 pub mod ctx;
 pub mod fsck;
 pub mod html;
@@ -50,6 +52,7 @@ pub mod errors {
     use reqwest;
     use hyper;
     use base64;
+    use toml;
 
     error_chain! {
         foreign_links {
@@ -61,6 +64,7 @@ pub mod errors {
             Utf8(std::str::Utf8Error);
             BufWrite(std::io::IntoInnerError<std::io::BufWriter<std::io::Stdout>>);
             Base64Decode(base64::DecodeError);
+            Toml(toml::de::Error);
         }
     }
 }
