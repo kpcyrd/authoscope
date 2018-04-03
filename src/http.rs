@@ -100,7 +100,8 @@ impl HttpRequest {
     }
 
     pub fn send(&self, state: &State) -> Result<LuaMap> {
-        // println!("sending! {:?}", self);
+        debug!("http send: {:?}", self);
+
         let client = reqwest::Client::builder()
             .redirect(reqwest::RedirectPolicy::none()) // TODO: this should be configurable
             .build().unwrap();
@@ -136,9 +137,9 @@ impl HttpRequest {
             None => (),
         };
 
-        // println!("req: {:?}", req);
+        debug!("http req: {:?}", req);
         let mut res = req.send()?;
-        // println!("res: {:?}", res);
+        debug!("http res: {:?}", res);
 
         let mut resp = LuaMap::new();
         let status = res.status();

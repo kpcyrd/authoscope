@@ -13,6 +13,7 @@ extern crate kuchiki;
 extern crate toml;
 extern crate nix;
 extern crate libc;
+#[macro_use] extern crate log;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate error_chain;
 #[macro_use] extern crate structopt;

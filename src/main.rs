@@ -1,9 +1,11 @@
 #![warn(unused_extern_crates)]
 extern crate badtouch;
+extern crate env_logger;
 extern crate colored;
 extern crate humantime;
 extern crate atty;
 extern crate error_chain;
+#[macro_use] extern crate log;
 
 use badtouch::args;
 use badtouch::fsck;
@@ -47,28 +49,28 @@ impl Report {
     }
 }
 
-macro_rules! infof {
+macro_rules! tinfof {
     ($arg1:tt, $fmt:expr, $($arg:tt)*) => (
         $arg1.bold().to_string() + " " + &(format!($fmt, $($arg)*).dimmed().to_string())
     );
 }
 
-macro_rules! info {
+macro_rules! tinfo {
     ($arg1:tt, $fmt:expr, $($arg:tt)*) => (
-        println!("{}", infof!($arg1, $fmt, $($arg)*));
+        println!("{}", tinfof!($arg1, $fmt, $($arg)*));
     );
 }
 
 fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict, config: &Arc<Config>) -> Result<usize> {
     let users = utils::load_list(&args.users).chain_err(|| "failed to load users")?;
-    info!("[+]", "loaded {} users", users.len());
+    tinfo!("[+]", "loaded {} users", users.len());
     let passwords = utils::load_list(&args.passwords).chain_err(|| "failed to load passwords")?;
-    info!("[+]", "loaded {} passwords", passwords.len());
+    tinfo!("[+]", "loaded {} passwords", passwords.len());
     let scripts = utils::load_scripts(args.scripts, &config).chain_err(|| "failed to load scripts")?;
-    info!("[+]", "loaded {} scripts", scripts.len());
+    tinfo!("[+]", "loaded {} scripts", scripts.len());
 
     let attempts = users.len() * passwords.len() * scripts.len();
-    info!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, pool.max_count());
+    tinfo!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, pool.max_count());
 
     for user in &users {
         for password in &passwords {
@@ -84,12 +86,12 @@ fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict, config: &Arc<
 
 fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds, config: &Arc<Config>) -> Result<usize> {
     let creds = utils::load_creds(&args.creds)?;
-    info!("[+]", "loaded {} credentials", creds.len());
+    tinfo!("[+]", "loaded {} credentials", creds.len());
     let scripts = utils::load_scripts(args.scripts, &config).chain_err(|| "failed to load scripts")?;
-    info!("[+]", "loaded {} scripts", scripts.len());
+    tinfo!("[+]", "loaded {} scripts", scripts.len());
 
     let attempts = creds.len() * scripts.len();
-    info!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, pool.max_count());
+    tinfo!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, pool.max_count());
 
     for cred in creds {
         // TODO: optimization if we only have once script
@@ -103,18 +105,22 @@ fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds, config
 }
 
 fn set_nofile(config: &Config) -> Result<()> {
-    let (_soft_limit, hard_limit) = getrlimit(Resource::RLIMIT_NOFILE)?;
+    let (soft_limit, hard_limit) = getrlimit(Resource::RLIMIT_NOFILE)?;
+    info!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
 
     let hard_limit = config.runtime.rlimit_nofile.or(hard_limit);
+    info!("setting soft_limit to {:?}", hard_limit);
     setrlimit(Resource::RLIMIT_NOFILE, hard_limit, hard_limit)?;
 
-    // let rlim = getrlimit(Resource::RLIMIT_NOFILE)?;
-    // println!("{:?}", rlim);
+    let (soft_limit, hard_limit) = getrlimit(Resource::RLIMIT_NOFILE)?;
+    info!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
 
     Ok(())
 }
 
 fn run() -> Result<()> {
+    env_logger::init();
+
     let args = args::parse();
 
     if atty::isnt(atty::Stream::Stdout) {
@@ -214,7 +220,7 @@ fn run() -> Result<()> {
 
     let elapsed = start.elapsed();
     let average = elapsed / attempts as u32;
-    pb.finish_replace(infof!("[+]", "found {} valid credentials with {} attempts and {} retries after {} and on average {} per attempt. {} attempts expired.\n",
+    pb.finish_replace(tinfof!("[+]", "found {} valid credentials with {} attempts and {} retries after {} and on average {} per attempt. {} attempts expired.\n",
             valid, attempts, retries,
             humantime::format_duration(elapsed),
             humantime::format_duration(average),
