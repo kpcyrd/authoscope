@@ -4,6 +4,7 @@ use std::env;
 use std::fs::File;
 use std::path::Path;
 use std::io::prelude::*;
+use libc::rlim_t;
 use toml;
 
 
@@ -17,6 +18,8 @@ pub struct Config {
 pub struct RuntimeConfig {
     #[serde(default)]
     pub user_agent: Option<String>,
+    #[serde(default)]
+    pub rlimit_nofile: Option<rlim_t>,
 }
 
 impl Config {

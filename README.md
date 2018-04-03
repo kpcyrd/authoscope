@@ -341,6 +341,15 @@ You can place a config file at `~/.config/badtouch.toml` to set some defaults.
 user_agent = "w3m/0.5.3+git20180125"
 ```
 
+### RLIMIT_NOFILE
+
+```toml
+[runtime]
+# requires CAP_SYS_RESOURCE
+# sudo setcap 'CAP_SYS_RESOURCE=+ep' /usr/bin/badtouch
+rlimit_nofile = 64000
+```
+
 ## Wrapping python scripts
 
 The badtouch runtime is still very bare bones, so you might have to shell

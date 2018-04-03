@@ -12,6 +12,7 @@ use badtouch::config::Config;
 use badtouch::pb::ProgressBar;
 use badtouch::scheduler::{Scheduler, Attempt, Msg};
 use badtouch::keyboard::{Keyboard, Key};
+use badtouch::ulimit::{Resource, getrlimit, setrlimit};
 
 use error_chain::ChainedError;
 use colored::*;
@@ -101,6 +102,18 @@ fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds, config
     Ok(attempts)
 }
 
+fn set_nofile(config: &Config) -> Result<()> {
+    let (_soft_limit, hard_limit) = getrlimit(Resource::RLIMIT_NOFILE)?;
+
+    let hard_limit = config.runtime.rlimit_nofile.or(hard_limit);
+    setrlimit(Resource::RLIMIT_NOFILE, hard_limit, hard_limit)?;
+
+    // let rlim = getrlimit(Resource::RLIMIT_NOFILE)?;
+    // println!("{:?}", rlim);
+
+    Ok(())
+}
+
 fn run() -> Result<()> {
     let args = args::parse();
 
@@ -109,9 +122,10 @@ fn run() -> Result<()> {
     }
 
     let config = Arc::new(Config::load()?);
+    set_nofile(&config)
+        .chain_err(|| "failed to set RLIMIT_NOFILE")?;
 
     let mut pool = Scheduler::new(args.workers);
-
     let mut report = Report::open(args.output)?;
 
     let attempts = match args.subcommand {
