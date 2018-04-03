@@ -3,6 +3,7 @@ use std::fs::{self, File};
 use std::sync::Arc;
 use std::io::{self, BufReader};
 use std::io::prelude::*;
+use config::Config;
 use errors::Result;
 
 use ctx;
@@ -46,7 +47,7 @@ pub fn load_creds(path: &str) -> Result<Vec<Arc<Vec<u8>>>> {
     Ok(creds)
 }
 
-pub fn load_scripts(paths: Vec<String>) -> Result<Vec<Arc<ctx::Script>>> {
+pub fn load_scripts(paths: Vec<String>, config: &Arc<Config>) -> Result<Vec<Arc<ctx::Script>>> {
     let mut scripts = Vec::new();
 
     for path in paths {
@@ -56,11 +57,11 @@ pub fn load_scripts(paths: Vec<String>) -> Result<Vec<Arc<ctx::Script>>> {
             for path in fs::read_dir(path)? {
                 let path = path?.path();
                 let path = path.to_str().unwrap();
-                let script = Arc::new(ctx::Script::load(path)?);
+                let script = Arc::new(ctx::Script::load(path, config.clone())?);
                 scripts.push(script);
             }
         } else {
-            let script = Arc::new(ctx::Script::load(&path)?);
+            let script = Arc::new(ctx::Script::load(&path, config.clone())?);
             scripts.push(script);
         }
     }

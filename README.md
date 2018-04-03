@@ -57,6 +57,7 @@ magically provided by the badtouch runtime.
 - [sha3_512](#sha3_512)
 - [sleep](#sleep)
 - [Examples](/scripts)
+- [Configuration](#configuration)
 - [Wrapping python scripts](#wrapping-python-scripts)
 
 ### base64_decode
@@ -327,6 +328,17 @@ Pauses the thread for the specified number of seconds. This is mostly used to
 debug concurrency.
 ```lua
 sleep(3)
+```
+
+## Configuration
+
+You can place a config file at `~/.config/badtouch.toml` to set some defaults.
+
+### Global user agent
+
+```toml
+[runtime]
+user_agent = "w3m/0.5.3+git20180125"
 ```
 
 ## Wrapping python scripts

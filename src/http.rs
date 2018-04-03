@@ -10,7 +10,9 @@ use serde_json;
 use json::LuaJsonValue;
 use std::collections::HashMap;
 use std::ops::Deref;
+use std::sync::Arc;
 use rand::{Rng, thread_rng};
+use config::Config;
 use ctx::State;
 
 
@@ -64,9 +66,11 @@ pub struct HttpRequest {
 }
 
 impl HttpRequest {
-    pub fn new(session: &HttpSession, method: String, url: String, options: RequestOptions) -> (String, HttpRequest) {
+    pub fn new(config: &Arc<Config>, session: &HttpSession, method: String, url: String, options: RequestOptions) -> (String, HttpRequest) {
         let id = thread_rng().gen_ascii_chars().take(16).collect();
         let cookies = session.cookies.clone();
+
+        let user_agent = options.user_agent.or(config.runtime.user_agent.clone());
 
         let mut request = HttpRequest {
             session: session.id.clone(),
@@ -76,7 +80,7 @@ impl HttpRequest {
             query: options.query,
             headers: options.headers,
             basic_auth: options.basic_auth,
-            user_agent: options.user_agent,
+            user_agent,
             body: None,
         };
 
