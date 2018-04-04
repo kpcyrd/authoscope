@@ -267,7 +267,7 @@ mysql_connect("127.0.0.1", 3306, user, password)
 ```
 
 ### print
-Prints the value of a variable. Please not that this bypasses the regular
+Prints the value of a variable. Please note that this bypasses the regular
 writer and may interfer with the progress bar. Only use this for debugging.
 ```lua
 print({
