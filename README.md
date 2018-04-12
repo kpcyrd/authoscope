@@ -161,7 +161,7 @@ set. The following options are available:
 
 - `query` - a map of query parameters that should be set on the url
 - `headers` - a map of headers that should be set
-- `basic_auth` - (unimplemented) configure the basic auth header with `{"user, "password"}`
+- `basic_auth` - configure the basic auth header with `{"user, "password"}`
 - `user_agent` - overwrite the default user agent with a string
 - `json` - the request body that should be json encoded
 - `form` - the request body that should be form encoded

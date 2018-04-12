@@ -199,7 +199,7 @@ set. The following options are available:
 .nf
 - \fBquery\fR - a map of query parameters that should be set on the url
 - \fBheaders\fR - a map of headers that should be set
-- \fBbasic_auth\fR - (unimplemented) configure the basic auth header with \fB{"user, "password"}\fR
+- \fBbasic_auth\fR - configure the basic auth header with \fB{"user, "password"}\fR
 - \fBuser_agent\fR - overwrite the default user agent with a string
 - \fBjson\fR - the request body that should be json encoded
 - \fBform\fR - the request body that should be form encoded
@@ -336,7 +336,7 @@ credentials. Returns \fBtrue\fP on success.
 
 .SS print
 .LP
-Prints the value of a variable. Please not that this bypasses the regular
+Prints the value of a variable. Please note that this bypasses the regular
 writer and may interfer with the progress bar. Only use this for debugging.
 .RS
 .nf

@@ -1,6 +1,5 @@
 use hlua;
 use errors::{Result, Error};
-use structs::LuaMap;
 use runtime;
 
 use std::fs::File;
@@ -18,7 +17,6 @@ pub struct State {
     config: Arc<Config>,
     error: Arc<Mutex<Option<Error>>>,
     http_sessions: Arc<Mutex<HashMap<String, HttpSession>>>,
-    http_requests: Arc<Mutex<HashMap<String, HttpRequest>>>,
 }
 
 impl State {
@@ -27,7 +25,6 @@ impl State {
             config,
             error: Arc::new(Mutex::new(None)),
             http_sessions: Arc::new(Mutex::new(HashMap::new())),
-            http_requests: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -60,23 +57,11 @@ impl State {
         id
     }
 
-    // TODO: this should return a hashmap
-    pub fn http_request(&self, session_id: &str, method: String, url: String, options: RequestOptions) -> String {
+    pub fn http_request(&self, session_id: &str, method: String, url: String, options: RequestOptions) -> HttpRequest {
         let mtx = self.http_sessions.lock().unwrap();
         let session = mtx.get(session_id).expect("invalid session reference"); // TODO
 
-        let (id, request) = HttpRequest::new(&self.config, &session, method, url, options);
-        // println!("{:?}", request);
-        let mut mtx = self.http_requests.lock().unwrap();
-        mtx.insert(id.clone(), request);
-
-        id
-    }
-
-    pub fn http_send(&self, request: String) -> Result<LuaMap> {
-        let mut mtx = self.http_requests.lock().unwrap();
-        let req = mtx.get_mut(&request).expect("invalid request reference"); // TODO
-        req.send(&self)
+        HttpRequest::new(&self.config, &session, method, url, options)
     }
 }
 

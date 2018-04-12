@@ -24,6 +24,7 @@ use std::time::Duration;
 use std::process::Command;
 use std::collections::HashMap;
 use ctx::State;
+use http::HttpRequest;
 use http::RequestOptions;
 use html;
 
@@ -203,7 +204,7 @@ pub fn http_basic_auth(lua: &mut hlua::Lua, state: State) {
                              .chain_err(|| "http request failed") {
             Ok(response) => response,
             Err(err) => return Err(state.set_error(err)),
-         };
+        };
 
         // println!("{:?}", response);
         // println!("{:?}", response.headers().get_raw("www-authenticate"));
@@ -223,21 +224,27 @@ pub fn http_mksession(lua: &mut hlua::Lua, state: State) {
 }
 
 pub fn http_request(lua: &mut hlua::Lua, state: State) {
-    lua.set("http_request", hlua::function4(move |session: String, method: String, url: String, options: AnyLuaValue| -> Result<String> {
+    lua.set("http_request", hlua::function4(move |session: String, method: String, url: String, options: AnyLuaValue| -> Result<AnyLuaValue> {
         let options = match RequestOptions::try_from(options)
                                 .chain_err(|| "invalid request options") {
             Ok(options) => options,
             Err(err) => return Err(state.set_error(err)),
         };
 
-        let id = state.http_request(&session, method, url, options);
-        Ok(id)
+        let req = state.http_request(&session, method, url, options);
+        Ok(req.into())
     }))
 }
 
 pub fn http_send(lua: &mut hlua::Lua, state: State) {
-    lua.set("http_send", hlua::function1(move |request: String| -> Result<HashMap<AnyHashableLuaValue, AnyLuaValue>> {
-        state.http_send(request)
+    lua.set("http_send", hlua::function1(move |request: AnyLuaValue| -> Result<HashMap<AnyHashableLuaValue, AnyLuaValue>> {
+        let req = match HttpRequest::try_from(request)
+                                .chain_err(|| "invalid http request object") {
+            Ok(req) => req,
+            Err(err) => return Err(state.set_error(err)),
+        };
+
+        req.send(&state)
             .map(|resp| resp.into())
             .map_err(|err| state.set_error(err))
     }))

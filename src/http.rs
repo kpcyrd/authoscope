@@ -51,7 +51,7 @@ impl RequestOptions {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct HttpRequest {
     // reference to the HttpSession
     session: String,
@@ -66,8 +66,7 @@ pub struct HttpRequest {
 }
 
 impl HttpRequest {
-    pub fn new(config: &Arc<Config>, session: &HttpSession, method: String, url: String, options: RequestOptions) -> (String, HttpRequest) {
-        let id = thread_rng().gen_ascii_chars().take(16).collect();
+    pub fn new(config: &Arc<Config>, session: &HttpSession, method: String, url: String, options: RequestOptions) -> HttpRequest {
         let cookies = session.cookies.clone();
 
         let user_agent = options.user_agent.or(config.runtime.user_agent.clone());
@@ -96,7 +95,7 @@ impl HttpRequest {
             request.body = Some(Body::Raw(text));
         }
 
-        (id, request)
+        request
     }
 
     pub fn send(&self, state: &State) -> Result<LuaMap> {
@@ -116,6 +115,11 @@ impl HttpRequest {
 
         if let Some(ref agent) = self.user_agent {
             req.header(UserAgent::new(agent.clone()));
+        }
+
+        if let Some(ref auth) = self.basic_auth {
+            let &(ref user, ref password) = auth;
+            req.basic_auth(user.clone(), Some(password.clone()));
         }
 
         if let Some(ref headers) = self.headers {
@@ -186,9 +190,24 @@ impl HttpRequest {
     }
 }
 
+impl HttpRequest {
+    pub fn try_from(x: AnyLuaValue) -> Result<HttpRequest> {
+        let x = LuaJsonValue::from(x);
+        let x = serde_json::from_value(x.into())?;
+        Ok(x)
+    }
+}
+
+impl Into<AnyLuaValue> for HttpRequest {
+    fn into(self) -> AnyLuaValue {
+        let v = serde_json::to_value(&self).unwrap();
+        LuaJsonValue::from(v).into()
+    }
+}
+
 // see https://github.com/seanmonstar/reqwest/issues/14 for proper cookie jars
 // maybe change this to reqwest::header::Cookie
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct CookieJar(HashMap<String, String>);
 
 impl CookieJar {
@@ -207,7 +226,7 @@ impl Deref for CookieJar {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum Body {
     Raw(String), // TODO: maybe Vec<u8>
     Form(serde_json::Value),

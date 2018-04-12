@@ -5,6 +5,7 @@ function verify(user, password)
 
     -- set cookies
     req = http_request(session, 'GET', 'https://httpbin.org/anything', {
+        basic_auth={"user", "password"},
         user_agent="some-agent/0.1",
         headers={
             foo="bar"
