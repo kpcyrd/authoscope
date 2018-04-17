@@ -34,6 +34,7 @@ extern crate mysql;
 extern crate ldap3;
 
 pub mod args;
+pub mod batch;
 pub mod config;
 pub mod ctx;
 pub mod fsck;

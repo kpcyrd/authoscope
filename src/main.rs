@@ -8,6 +8,7 @@ extern crate error_chain;
 #[macro_use] extern crate log;
 
 use badtouch::args;
+use badtouch::batch;
 use badtouch::fsck;
 use badtouch::utils;
 use badtouch::config::Config;
@@ -138,6 +139,7 @@ fn run() -> Result<()> {
         args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict, &config)?,
         args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds, &config)?,
         args::SubCommand::Fsck(fsck) => return fsck::run_fsck(fsck),
+        args::SubCommand::Batch(batch) => return batch::run_batch(batch),
     };
 
     let tx = pool.tx();

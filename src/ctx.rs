@@ -151,12 +151,10 @@ impl Script {
         self.descr.as_str()
     }
 
-    /*
     #[inline]
     pub fn code(&self) -> &str {
         self.code.as_str()
     }
-    */
 
     pub fn run_once(&self, user: &str, password: &str) -> Result<bool> {
         let (mut lua, state) = Script::ctx(&self.config);

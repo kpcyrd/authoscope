@@ -12,6 +12,11 @@ pub enum Creds {
 }
 
 impl Creds {
+    #[inline]
+    pub fn new(user: String, password: String) -> Creds {
+        Creds::Tuple((Arc::new(user), Arc::new(password)))
+    }
+
     // BEWARE: these functions are somewhat hot
 
     #[inline]
@@ -78,8 +83,14 @@ impl Attempt {
     }
 
     #[inline]
-    pub fn run(self, tx: mpsc::Sender<Msg>) {
-        let result = self.script.run_once(self.user(), self.password());
+    pub fn run(&self) -> Result<bool> {
+        self.script.run_once(self.user(), self.password())
+    }
+
+    // TODO: deprecate?
+    #[inline]
+    pub fn run_send(self, tx: mpsc::Sender<Msg>) {
+        let result = self.run();
         tx.send(Msg::Attempt(self, result)).expect("failed to send result");
     }
 }
@@ -177,7 +188,7 @@ impl Scheduler {
                     paused = cvar.wait(paused).unwrap();
                 }
             }
-            attempt.run(tx);
+            attempt.run_send(tx);
         });
     }
 

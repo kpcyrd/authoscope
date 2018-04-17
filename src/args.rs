@@ -29,6 +29,11 @@ pub enum SubCommand {
                 name="fsck",
                 about="Verify and fix encoding of a list")]
     Fsck(Fsck),
+    #[structopt(author = "",
+                name="batch",
+                about="Execute jobs from stdin",
+                after_help=r#"DANGER: This executes code from stdin. Do NOT use on untrusted input."#)]
+    Batch(Batch),
 }
 
 #[derive(StructOpt, Debug)]
@@ -62,6 +67,10 @@ pub struct Fsck {
     pub require_colon: bool,
     #[structopt(help="Files to read")]
     pub paths: Vec<String>,
+}
+
+#[derive(StructOpt, Debug)]
+pub struct Batch {
 }
 
 pub fn parse() -> Args {
