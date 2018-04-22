@@ -8,13 +8,21 @@ pub struct Keyboard {
     getch: Getch,
 }
 
-impl Keyboard {
-    pub fn new() -> Keyboard {
+impl Default for Keyboard {
+    #[inline]
+    fn default() -> Keyboard {
         let getch = Getch::new();
 
         Keyboard {
             getch,
         }
+    }
+}
+
+impl Keyboard {
+    #[inline]
+    pub fn new() -> Keyboard {
+        Keyboard::default()
     }
 
     pub fn get(&self) -> Key {

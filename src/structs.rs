@@ -4,28 +4,36 @@ use std::collections;
 use std::collections::HashMap;
 
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct LuaMap(HashMap<AnyHashableLuaValue, AnyLuaValue>);
 
 impl LuaMap {
+    #[inline]
     pub fn new() -> LuaMap {
-        LuaMap(HashMap::new())
+        LuaMap::default()
     }
 
+    #[inline]
     pub fn insert<K: Into<String>, V: Into<AnyLuaValue>>(&mut self, k: K, v: V) {
         self.0.insert(AnyHashableLuaValue::LuaString(k.into()), v.into());
     }
 
+    #[inline]
     pub fn insert_str<K: Into<String>, V: Into<String>>(&mut self, k: K, v: V) {
         self.0.insert(AnyHashableLuaValue::LuaString(k.into()), AnyLuaValue::LuaString(v.into()));
     }
 
+    #[inline]
     pub fn insert_num<K: Into<String>>(&mut self, k: K, v: f64) {
         self.0.insert(AnyHashableLuaValue::LuaString(k.into()), AnyLuaValue::LuaNumber(v));
     }
+}
 
-    // TODO: use trait instead
-    pub fn into_iter(self) -> collections::hash_map::IntoIter<AnyHashableLuaValue, AnyLuaValue> {
+impl IntoIterator for LuaMap {
+    type Item = (AnyHashableLuaValue, AnyLuaValue);
+    type IntoIter = collections::hash_map::IntoIter<AnyHashableLuaValue, AnyLuaValue>;
+
+    fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
 }
@@ -51,9 +59,9 @@ impl From<Vec<(AnyLuaValue, AnyLuaValue)>> for LuaMap {
         let mut map = LuaMap::new();
 
         for (k, v) in x {
-            match k {
-                AnyLuaValue::LuaString(k) => map.insert(k, v),
-                _ => (), // TODO: handle unknown types
+            // TODO: handle unknown types
+            if let AnyLuaValue::LuaString(k) = k {
+                map.insert(k, v);
             }
         }
 

@@ -24,14 +24,14 @@ impl Into<AnyLuaValue> for Element {
     }
 }
 
-fn transform_element(entry: kuchiki::NodeDataRef<kuchiki::ElementData>) -> Element {
+fn transform_element(entry: &kuchiki::NodeDataRef<kuchiki::ElementData>) -> Element {
     let text = entry.text_contents();
     let as_node = entry.as_node();
 
     let mut attrs: HashMap<String, String> = HashMap::new();
 
     if let Some(element) = as_node.as_element() {
-        for (k, v) in element.attributes.borrow().map.iter() {
+        for (k, v) in &element.attributes.borrow().map {
             attrs.insert(k.local.to_string(), v.value.clone());
         }
     }
@@ -45,8 +45,8 @@ fn transform_element(entry: kuchiki::NodeDataRef<kuchiki::ElementData>) -> Eleme
 pub fn html_select(html: &str, selector: &str) -> Result<Element> {
     let doc = kuchiki::parse_html().one(html);
     match doc.select_first(selector) {
-        Ok(x) => Ok(transform_element(x)),
-        Err(_) => return Err("css selector failed".into()),
+        Ok(x) => Ok(transform_element(&x)),
+        Err(_) => Err("css selector failed".into()),
     }
 }
 
@@ -54,8 +54,8 @@ pub fn html_select_list(html: &str, selector: &str) -> Result<Vec<Element>> {
     let doc = kuchiki::parse_html().one(html);
 
     match doc.select(selector) {
-        Ok(x) => Ok(x.into_iter().map(transform_element).collect()),
-        Err(_) => return Err("css selector failed".into()),
+        Ok(x) => Ok(x.into_iter().map(|x| transform_element(&x)).collect()),
+        Err(_) => Err("css selector failed".into()),
     }
 }
 

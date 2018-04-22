@@ -78,15 +78,15 @@ impl Attempt {
     }
 
     #[inline]
-    pub fn run(self, tx: mpsc::Sender<Msg>) {
+    pub fn run(self, tx: &mpsc::Sender<Msg>) {
         let result = self.script.run_once(self.user(), self.password());
-        tx.send(Msg::Attempt(self, result)).expect("failed to send result");
+        tx.send(Msg::Attempt(Box::new(self), result)).expect("failed to send result");
     }
 }
 
 #[derive(Debug)]
 pub enum Msg {
-    Attempt(Attempt, Result<bool>),
+    Attempt(Box<Attempt>, Result<bool>),
     Key(keyboard::Key),
 }
 
@@ -177,7 +177,7 @@ impl Scheduler {
                     paused = cvar.wait(paused).unwrap();
                 }
             }
-            attempt.run(tx);
+            attempt.run(&tx);
         });
     }
 

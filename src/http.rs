@@ -26,7 +26,7 @@ impl HttpSession {
     pub fn new() -> (String, HttpSession) {
         let id: String = thread_rng().gen_ascii_chars().take(16).collect();
         (id.clone(), HttpSession {
-            id: id,
+            id,
             cookies: CookieJar::default(),
         })
     }
@@ -69,7 +69,7 @@ impl HttpRequest {
     pub fn new(config: &Arc<Config>, session: &HttpSession, method: String, url: String, options: RequestOptions) -> HttpRequest {
         let cookies = session.cookies.clone();
 
-        let user_agent = options.user_agent.or(config.runtime.user_agent.clone());
+        let user_agent = options.user_agent.or_else(|| config.runtime.user_agent.clone());
 
         let mut request = HttpRequest {
             session: session.id.clone(),
@@ -147,7 +147,7 @@ impl HttpRequest {
 
         let mut resp = LuaMap::new();
         let status = res.status();
-        resp.insert_num("status", status.as_u16() as f64);
+        resp.insert_num("status", f64::from(status.as_u16()));
 
         if let Some(cookies) = res.headers().get_raw("set-cookie") {
             HttpRequest::register_cookies_on_state(&self.session, state, cookies);
@@ -166,7 +166,7 @@ impl HttpRequest {
         Ok(resp)
     }
 
-    fn register_cookies_on_state(session: &String, state: &State, cookies: &reqwest::header::Raw) {
+    fn register_cookies_on_state(session: &str, state: &State, cookies: &reqwest::header::Raw) {
         let mut jar = Vec::new();
 
         for cookie in cookies {

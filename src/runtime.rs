@@ -44,7 +44,7 @@ fn byte_array(bytes: AnyLuaValue) -> Result<Vec<u8>> {
                 })
                 .collect::<Result<_>>()?)
         },
-        _ => return Err(format!("invalid type: {:?}", bytes).into()),
+        _ => Err(format!("invalid type: {:?}", bytes).into()),
     }
 }
 
@@ -314,7 +314,7 @@ pub fn ldap_search_bind(lua: &mut hlua::Lua, state: State) {
             Err(err) => return Err(state.set_error(err)),
         };
 
-        if !result.success().is_ok() {
+        if result.success().is_err() {
             return Err("login with search user failed".into());
         }
 
