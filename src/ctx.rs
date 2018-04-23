@@ -40,10 +40,10 @@ impl State {
         let mut mtx = self.error.lock().unwrap();
         let cp = err.to_string();
         *mtx = Some(err);
-        return cp.into();
+        cp.into()
     }
 
-    pub fn register_in_jar(&self, session: &String, cookies: Vec<(String, String)>) {
+    pub fn register_in_jar(&self, session: &str, cookies: Vec<(String, String)>) {
         let mut mtx = self.http_sessions.lock().unwrap();
         if let Some(session) = mtx.get_mut(session) {
             session.cookies.register_in_jar(cookies);
@@ -87,20 +87,20 @@ impl Script {
         lua.execute::<()>(&code)?;
 
         let descr = {
-            let descr: Result<_> = lua.get("descr").ok_or("descr undefined".into());
+            let descr: Result<_> = lua.get("descr").ok_or_else(|| "descr undefined".into());
             let descr: hlua::StringInLua<_> = descr?;
             (*descr).to_owned()
         };
 
         {
-            let verify: Result<_> = lua.get("verify").ok_or("verify undefined".into());
+            let verify: Result<_> = lua.get("verify").ok_or_else(|| "verify undefined".into());
             let _: hlua::LuaFunction<_> = verify?;
         };
 
         Ok(Script {
             descr,
             code,
-            config: config,
+            config,
         })
     }
 
@@ -162,7 +162,7 @@ impl Script {
         let (mut lua, state) = Script::ctx(&self.config);
         lua.execute::<()>(&self.code)?;
 
-        let verify: Result<_> = lua.get("verify").ok_or("verify undefined".into());
+        let verify: Result<_> = lua.get("verify").ok_or_else(|| "verify undefined".into());
         let mut verify: hlua::LuaFunction<_> = verify?;
 
         let result: hlua::AnyLuaValue = match verify.call_with_args((user, password)) {

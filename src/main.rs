@@ -1,4 +1,7 @@
 #![warn(unused_extern_crates)]
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
+
 extern crate badtouch;
 extern crate env_logger;
 extern crate colored;
@@ -40,12 +43,10 @@ impl Report {
     }
 
     pub fn write(&mut self, user: &str, password: &str, script: &str) -> Result<()> {
-        match *self {
-            Report::Some(ref mut f) => {
-                Ok(writeln!(f, "{}:{}:{}", script, user, password)?)
-            },
-            Report::None => Ok(()),
+        if let Report::Some(ref mut f) = *self {
+            writeln!(f, "{}:{}:{}", script, user, password)?;
         }
+        Ok(())
     }
 }
 
@@ -137,7 +138,7 @@ fn run() -> Result<()> {
     let attempts = match args.subcommand {
         args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict, &config)?,
         args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds, &config)?,
-        args::SubCommand::Fsck(fsck) => return fsck::run_fsck(fsck),
+        args::SubCommand::Fsck(fsck) => return fsck::run_fsck(&fsck),
     };
 
     let tx = pool.tx();
@@ -205,7 +206,7 @@ fn run() -> Result<()> {
                             // we have retries left
                             retries += 1;
                             attempt.ttl -= 1;
-                            pool.run(attempt);
+                            pool.run(*attempt);
                             pb.tick();
                         } else {
                             // giving up

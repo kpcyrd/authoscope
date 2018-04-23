@@ -13,7 +13,7 @@ pub fn load_list(path: &str) -> Result<Vec<Arc<String>>> {
     let f = File::open(path)?;
     let file = BufReader::new(&f);
     let lines: io::Result<_> = file.lines()
-            .map(|x| x.map(|x| Arc::new(x)))
+            .map(|x| x.map(Arc::new))
             .collect();
     Ok(lines?)
 }

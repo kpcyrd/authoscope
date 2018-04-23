@@ -43,11 +43,11 @@ impl Config {
         let mut buf = String::new();
         file.read_to_string(&mut buf)?;
 
-        Config::from_str(&buf)
+        Config::try_from_str(&buf)
     }
 
     #[inline]
-    pub fn from_str(buf: &str) -> Result<Config> {
+    pub fn try_from_str(buf: &str) -> Result<Config> {
         let config = toml::from_str(&buf)?;
         Ok(config)
     }
@@ -59,7 +59,7 @@ mod tests {
 
     #[test]
     fn verify_empty() {
-        let config = Config::from_str("").unwrap();
+        let config = Config::try_from_str("").unwrap();
         assert_eq!(config, Config::default());
     }
 }

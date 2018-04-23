@@ -31,7 +31,7 @@ fn validate_file(path: &str, args: &Fsck) -> Result<()> {
             Ok(line) => {
                 if !args.require_colon || buf.iter().any(|x| *x == b':') {
                     if !args.silent {
-                        out.write(line.as_bytes())?;
+                        out.write_all(line.as_bytes())?;
                     }
                 } else if !args.quiet {
                     eprintln!("Invalid(line {}): {:?}",
@@ -59,7 +59,7 @@ fn validate_file(path: &str, args: &Fsck) -> Result<()> {
     Ok(())
 }
 
-pub fn run_fsck(args: Fsck) -> Result<()> {
+pub fn run_fsck(args: &Fsck) -> Result<()> {
     for path in &args.paths {
         validate_file(path, &args)?;
     }

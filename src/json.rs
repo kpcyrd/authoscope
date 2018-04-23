@@ -20,8 +20,8 @@ pub fn encode(v: AnyLuaValue) -> Result<String> {
         .chain_err(|| "serialize failed")
 }
 
-pub fn lua_array_is_list(array: &Vec<(AnyLuaValue, AnyLuaValue)>) -> bool {
-    if array.len() > 0 {
+pub fn lua_array_is_list(array: &[(AnyLuaValue, AnyLuaValue)]) -> bool {
+    if !array.is_empty() {
         let first = &array[0];
         if let AnyLuaValue::LuaNumber(_) = first.0 {
             true
@@ -76,9 +76,10 @@ impl From<AnyLuaValue> for LuaJsonValue {
             ),
             AnyLuaValue::LuaNumber(v) => {
                 // this is needed or every number is detected as float
-                LuaJsonValue::Number(match v % 1f64 == 0f64 {
-                    true  => (v as u64).into(),
-                    false => Number::from_f64(v).expect("invalid LuaJson::Number"),
+                LuaJsonValue::Number(if v % 1f64 == 0f64 {
+                    (v as u64).into()
+                } else {
+                    Number::from_f64(v).expect("invalid LuaJson::Number")
                 })
             },
             AnyLuaValue::LuaArray(v) => {
@@ -90,7 +91,7 @@ impl From<AnyLuaValue> for LuaJsonValue {
                 } else {
                     LuaJsonValue::Object(v.into_iter()
                         .filter_map(|(k, v)| match k {
-                            AnyLuaValue::LuaString(k) => Some((k.into(), v.into())),
+                            AnyLuaValue::LuaString(k) => Some((k, v.into())),
                             _ => None,
                         })
                         .collect()
