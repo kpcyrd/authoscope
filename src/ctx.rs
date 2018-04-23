@@ -111,6 +111,8 @@ impl Script {
 
         runtime::base64_decode(&mut lua, state.clone());
         runtime::base64_encode(&mut lua, state.clone());
+        runtime::bcrypt(&mut lua, state.clone());
+        runtime::bcrypt_verify(&mut lua, state.clone());
         runtime::execve(&mut lua, state.clone());
         runtime::hex(&mut lua, state.clone());
         runtime::hmac_md5(&mut lua, state.clone());
@@ -468,6 +470,20 @@ mod tests {
         "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("x", "x").expect("test script failed");
+        assert!(result);
+    }
+
+    #[test]
+    fn verify_bcrypt_verify() {
+        let script = Script::load_from(r#"
+        descr = "bcrypt_verify"
+
+        function verify(user, password)
+            return bcrypt_verify(password, "$2a$12$ByUlHCHx3rxMsdQONpuFbulQqut6GQ/84I5EAUkCqTTI07JA7wUju")
+        end
+        "#.as_bytes(), empty_config()).unwrap();
+
+        let result = script.run_once("x", "hunter2").expect("test script failed");
         assert!(result);
     }
 }

@@ -12,6 +12,7 @@ use digest::{Input, BlockInput, FixedOutput};
 use digest::generic_array::ArrayLength;
 use hmac::{Hmac, Mac};
 use base64;
+use bcrypt;
 
 use reqwest;
 use ldap3;
@@ -73,6 +74,28 @@ pub fn base64_encode(lua: &mut hlua::Lua, state: State) {
         };
 
         Ok(base64::encode(&bytes))
+    }))
+}
+
+pub fn bcrypt(lua: &mut hlua::Lua, state: State) {
+    lua.set("bcrypt", hlua::function2(move |password: String, cost: u32| -> Result<String> {
+        let result = match bcrypt::hash(&password, cost) {
+            Ok(result) => result,
+            Err(err) => return Err(state.set_error(err.into())),
+        };
+
+        Ok(result)
+    }))
+}
+
+pub fn bcrypt_verify(lua: &mut hlua::Lua, state: State) {
+    lua.set("bcrypt_verify", hlua::function2(move |password: String, hashed: String| -> Result<bool> {
+        let result = match bcrypt::verify(&password, &hashed) {
+            Ok(result) => result,
+            Err(err) => return Err(state.set_error(err.into())),
+        };
+
+        Ok(result)
     }))
 }
 

@@ -28,6 +28,7 @@ extern crate sha3;
 extern crate digest;
 extern crate hmac;
 extern crate base64;
+extern crate bcrypt;
 
 #[cfg(not(windows))]
 extern crate termios;
@@ -61,6 +62,7 @@ pub mod errors {
     use base64;
     use toml;
     use nix;
+    use bcrypt;
 
     error_chain! {
         foreign_links {
@@ -74,6 +76,7 @@ pub mod errors {
             Base64Decode(base64::DecodeError);
             Toml(toml::de::Error);
             Nix(nix::Error);
+            Bcrypt(bcrypt::BcryptError);
         }
     }
 }

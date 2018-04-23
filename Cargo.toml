@@ -41,6 +41,7 @@ sha3 = "0.7"
 digest = "0.7"
 hmac = "0.6"
 base64 = "0.9"
+bcrypt = "0.2"
 
 reqwest = "0.8"
 hyper = "0.11.22"
