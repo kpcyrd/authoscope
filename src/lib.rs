@@ -36,10 +36,12 @@ extern crate termios;
 extern crate reqwest;
 extern crate mysql;
 extern crate ldap3;
+extern crate twox_hash;
 
 pub mod args;
 pub mod config;
 pub mod ctx;
+pub mod db;
 pub mod fsck;
 pub mod html;
 pub mod http;
@@ -63,6 +65,7 @@ pub mod errors {
     use toml;
     use nix;
     use bcrypt;
+    use mysql;
 
     error_chain! {
         foreign_links {
@@ -77,6 +80,7 @@ pub mod errors {
             Toml(toml::de::Error);
             Nix(nix::Error);
             Bcrypt(bcrypt::BcryptError);
+            Mysql(mysql::Error);
         }
     }
 }

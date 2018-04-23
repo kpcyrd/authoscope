@@ -6,10 +6,12 @@ use std::fs::File;
 use std::sync::{Arc, Mutex};
 use std::io::prelude::*;
 use std::collections::HashMap;
+use rand::{Rng, thread_rng};
 use http::HttpSession;
 use http::HttpRequest;
 use http::RequestOptions;
 use config::Config;
+use mysql;
 
 
 #[derive(Debug, Clone)]
@@ -17,6 +19,7 @@ pub struct State {
     config: Arc<Config>,
     error: Arc<Mutex<Option<Error>>>,
     http_sessions: Arc<Mutex<HashMap<String, HttpSession>>>,
+    mysql_sessions: Arc<Mutex<HashMap<String, Arc<Mutex<mysql::Conn>>>>>,
 }
 
 impl State {
@@ -25,6 +28,7 @@ impl State {
             config,
             error: Arc::new(Mutex::new(None)),
             http_sessions: Arc::new(Mutex::new(HashMap::new())),
+            mysql_sessions: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -62,6 +66,22 @@ impl State {
         let session = mtx.get(session_id).expect("invalid session reference"); // TODO
 
         HttpRequest::new(&self.config, &session, method, url, options)
+    }
+
+    pub fn mysql_register(&self, sock: mysql::Conn) -> String {
+        let mut mtx = self.mysql_sessions.lock().unwrap();
+        let id: String = thread_rng().gen_ascii_chars().take(16).collect();
+
+        let sock = Arc::new(Mutex::new(sock));
+        mtx.insert(id.clone(), sock);
+
+        id
+    }
+
+    pub fn mysql_session(&self, id: &str) -> Arc<Mutex<mysql::Conn>> {
+        let mtx = self.mysql_sessions.lock().unwrap();
+        let sock = mtx.get(id).expect("invalid session reference"); // TODO
+        sock.clone()
     }
 }
 
@@ -135,6 +155,7 @@ impl Script {
         runtime::ldap_search_bind(&mut lua, state.clone());
         runtime::md5(&mut lua, state.clone());
         runtime::mysql_connect(&mut lua, state.clone());
+        runtime::mysql_query(&mut lua, state.clone());
         runtime::print(&mut lua, state.clone());
         runtime::rand(&mut lua, state.clone());
         runtime::randombytes(&mut lua, state.clone());

@@ -14,6 +14,11 @@ impl LuaMap {
     }
 
     #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    #[inline]
     pub fn insert<K: Into<String>, V: Into<AnyLuaValue>>(&mut self, k: K, v: V) {
         self.0.insert(AnyHashableLuaValue::LuaString(k.into()), v.into());
     }

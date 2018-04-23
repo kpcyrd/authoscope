@@ -1,8 +1,10 @@
 use hlua;
 use hlua::{AnyLuaValue, AnyHashableLuaValue, AnyLuaString};
 use hlua::AnyLuaValue::LuaString;
+use structs::LuaMap;
 use errors::{Result, ResultExt};
 use json;
+use db;
 
 use md5;
 use sha1;
@@ -382,8 +384,8 @@ pub fn md5(lua: &mut hlua::Lua, state: State) {
     }))
 }
 
-pub fn mysql_connect(lua: &mut hlua::Lua, _state: State) {
-    lua.set("mysql_connect", hlua::function4(move |host: String, port: u16, user: String, password: String| -> Result<bool> {
+pub fn mysql_connect(lua: &mut hlua::Lua, state: State) {
+    lua.set("mysql_connect", hlua::function4(move |host: String, port: u16, user: String, password: String| -> Result<String> {
         let mut builder = mysql::OptsBuilder::new();
         builder.ip_or_hostname(Some(host))
                .tcp_port(port)
@@ -391,14 +393,40 @@ pub fn mysql_connect(lua: &mut hlua::Lua, _state: State) {
                .user(Some(user))
                .pass(Some(password));
 
-        match mysql::Conn::new(builder) {
-            Ok(_) => Ok(true),
-            Err(_err) => {
-                // TODO: err
-                // println!("{:?}", _err);
-                Ok(false)
-            },
+        let sock = match mysql::Conn::new(builder) {
+            Ok(sock) => sock,
+            // TODO: setting an error here means we can't bruteforce mysql anymore
+            Err(err) => return Err(state.set_error(err.into())),
+        };
+
+        let id = state.mysql_register(sock);
+        Ok(id)
+    }))
+}
+
+pub fn mysql_query(lua: &mut hlua::Lua, state: State) {
+    lua.set("mysql_query", hlua::function3(move |session: String, query: String, params: HashMap<AnyHashableLuaValue, AnyLuaValue>| -> Result<Vec<AnyLuaValue>> {
+        let params = LuaMap::from(params);
+
+        let sock = state.mysql_session(&session);
+        let mut sock = sock.lock().unwrap();
+        let rows = sock.prep_exec(query, params)?; // TODO: handle error
+
+        let mut result = Vec::new();
+        let column_names = rows.column_indexes();
+
+        for row in rows {
+            let row = row?; // TODO: handle error
+
+            let mut map = LuaMap::new();
+            for (k, i) in &column_names {
+                map.insert(k.as_str(), db::mysql::mysql_value_to_lua(row[*i].clone()));
+            }
+
+            result.push(map.into());
         }
+
+        Ok(result)
     }))
 }
 
