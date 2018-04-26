@@ -353,13 +353,13 @@ rlimit_nofile = 64000
 ## Wrapping python scripts
 
 The badtouch runtime is still very bare bones, so you might have to shell
-out to your regular python script occasionally. Your wrapper my look like this:
+out to your regular python script occasionally. Your wrapper may look like this:
 
 ```lua
 descr = "example.com"
 
 function verify(user, password)
-    ret = execve("./docs/test.sh", {user, password})
+    ret = execve("./docs/test.py", {user, password})
     if last_err() then return end
 
     if ret == 2 then
@@ -378,14 +378,14 @@ import sys
 try:
     if sys.argv[1] == "foo" and sys.argv[2] == "bar":
         # correct credentials
-        exit(0)
+        sys.exit(0)
     else:
         # incorrect credentials
-        exit(1)
+        sys.exit(1)
 except:
     # signal an exception
     # this requeues the attempt instead of discarding it
-    exit(2)
+    sys.exit(2)
 ```
 
 # License
