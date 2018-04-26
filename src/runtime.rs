@@ -86,6 +86,12 @@ pub fn bcrypt_verify(lua: &mut hlua::Lua, state: State) {
     }))
 }
 
+pub fn clear_err(lua: &mut hlua::Lua, state: State) {
+    lua.set("clear_err", hlua::function0(move || {
+        state.clear_error()
+    }))
+}
+
 pub fn execve(lua: &mut hlua::Lua, state: State) {
     lua.set("execve", hlua::function2(move |prog: String, args: Vec<AnyLuaValue>| -> Result<i32> {
         let args: Vec<_> = args.into_iter()

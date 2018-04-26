@@ -34,10 +34,12 @@ impl State {
 
     pub fn last_error(&self) -> Option<String> {
         let lock = self.error.lock().unwrap();
-        match *lock {
-            Some(ref err) => Some(err.to_string()),
-            None => None,
-        }
+        lock.as_ref().map(|err| err.to_string())
+    }
+
+    pub fn clear_error(&self) {
+        let mut lock = self.error.lock().unwrap();
+        *lock = None;
     }
 
     pub fn set_error(&self, err: Error) -> Error {
@@ -133,6 +135,7 @@ impl Script {
         runtime::base64_encode(&mut lua, state.clone());
         runtime::bcrypt(&mut lua, state.clone());
         runtime::bcrypt_verify(&mut lua, state.clone());
+        runtime::clear_err(&mut lua, state.clone());
         runtime::execve(&mut lua, state.clone());
         runtime::hex(&mut lua, state.clone());
         runtime::hmac_md5(&mut lua, state.clone());
@@ -242,6 +245,37 @@ mod tests {
         "#.as_bytes(), empty_config()).unwrap();
 
         let result = script.run_once("foo", "bar").expect("test script failed");
+        assert!(result);
+    }
+
+    #[test]
+    fn verify_record_error() {
+        let script = Script::load_from(r#"
+        descr = "json"
+
+        function verify(user, password)
+            json_decode("{{{{{{{{{{{{{{{{{{")
+            return true
+        end
+        "#.as_bytes(), empty_config()).unwrap();
+
+        let result = script.run_once("x", "x");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn verify_clear_recorded_error() {
+        let script = Script::load_from(r#"
+        descr = "json"
+
+        function verify(user, password)
+            json_decode("{{{{{{{{{{{{{{{{{{")
+            clear_err()
+            return true
+        end
+        "#.as_bytes(), empty_config()).unwrap();
+
+        let result = script.run_once("x", "x").expect("test script failed");
         assert!(result);
     }
 
