@@ -51,53 +51,38 @@ fn byte_array(bytes: AnyLuaValue) -> Result<Vec<u8>> {
     }
 }
 
-pub fn lua_bytes(bytes: &[u8]) -> AnyLuaValue {
+fn lua_bytes(bytes: &[u8]) -> AnyLuaValue {
     let bytes = AnyLuaString(bytes.to_vec());
     AnyLuaValue::LuaAnyString(bytes)
 }
 
-
 pub fn base64_decode(lua: &mut hlua::Lua, state: State) {
     lua.set("base64_decode", hlua::function1(move |bytes: String| -> Result<AnyLuaValue> {
-        let bytes = match base64::decode(&bytes) {
-            Ok(bytes) => bytes,
-            Err(err) => return Err(state.set_error(err.into())),
-        };
-
-        Ok(lua_bytes(&bytes))
+        base64::decode(&bytes)
+            .map_err(|err| state.set_error(err.into()))
+            .map(|bytes| lua_bytes(&bytes))
     }))
 }
 
 pub fn base64_encode(lua: &mut hlua::Lua, state: State) {
     lua.set("base64_encode", hlua::function1(move |bytes: AnyLuaValue| -> Result<String> {
-        let bytes = match byte_array(bytes) {
-            Ok(bytes) => bytes,
-            Err(err) => return Err(state.set_error(err)),
-        };
-
-        Ok(base64::encode(&bytes))
+        byte_array(bytes)
+            .map_err(|err| state.set_error(err))
+            .map(|bytes| base64::encode(&bytes))
     }))
 }
 
 pub fn bcrypt(lua: &mut hlua::Lua, state: State) {
     lua.set("bcrypt", hlua::function2(move |password: String, cost: u32| -> Result<String> {
-        let result = match bcrypt::hash(&password, cost) {
-            Ok(result) => result,
-            Err(err) => return Err(state.set_error(err.into())),
-        };
-
-        Ok(result)
+        bcrypt::hash(&password, cost)
+            .map_err(|err| state.set_error(err.into()))
     }))
 }
 
 pub fn bcrypt_verify(lua: &mut hlua::Lua, state: State) {
     lua.set("bcrypt_verify", hlua::function2(move |password: String, hashed: String| -> Result<bool> {
-        let result = match bcrypt::verify(&password, &hashed) {
-            Ok(result) => result,
-            Err(err) => return Err(state.set_error(err.into())),
-        };
-
-        Ok(result)
+        bcrypt::verify(&password, &hashed)
+            .map_err(|err| state.set_error(err.into()))
     }))
 }
 
@@ -129,18 +114,17 @@ pub fn execve(lua: &mut hlua::Lua, state: State) {
 
 pub fn hex(lua: &mut hlua::Lua, state: State) {
     lua.set("hex", hlua::function1(move |bytes: AnyLuaValue| -> Result<String> {
-        let bytes = match byte_array(bytes) {
-            Ok(bytes) => bytes,
-            Err(err) => return Err(state.set_error(err)),
-        };
+        byte_array(bytes)
+            .map_err(|err| state.set_error(err))
+            .map(|bytes| {
+                let mut out = String::new();
 
-        let mut out = String::new();
+                for b in bytes {
+                    out += &format!("{:02x}", b);
+                }
 
-        for b in bytes {
-            out += &format!("{:02x}", b);
-        }
-
-        Ok(out)
+                out
+            })
     }))
 }
 
@@ -206,16 +190,16 @@ pub fn hmac_sha3_512(lua: &mut hlua::Lua, state: State) {
 pub fn html_select(lua: &mut hlua::Lua, state: State) {
     lua.set("html_select", hlua::function2(move |html: String, selector: String| -> Result<AnyLuaValue> {
         html::html_select(&html, &selector)
-            .map(|x| x.into())
             .map_err(|err| state.set_error(err))
+            .map(|x| x.into())
     }))
 }
 
 pub fn html_select_list(lua: &mut hlua::Lua, state: State) {
     lua.set("html_select_list", hlua::function2(move |html: String, selector: String| -> Result<Vec<AnyLuaValue>> {
         html::html_select_list(&html, &selector)
-            .map(|x| x.into_iter().map(|x| x.into()).collect())
             .map_err(|err| state.set_error(err))
+            .map(|x| x.into_iter().map(|x| x.into()).collect())
     }))
 }
 
@@ -223,22 +207,16 @@ pub fn http_basic_auth(lua: &mut hlua::Lua, state: State) {
     lua.set("http_basic_auth", hlua::function3(move |url: String, user: String, password: String| -> Result<bool> {
         let client = reqwest::Client::new();
 
-        let response = match client.get(&url)
-                             .basic_auth(user, Some(password))
-                             .send()
-                             .chain_err(|| "http request failed") {
-            Ok(response) => response,
-            Err(err) => return Err(state.set_error(err)),
-        };
-
-        // println!("{:?}", response);
-        // println!("{:?}", response.headers().get_raw("www-authenticate"));
-        // println!("{:?}", response.status());
-
-        let authorized = response.headers().get_raw("www-authenticate").is_none() &&
-            response.status() != reqwest::StatusCode::Unauthorized;
-
-        Ok(authorized)
+        client.get(&url)
+            .basic_auth(user, Some(password))
+            .send()
+            .chain_err(|| "http request failed")
+            .map_err(|err| state.set_error(err))
+            .map(|response| {
+                debug!("http_basic_auth: {:?}", response);
+                response.headers().get_raw("www-authenticate").is_none() &&
+                    response.status() != reqwest::StatusCode::Unauthorized
+            })
     }))
 }
 
@@ -250,14 +228,12 @@ pub fn http_mksession(lua: &mut hlua::Lua, state: State) {
 
 pub fn http_request(lua: &mut hlua::Lua, state: State) {
     lua.set("http_request", hlua::function4(move |session: String, method: String, url: String, options: AnyLuaValue| -> Result<AnyLuaValue> {
-        let options = match RequestOptions::try_from(options)
-                                .chain_err(|| "invalid request options") {
-            Ok(options) => options,
-            Err(err) => return Err(state.set_error(err)),
-        };
-
-        let req = state.http_request(&session, method, url, options);
-        Ok(req.into())
+        RequestOptions::try_from(options)
+            .chain_err(|| "invalid request options")
+            .map_err(|err| state.set_error(err))
+            .map(|options| {
+                state.http_request(&session, method, url, options).into()
+            })
     }))
 }
 
@@ -270,8 +246,8 @@ pub fn http_send(lua: &mut hlua::Lua, state: State) {
         };
 
         req.send(&state)
-            .map(|resp| resp.into())
             .map_err(|err| state.set_error(err))
+            .map(|resp| resp.into())
     }))
 }
 
@@ -306,15 +282,13 @@ pub fn ldap_bind(lua: &mut hlua::Lua, state: State) {
             Err(err) => return Err(state.set_error(err)),
         };
 
-        let result = match sock.simple_bind(&dn, &password)
-                            .chain_err(|| "fatal error during simple_bind") {
-            Ok(result) => result,
-            Err(err) => return Err(state.set_error(err)),
-        };
-
-        // println!("{:?}", result);
-
-        Ok(result.success().is_ok())
+        sock.simple_bind(&dn, &password)
+            .chain_err(|| "fatal error during simple_bind")
+            .map_err(|err| state.set_error(err))
+            .map(|result| {
+                debug!("ldap_bind: {:?}", result);
+                result.success().is_ok()
+            })
     }))
 }
 
@@ -379,8 +353,8 @@ pub fn ldap_search_bind(lua: &mut hlua::Lua, state: State) {
 pub fn md5(lua: &mut hlua::Lua, state: State) {
     lua.set("md5", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
         byte_array(bytes)
-            .map(|bytes| lua_bytes(&md5::Md5::digest(&bytes)))
             .map_err(|err| state.set_error(err))
+            .map(|bytes| lua_bytes(&md5::Md5::digest(&bytes)))
     }))
 }
 
@@ -393,14 +367,10 @@ pub fn mysql_connect(lua: &mut hlua::Lua, state: State) {
                .user(Some(user))
                .pass(Some(password));
 
-        let sock = match mysql::Conn::new(builder) {
-            Ok(sock) => sock,
+        mysql::Conn::new(builder)
             // TODO: setting an error here means we can't bruteforce mysql anymore
-            Err(err) => return Err(state.set_error(err.into())),
-        };
-
-        let id = state.mysql_register(sock);
-        Ok(id)
+            .map_err(|err| state.set_error(err.into()))
+            .map(|sock| state.mysql_register(sock))
     }))
 }
 
@@ -492,40 +462,40 @@ pub fn randombytes(lua: &mut hlua::Lua, _: State) {
 pub fn sha1(lua: &mut hlua::Lua, state: State) {
     lua.set("sha1", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
         byte_array(bytes)
-            .map(|bytes| lua_bytes(&sha1::Sha1::digest(&bytes)))
             .map_err(|err| state.set_error(err))
+            .map(|bytes| lua_bytes(&sha1::Sha1::digest(&bytes)))
     }))
 }
 
 pub fn sha2_256(lua: &mut hlua::Lua, state: State) {
     lua.set("sha2_256", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
         byte_array(bytes)
-            .map(|bytes| lua_bytes(&sha2::Sha256::digest(&bytes)))
             .map_err(|err| state.set_error(err))
+            .map(|bytes| lua_bytes(&sha2::Sha256::digest(&bytes)))
     }))
 }
 
 pub fn sha2_512(lua: &mut hlua::Lua, state: State) {
     lua.set("sha2_512", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
         byte_array(bytes)
-            .map(|bytes| lua_bytes(&sha2::Sha512::digest(&bytes)))
             .map_err(|err| state.set_error(err))
+            .map(|bytes| lua_bytes(&sha2::Sha512::digest(&bytes)))
     }))
 }
 
 pub fn sha3_256(lua: &mut hlua::Lua, state: State) {
     lua.set("sha3_256", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
         byte_array(bytes)
-            .map(|bytes| lua_bytes(&sha3::Sha3_256::digest(&bytes)))
             .map_err(|err| state.set_error(err))
+            .map(|bytes| lua_bytes(&sha3::Sha3_256::digest(&bytes)))
     }))
 }
 
 pub fn sha3_512(lua: &mut hlua::Lua, state: State) {
     lua.set("sha3_512", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
         byte_array(bytes)
-            .map(|bytes| lua_bytes(&sha3::Sha3_512::digest(&bytes)))
             .map_err(|err| state.set_error(err))
+            .map(|bytes| lua_bytes(&sha3::Sha3_512::digest(&bytes)))
     }))
 }
 
