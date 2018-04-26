@@ -73,6 +73,20 @@ Encode a binary array with base64.
 .fi
 .RE
 
+.SS clear_err
+.LP
+Clear all recorded errors to prevent a requeue.
+.RS
+.nf
+\fBif last_err() then
+    clear_err()
+    return false
+else
+    return true
+end\fP
+.fi
+.RE
+
 .SS execve
 .LP
 Execute an external program. Returns the exit code.
@@ -327,10 +341,22 @@ Hash a byte array with md5 and return the results as bytes.
 .SS mysql_connect
 .LP
 Connect to a mysql database and try to authenticate with the provided
-credentials. Returns \fBtrue\fP on success.
+credentials. Returns a mysql connection on success.
 .RS
 .nf
-\fBmysql_connect("127.0.0.1", 3306, user, password)\fP
+\fBsock = mysql_connect("127.0.0.1", 3306, user, password)\fP
+.fi
+.RE
+
+.SS mysql_query
+.LP
+Run a query on a mysql connection. The 3rd parameter is for prepared
+statements.
+.RS
+.nf
+\fBrows = mysql_query(sock, 'SELECT VERSION(), :foo as foo', {
+    foo='magic'
+})\fP
 .fi
 .RE
 

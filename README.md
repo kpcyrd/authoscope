@@ -25,6 +25,7 @@ magically provided by the badtouch runtime.
 ## Reference
 - [base64_decode](#base64_decode)
 - [base64_encode](#base64_encode)
+- [clear_err](#clear_err)
 - [execve](#execve)
 - [hex](#hex)
 - [hmac_md5](#hmac_md5)
@@ -47,6 +48,7 @@ magically provided by the badtouch runtime.
 - [ldap_search_bind](#ldap_search_bind)
 - [md5](#md5)
 - [mysql_connect](#mysql_connect)
+- [mysql_query](#mysql_query)
 - [print](#print)
 - [rand](#rand)
 - [randombytes](#randombytes)
@@ -70,6 +72,17 @@ base64_decode("ww==")
 Encode a binary array with base64.
 ```lua
 base64_encode("\x00\xff")
+```
+
+### clear_err
+Clear all recorded errors to prevent a requeue.
+```lua
+if last_err() then
+    clear_err()
+    return false
+else
+    return true
+end
 ```
 
 ### execve
@@ -261,9 +274,18 @@ hex(md5("\x00\xff"))
 
 ### mysql_connect
 Connect to a mysql database and try to authenticate with the provided
-credentials. Returns `true` on success.
+credentials. Returns a mysql connection on success.
 ```lua
-mysql_connect("127.0.0.1", 3306, user, password)
+sock = mysql_connect("127.0.0.1", 3306, user, password)
+```
+
+### mysql_query
+Run a query on a mysql connection. The 3rd parameter is for prepared
+statements.
+```lua
+rows = mysql_query(sock, 'SELECT VERSION(), :foo as foo', {
+    foo='magic'
+})
 ```
 
 ### print
