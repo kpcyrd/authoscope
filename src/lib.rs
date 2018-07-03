@@ -11,7 +11,6 @@ extern crate atty;
 extern crate rand;
 extern crate getch;
 extern crate serde_json;
-extern crate hyper;
 extern crate kuchiki;
 extern crate toml;
 extern crate nix;
@@ -60,7 +59,6 @@ pub mod errors {
     use hlua;
     use serde_json;
     use reqwest;
-    use hyper;
     use base64;
     use toml;
     use nix;
@@ -73,7 +71,6 @@ pub mod errors {
             Lua(hlua::LuaError);
             Json(serde_json::Error);
             Reqwest(reqwest::Error);
-            Hyper(hyper::error::Error);
             Utf8(std::str::Utf8Error);
             BufWrite(std::io::IntoInnerError<std::io::BufWriter<std::io::Stdout>>);
             Base64Decode(base64::DecodeError);

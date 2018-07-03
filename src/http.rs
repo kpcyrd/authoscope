@@ -1,4 +1,4 @@
-use errors::Result;
+use errors::{Result, ResultExt};
 use structs::LuaMap;
 
 use reqwest;
@@ -12,6 +12,7 @@ use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
 use rand::{Rng, thread_rng};
+use rand::distributions::Alphanumeric;
 use config::Config;
 use ctx::State;
 
@@ -24,7 +25,7 @@ pub struct HttpSession {
 
 impl HttpSession {
     pub fn new() -> (String, HttpSession) {
-        let id: String = thread_rng().gen_ascii_chars().take(16).collect();
+        let id: String = thread_rng().sample_iter(&Alphanumeric).take(16).collect();
         (id.clone(), HttpSession {
             id,
             cookies: CookieJar::default(),
@@ -104,7 +105,8 @@ impl HttpRequest {
         let client = reqwest::Client::builder()
             .redirect(reqwest::RedirectPolicy::none()) // TODO: this should be configurable
             .build().unwrap();
-        let method = self.method.parse()?;
+        let method = self.method.parse()
+                        .chain_err(|| "Invalid http method")?;
         let mut req = client.request(method, &self.url);
 
         let mut cookie = Cookie::new();

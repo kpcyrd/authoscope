@@ -7,9 +7,10 @@ use std::sync::{Arc, Mutex};
 use std::io::prelude::*;
 use std::collections::HashMap;
 use rand::{Rng, thread_rng};
-use http::HttpSession;
-use http::HttpRequest;
-use http::RequestOptions;
+use rand::distributions::Alphanumeric;
+use http::{HttpSession,
+           HttpRequest,
+           RequestOptions};
 use config::Config;
 use mysql;
 
@@ -72,7 +73,7 @@ impl State {
 
     pub fn mysql_register(&self, sock: mysql::Conn) -> String {
         let mut mtx = self.mysql_sessions.lock().unwrap();
-        let id: String = thread_rng().gen_ascii_chars().take(16).collect();
+        let id: String = thread_rng().sample_iter(&Alphanumeric).take(16).collect();
 
         let sock = Arc::new(Mutex::new(sock));
         mtx.insert(id.clone(), sock);
