@@ -124,14 +124,14 @@ fn run_oneshot(oneshot: args::Oneshot, config: Arc<Config>) -> Result<()> {
 
 fn set_nofile(config: &Config) -> Result<()> {
     let (soft_limit, hard_limit) = getrlimit(Resource::RLIMIT_NOFILE)?;
-    info!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
+    debug!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
 
     let hard_limit = config.runtime.rlimit_nofile.or(hard_limit);
     info!("setting soft_limit to {:?}", hard_limit);
     setrlimit(Resource::RLIMIT_NOFILE, hard_limit, hard_limit)?;
 
     let (soft_limit, hard_limit) = getrlimit(Resource::RLIMIT_NOFILE)?;
-    info!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
+    debug!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
 
     Ok(())
 }
