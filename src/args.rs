@@ -26,6 +26,10 @@ pub enum SubCommand {
                 about="Credential confirmation attack")]
     Creds(Creds),
     #[structopt(author = "",
+                name="oneshot",
+                about="Test a single username-password combination")]
+    Oneshot(Oneshot),
+    #[structopt(author = "",
                 name="fsck",
                 about="Verify and fix encoding of a list")]
     Fsck(Fsck),
@@ -49,6 +53,16 @@ pub struct Creds {
     #[structopt(raw(required="true"),
                 help="Scripts to run")]
     pub scripts: Vec<String>,
+}
+
+#[derive(StructOpt, Debug)]
+pub struct Oneshot {
+    #[structopt(help="Script to run")]
+    pub script: String,
+    #[structopt(help="Username to test")]
+    pub user: String,
+    #[structopt(help="Password to test")]
+    pub password: String,
 }
 
 #[derive(StructOpt, Debug)]

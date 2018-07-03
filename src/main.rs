@@ -11,6 +11,7 @@ extern crate error_chain;
 #[macro_use] extern crate log;
 
 use badtouch::args;
+use badtouch::ctx::Script;
 use badtouch::fsck;
 use badtouch::utils;
 use badtouch::config::Config;
@@ -105,6 +106,22 @@ fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds, config
     Ok(attempts)
 }
 
+fn run_oneshot(oneshot: args::Oneshot, config: Arc<Config>) -> Result<()> {
+    let script = Script::load(&oneshot.script, config)?;
+    let user = oneshot.user;
+    let password = oneshot.password;
+
+    let valid = script.run_once(&user, &password)?;
+
+    if valid {
+        // TODO: this is duplicate code, see further down below
+        println!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
+            script.descr().yellow(), user, password);
+    }
+
+    Ok(())
+}
+
 fn set_nofile(config: &Config) -> Result<()> {
     let (soft_limit, hard_limit) = getrlimit(Resource::RLIMIT_NOFILE)?;
     info!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
@@ -138,6 +155,7 @@ fn run() -> Result<()> {
     let attempts = match args.subcommand {
         args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict, &config)?,
         args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds, &config)?,
+        args::SubCommand::Oneshot(oneshot) => return run_oneshot(oneshot, config),
         args::SubCommand::Fsck(fsck) => return fsck::run_fsck(&fsck),
     };
 
