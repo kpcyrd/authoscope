@@ -37,7 +37,8 @@ pub struct Dict {
     pub users: String,
     #[structopt(help="Password list path")]
     pub passwords: String,
-    #[structopt(help="Scripts to run")]
+    #[structopt(raw(required="true"),
+                help="Scripts to run")]
     pub scripts: Vec<String>,
 }
 
@@ -45,7 +46,8 @@ pub struct Dict {
 pub struct Creds {
     #[structopt(help="Credential list path")]
     pub creds: String,
-    #[structopt(help="Scripts to run")]
+    #[structopt(raw(required="true"),
+                help="Scripts to run")]
     pub scripts: Vec<String>,
 }
 

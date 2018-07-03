@@ -20,7 +20,7 @@ use reqwest;
 use ldap3;
 use mysql;
 use rand;
-use rand::Rng;
+use rand::RngCore;
 
 use std::thread;
 use std::time::Duration;
