@@ -5,6 +5,10 @@ use structopt::clap::AppSettings;
 #[structopt(author = "",
             raw(global_settings = "&[AppSettings::ColoredHelp]"))]
 pub struct Args {
+    #[structopt(short = "v", long = "verbose",
+                raw(global = "true"), parse(from_occurrences),
+                help="Verbose output")]
+    pub verbose: u8,
     #[structopt(short = "n", long = "workers", default_value = "16",
                 help="Concurrent workers")]
     pub workers: usize,
