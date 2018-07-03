@@ -1,6 +1,6 @@
 [package]
 name = "badtouch"
-version = "0.5.1"
+version = "0.5.2"
 description = "Scriptable network authentication cracker"
 authors = ["kpcyrd <git@rxv.cc>"]
 license = "GPL-3.0"
