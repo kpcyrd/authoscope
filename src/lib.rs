@@ -1,7 +1,4 @@
 #![warn(unused_extern_crates)]
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
-
 extern crate hlua_badtouch as hlua;
 extern crate pbr;
 extern crate threadpool;

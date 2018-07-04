@@ -49,7 +49,5 @@ ldap3 = "0.6"
 kuchiki = "0.7"
 twox-hash = "1.1"
 
-clippy = { version = "0.0.195", optional = true }
-
 [target."cfg(unix)".dependencies]
 termios = "0.3"

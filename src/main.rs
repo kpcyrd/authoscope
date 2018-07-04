@@ -1,7 +1,4 @@
 #![warn(unused_extern_crates)]
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
-
 extern crate badtouch;
 extern crate env_logger;
 extern crate colored;
