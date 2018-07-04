@@ -1,4 +1,4 @@
-.TH BADTOUCH "1" "April 2018" "badtouch 0.5.2" "User Commands"
+.TH BADTOUCH "1" "July 2018" "badtouch 0.5.2" "User Commands"
 .SH NAME
 badtouch \- scriptable network authentication cracker
 
@@ -21,6 +21,12 @@ magically provided by the badtouch runtime.
 .TP
 \fB\-n\fR, \fB\-\-workers\fR <workers>
 The number of concurrent workers to run.
+.TP
+\fB\-o\fR, \fB\-\-output\fR <output>
+Write results to this file.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Enable verbose output.
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Prints help information.
@@ -50,6 +56,16 @@ with every script.
 <\fBcredentials\fR>
 [\fBscripts\fR]...
 .RE
+
+.SS Oneshot
+.LP
+Test a single username-password combination using a specific script. This
+command is also useful when developing a new script.
+.RS
+\fBbadtouch oneshot\fR
+<\fBscript\fR>
+<\fBuser\fR>
+<\fBpassword\fR>
 
 .SH RUNTIME REFERENCE
 The badtouch runtime provides a number of functions that can be used to test
