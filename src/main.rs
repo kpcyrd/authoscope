@@ -111,12 +111,15 @@ fn run_oneshot(oneshot: args::Oneshot, config: Arc<Config>) -> Result<()> {
     let valid = script.run_once(&user, &password)?;
 
     if valid {
-        // TODO: this is duplicate code, see further down below
-        println!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
-            script.descr().yellow(), user, password);
+        println!("{}", format_valid(script.descr(), &user, &password));
     }
 
     Ok(())
+}
+
+fn format_valid(script: &str, user: &str, password: &str) -> String {
+    format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
+        script.yellow(), user, password)
 }
 
 fn set_nofile(config: &Config) -> Result<()> {
@@ -213,8 +216,7 @@ fn run() -> Result<()> {
                             let password = attempt.password();
                             let script = attempt.script.descr();
 
-                            pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
-                                script.yellow(), user, password));
+                            pb.writeln(format_valid(script, user, password));
                             report.write(user, password, script)?;
                             valid += 1;
                         }
