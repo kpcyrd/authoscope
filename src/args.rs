@@ -5,6 +5,10 @@ use structopt::clap::AppSettings;
 #[structopt(author = "",
             raw(global_settings = "&[AppSettings::ColoredHelp]"))]
 pub struct Args {
+    #[structopt(short = "v", long = "verbose",
+                raw(global = "true"), parse(from_occurrences),
+                help="Verbose output")]
+    pub verbose: u8,
     #[structopt(short = "n", long = "workers", default_value = "16",
                 help="Concurrent workers")]
     pub workers: usize,
@@ -25,6 +29,10 @@ pub enum SubCommand {
                 name="creds",
                 about="Credential confirmation attack")]
     Creds(Creds),
+    #[structopt(author = "",
+                name="oneshot",
+                about="Test a single username-password combination")]
+    Oneshot(Oneshot),
     #[structopt(author = "",
                 name="fsck",
                 about="Verify and fix encoding of a list")]
@@ -49,6 +57,16 @@ pub struct Creds {
     #[structopt(raw(required="true"),
                 help="Scripts to run")]
     pub scripts: Vec<String>,
+}
+
+#[derive(StructOpt, Debug)]
+pub struct Oneshot {
+    #[structopt(help="Script to run")]
+    pub script: String,
+    #[structopt(help="Username to test")]
+    pub user: String,
+    #[structopt(help="Password to test")]
+    pub password: String,
 }
 
 #[derive(StructOpt, Debug)]

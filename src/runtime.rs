@@ -219,7 +219,7 @@ pub fn http_basic_auth(lua: &mut hlua::Lua, state: State) {
             .chain_err(|| "http request failed")
             .map_err(|err| state.set_error(err))
             .map(|response| {
-                debug!("http_basic_auth: {:?}", response);
+                info!("http_basic_auth: {:?}", response);
                 response.headers().get_raw("www-authenticate").is_none() &&
                     response.status() != reqwest::StatusCode::Unauthorized
             })

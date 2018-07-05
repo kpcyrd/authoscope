@@ -1,7 +1,4 @@
 #![warn(unused_extern_crates)]
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
-
 extern crate badtouch;
 extern crate env_logger;
 extern crate colored;
@@ -11,6 +8,7 @@ extern crate error_chain;
 #[macro_use] extern crate log;
 
 use badtouch::args;
+use badtouch::ctx::Script;
 use badtouch::fsck;
 use badtouch::utils;
 use badtouch::config::Config;
@@ -105,24 +103,49 @@ fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds, config
     Ok(attempts)
 }
 
+fn run_oneshot(oneshot: args::Oneshot, config: Arc<Config>) -> Result<()> {
+    let script = Script::load(&oneshot.script, config)?;
+    let user = oneshot.user;
+    let password = oneshot.password;
+
+    let valid = script.run_once(&user, &password)?;
+
+    if valid {
+        println!("{}", format_valid(script.descr(), &user, &password));
+    }
+
+    Ok(())
+}
+
+fn format_valid(script: &str, user: &str, password: &str) -> String {
+    format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
+        script.yellow(), user, password)
+}
+
 fn set_nofile(config: &Config) -> Result<()> {
     let (soft_limit, hard_limit) = getrlimit(Resource::RLIMIT_NOFILE)?;
-    info!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
+    debug!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
 
     let hard_limit = config.runtime.rlimit_nofile.or(hard_limit);
     info!("setting soft_limit to {:?}", hard_limit);
     setrlimit(Resource::RLIMIT_NOFILE, hard_limit, hard_limit)?;
 
     let (soft_limit, hard_limit) = getrlimit(Resource::RLIMIT_NOFILE)?;
-    info!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
+    debug!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
 
     Ok(())
 }
 
 fn run() -> Result<()> {
-    env_logger::init();
-
     let args = args::parse();
+
+    let env = env_logger::Env::default();
+    let env = match args.verbose {
+        0 => env,
+        1 => env.filter_or("RUST_LOG", "info"),
+        _ => env.filter_or("RUST_LOG", "debug"),
+    };
+    env_logger::init_from_env(env);
 
     if atty::isnt(atty::Stream::Stdout) {
         colored::control::SHOULD_COLORIZE.set_override(false);
@@ -138,6 +161,7 @@ fn run() -> Result<()> {
     let attempts = match args.subcommand {
         args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict, &config)?,
         args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds, &config)?,
+        args::SubCommand::Oneshot(oneshot) => return run_oneshot(oneshot, config),
         args::SubCommand::Fsck(fsck) => return fsck::run_fsck(&fsck),
     };
 
@@ -192,8 +216,7 @@ fn run() -> Result<()> {
                             let password = attempt.password();
                             let script = attempt.script.descr();
 
-                            pb.writeln(format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
-                                script.yellow(), user, password));
+                            pb.writeln(format_valid(script, user, password));
                             report.write(user, password, script)?;
                             valid += 1;
                         }

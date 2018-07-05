@@ -186,6 +186,8 @@ impl Script {
     */
 
     pub fn run_once(&self, user: &str, password: &str) -> Result<bool> {
+        debug!("executing {:?} with {:?}:{:?}", self.descr(), user, password);
+
         let (mut lua, state) = Script::ctx(&self.config);
         lua.execute::<()>(&self.code)?;
 

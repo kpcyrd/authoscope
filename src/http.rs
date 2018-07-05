@@ -143,9 +143,9 @@ impl HttpRequest {
             None => (),
         };
 
-        debug!("http req: {:?}", req);
+        info!("http req: {:?}", req);
         let mut res = req.send()?;
-        debug!("http res: {:?}", res);
+        info!("http res: {:?}", res);
 
         let mut resp = LuaMap::new();
         let status = res.status();
