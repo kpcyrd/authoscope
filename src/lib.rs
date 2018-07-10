@@ -12,6 +12,8 @@ extern crate kuchiki;
 extern crate toml;
 extern crate nix;
 extern crate libc;
+extern crate bufstream;
+extern crate regex;
 #[macro_use] extern crate log;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate error_chain;
@@ -46,6 +48,7 @@ pub mod keyboard;
 pub mod pb;
 pub mod runtime;
 pub mod scheduler;
+pub mod sockets;
 pub mod structs;
 pub mod ulimit;
 pub mod utils;
@@ -61,6 +64,7 @@ pub mod errors {
     use nix;
     use bcrypt;
     use mysql;
+    use regex;
 
     error_chain! {
         foreign_links {
@@ -68,13 +72,13 @@ pub mod errors {
             Lua(hlua::LuaError);
             Json(serde_json::Error);
             Reqwest(reqwest::Error);
-            Utf8(std::str::Utf8Error);
             BufWrite(std::io::IntoInnerError<std::io::BufWriter<std::io::Stdout>>);
             Base64Decode(base64::DecodeError);
             Toml(toml::de::Error);
             Nix(nix::Error);
             Bcrypt(bcrypt::BcryptError);
             Mysql(mysql::Error);
+            Regex(regex::Error);
         }
     }
 }

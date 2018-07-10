@@ -1,10 +1,11 @@
+use errors::{Result, ResultExt};
+
 use std::str;
 use std::fs::{self, File};
 use std::sync::Arc;
 use std::io::{self, BufReader};
 use std::io::prelude::*;
 use config::Config;
-use errors::Result;
 
 use ctx;
 
@@ -33,7 +34,8 @@ pub fn load_creds(path: &str) -> Result<Vec<Arc<Vec<u8>>>> {
         }
 
         // ensure line is valid utf8
-        str::from_utf8(&buf)?;
+        str::from_utf8(&buf)
+            .chain_err(|| "failed to decode utf8")?;
 
         if buf.iter().any(|x| *x == b':') {
             creds.push(Arc::new(buf.clone()));
