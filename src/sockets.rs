@@ -3,6 +3,7 @@ use errors::{Result, ResultExt};
 use bufstream::BufStream;
 use regex::Regex;
 
+use std::str;
 use std::io;
 use std::io::prelude::*;
 use std::io::BufRead;
@@ -23,8 +24,10 @@ impl Socket {
         let mut errors = Vec::new();
 
         for addr in addrs {
+            debug!("connecting to {:?}", addr);
             match TcpStream::connect(&addr) {
                 Ok(socket) => {
+                    debug!("successfully connected to {:?}", addr);
                     let stream = BufStream::new(socket);
 
                     return Ok(Socket {
@@ -44,14 +47,24 @@ impl Socket {
     }
 
     pub fn send(&mut self, data: &[u8]) -> Result<()> {
+        match str::from_utf8(&data) {
+            Ok(data) => debug!("send: {:?}", data),
+            Err(_) => debug!("send: {:?}", data),
+        };
         self.stream.write_all(data)?;
+        self.stream.flush()?;
         Ok(())
     }
 
     pub fn recv(&mut self) -> Result<Vec<u8>> {
         let mut buf = [0; 4096];
         let n = self.stream.read(&mut buf)?;
-        Ok(buf[..n].to_vec())
+        let data = buf[..n].to_vec();
+        match str::from_utf8(&data) {
+            Ok(data) => debug!("recv: {:?}", data),
+            Err(_) => debug!("recv: {:?}", data),
+        };
+        Ok(data)
     }
 
     pub fn sendline(&mut self, line: &str) -> Result<()> {
@@ -70,6 +83,10 @@ impl Socket {
     pub fn recvall(&mut self) -> Result<Vec<u8>> {
         let mut buf = Vec::new();
         self.stream.read_to_end(&mut buf)?;
+        match str::from_utf8(&buf) {
+            Ok(buf) => debug!("recvall: {:?}", buf),
+            Err(_) => debug!("recvall: {:?}", buf),
+        };
         Ok(buf)
     }
 
@@ -95,11 +112,17 @@ impl Socket {
     pub fn recvn(&mut self, n: u32) -> Result<Vec<u8>> {
         let mut buf = vec![0; n as usize];
         self.stream.read_exact(buf.as_mut_slice())?;
+        match str::from_utf8(&buf) {
+            Ok(buf) => debug!("recvn: {:?}", buf),
+            Err(_) => debug!("recvn: {:?}", buf),
+        };
         Ok(buf.to_vec())
     }
 
     pub fn recvuntil(&mut self, delim: &[u8]) -> Result<Vec<u8>> {
         let mut buf = Vec::new();
+
+        let delim_len = delim.len();
 
         loop {
             let (done, used) = {
@@ -109,10 +132,10 @@ impl Socket {
                     Err(e) => return Err(e.into())
                 };
 
-                match available.windows(delim.len()).position(|window| window == delim) {
+                match available.windows(delim_len).position(|window| window == delim) {
                     Some(i) => {
-                        buf.extend_from_slice(&available[..i + 1]);
-                        (true, i + 1)
+                        buf.extend_from_slice(&available[..i + delim_len]);
+                        (true, i + delim_len)
                     }
                     None => {
                         buf.extend_from_slice(available);
@@ -123,6 +146,10 @@ impl Socket {
             self.stream.consume(used);
 
             if done || used == 0 {
+                match str::from_utf8(&buf) {
+                    Ok(buf) => debug!("recvuntil: {:?}", buf),
+                    Err(_) => debug!("recvuntil: {:?}", buf),
+                };
                 return Ok(buf);
             }
         }
