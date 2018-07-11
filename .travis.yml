@@ -1,5 +1,15 @@
 language: rust
+
+matrix:
+  include:
+  - os: linux
+    rust: stable
+    env: BUILD_MODE=build
+  - os: linux
+    rust: stable
+    env: BUILD_MODE=integration
+
+before_install:
+- sudo ci/dependencies.sh
 script:
-- cargo build --verbose --all
-- cargo build --verbose --examples
-- cargo test --verbose --all
+- ci/run.sh

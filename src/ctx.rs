@@ -13,6 +13,7 @@ use http::{HttpSession,
            RequestOptions};
 use config::Config;
 use mysql;
+use sockets::Socket;
 
 
 #[derive(Debug, Clone)]
@@ -21,6 +22,7 @@ pub struct State {
     error: Arc<Mutex<Option<Error>>>,
     http_sessions: Arc<Mutex<HashMap<String, HttpSession>>>,
     mysql_sessions: Arc<Mutex<HashMap<String, Arc<Mutex<mysql::Conn>>>>>,
+    socket_sessions: Arc<Mutex<HashMap<String, Arc<Mutex<Socket>>>>>,
 }
 
 impl State {
@@ -30,6 +32,7 @@ impl State {
             error: Arc::new(Mutex::new(None)),
             http_sessions: Arc::new(Mutex::new(HashMap::new())),
             mysql_sessions: Arc::new(Mutex::new(HashMap::new())),
+            socket_sessions: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -48,6 +51,10 @@ impl State {
         let cp = err.to_string();
         *mtx = Some(err);
         cp.into()
+    }
+
+    fn random_id(&self) -> String {
+        thread_rng().sample_iter(&Alphanumeric).take(16).collect()
     }
 
     pub fn register_in_jar(&self, session: &str, cookies: Vec<(String, String)>) {
@@ -73,7 +80,7 @@ impl State {
 
     pub fn mysql_register(&self, sock: mysql::Conn) -> String {
         let mut mtx = self.mysql_sessions.lock().unwrap();
-        let id: String = thread_rng().sample_iter(&Alphanumeric).take(16).collect();
+        let id = self.random_id();
 
         let sock = Arc::new(Mutex::new(sock));
         mtx.insert(id.clone(), sock);
@@ -83,6 +90,22 @@ impl State {
 
     pub fn mysql_session(&self, id: &str) -> Arc<Mutex<mysql::Conn>> {
         let mtx = self.mysql_sessions.lock().unwrap();
+        let sock = mtx.get(id).expect("invalid session reference"); // TODO
+        sock.clone()
+    }
+
+    pub fn sock_connect(&self, host: &str, port: u16) -> Result<String> {
+        let mut mtx = self.socket_sessions.lock().unwrap();
+        let id = self.random_id();
+
+        let sock = Socket::connect(host, port)?;
+        mtx.insert(id.clone(), Arc::new(Mutex::new(sock)));
+
+        Ok(id)
+    }
+
+    pub fn get_sock(&self, id: &str)-> Arc<Mutex<Socket>> {
+        let mtx = self.socket_sessions.lock().unwrap();
         let sock = mtx.get(id).expect("invalid session reference"); // TODO
         sock.clone()
     }
@@ -169,6 +192,18 @@ impl Script {
         runtime::sha3_256(&mut lua, state.clone());
         runtime::sha3_512(&mut lua, state.clone());
         runtime::sleep(&mut lua, state.clone());
+        runtime::sock_connect(&mut lua, state.clone());
+        runtime::sock_send(&mut lua, state.clone());
+        runtime::sock_recv(&mut lua, state.clone());
+        runtime::sock_sendline(&mut lua, state.clone());
+        runtime::sock_recvline(&mut lua, state.clone());
+        runtime::sock_recvall(&mut lua, state.clone());
+        runtime::sock_recvline_contains(&mut lua, state.clone());
+        runtime::sock_recvline_regex(&mut lua, state.clone());
+        runtime::sock_recvn(&mut lua, state.clone());
+        runtime::sock_recvuntil(&mut lua, state.clone());
+        runtime::sock_sendafter(&mut lua, state.clone());
+        runtime::sock_newline(&mut lua, state.clone());
 
         (lua, state)
     }
