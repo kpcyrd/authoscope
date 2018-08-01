@@ -143,6 +143,8 @@ fn run_oneshot(oneshot: args::Oneshot, config: Arc<Config>) -> Result<()> {
             Some(ref password) => println!("{}", format_valid_creds(script.descr(), &user, &password)),
             None => println!("{}", format_valid_enum(script.descr(), &user)),
         }
+    } else if oneshot.exitcode {
+        std::process::exit(2);
     }
 
     Ok(())
@@ -306,7 +308,7 @@ fn run() -> Result<()> {
 
 fn main() {
     if let Err(ref e) = run() {
-        eprintln!("{}", e.display_chain());
+        eprint!("{}", e.display_chain());
         std::process::exit(1);
     }
 }

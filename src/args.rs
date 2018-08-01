@@ -80,6 +80,9 @@ pub struct Oneshot {
     pub user: String,
     #[structopt(help="Password to test")]
     pub password: Option<String>,
+    #[structopt(short = "x", long = "exitcode",
+                help="Set the exitcode to 2 if the credentials are invalid")]
+    pub exitcode: bool,
 }
 
 #[derive(StructOpt, Debug)]
