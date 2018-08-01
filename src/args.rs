@@ -30,6 +30,10 @@ pub enum SubCommand {
                 about="Credential confirmation attack")]
     Creds(Creds),
     #[structopt(author = "",
+                name="enum",
+                about="Enumerate users")]
+    Enum(Enum),
+    #[structopt(author = "",
                 name="oneshot",
                 about="Test a single username-password combination")]
     Oneshot(Oneshot),
@@ -60,13 +64,25 @@ pub struct Creds {
 }
 
 #[derive(StructOpt, Debug)]
+pub struct Enum {
+    #[structopt(help="Username list path")]
+    pub users: String,
+    #[structopt(raw(required="true"),
+                help="Scripts to run")]
+    pub scripts: Vec<String>,
+}
+
+#[derive(StructOpt, Debug)]
 pub struct Oneshot {
     #[structopt(help="Script to run")]
     pub script: String,
     #[structopt(help="Username to test")]
     pub user: String,
     #[structopt(help="Password to test")]
-    pub password: String,
+    pub password: Option<String>,
+    #[structopt(short = "x", long = "exitcode",
+                help="Set the exitcode to 2 if the credentials are invalid")]
+    pub exitcode: bool,
 }
 
 #[derive(StructOpt, Debug)]

@@ -9,6 +9,7 @@ use std::sync::{mpsc, Arc, Mutex, Condvar};
 pub enum Creds {
     Tuple((Arc<String>, Arc<String>)),
     Bytes(Arc<Vec<u8>>),
+    Enum(Arc<String>),
 }
 
 impl Creds {
@@ -24,6 +25,7 @@ impl Creds {
                 let idx = bytes.iter().position(|x| *x == b':').unwrap();
                 str::from_utf8(&bytes[..idx]).unwrap()
             },
+            Creds::Enum(ref user) => user.as_str(),
         }
     }
 
@@ -36,7 +38,9 @@ impl Creds {
 
                 let idx = bytes.iter().position(|x| *x == b':').unwrap();
                 str::from_utf8(&bytes[idx+1..]).unwrap()
-            }
+            },
+            // TODO: empty string is technically not correct
+            Creds::Enum(_) => "",
         }
     }
 }
@@ -68,6 +72,15 @@ impl Attempt {
     }
 
     #[inline]
+    pub fn enumerate(user: &Arc<String>, script: &Arc<Script>) -> Attempt {
+        Attempt {
+            creds: Creds::Enum(user.clone()),
+            script: script.clone(),
+            ttl: 5,
+        }
+    }
+
+    #[inline]
     pub fn user(&self) -> &str {
         self.creds.user()
     }
@@ -79,7 +92,10 @@ impl Attempt {
 
     #[inline]
     pub fn run(self, tx: &mpsc::Sender<Msg>) {
-        let result = self.script.run_once(self.user(), self.password());
+        let result = match self.creds {
+            Creds::Enum(_) => self.script.run_enum(self.user()),
+            _ => self.script.run_creds(self.user(), self.password()),
+        };
         tx.send(Msg::Attempt(Box::new(self), result)).expect("failed to send result");
     }
 }

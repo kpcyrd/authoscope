@@ -57,15 +57,31 @@ with every script.
 [\fBscripts\fR]...
 .RE
 
+.SS Username enumeration
+.LP
+Takes a list of username and verifies they exist on the system. This is still
+executing the \fBverify\fR function with two arguments, but the password is set
+to \fBnil\fR. You may write a script that can do both by checking the password
+for nil to detect in which mode the script is executed.
+.RS
+\fBbadtouch enum\fR
+<\fBusers\fR>
+[\fBscripts\fR]...
+.RE
+
 .SS Oneshot
 .LP
 Test a single username-password combination using a specific script. This
-command is also useful when developing a new script.
+command is also useful when developing a new script. If the password argument
+is omitted, the script is executed in enumerate mode. If you want to use this
+command in scripts, set \-x so the exitcode is set to 2 if the credentials are
+invalid.
 .RS
 \fBbadtouch oneshot\fR
+[\fB\-x\fR]
 <\fBscript\fR>
 <\fBuser\fR>
-<\fBpassword\fR>
+[\fBpassword\fR]
 
 .SH RUNTIME REFERENCE
 The badtouch runtime provides a number of functions that can be used to test
@@ -464,6 +480,116 @@ debug concurrency.
 .RS
 .nf
 \fBsleep(3)\fP
+.fi
+.RE
+
+.SS sock_connect
+.LP
+Create a tcp connection.
+.RS
+.nf
+\fBsock = sock_connect("127.0.0.1", 1337)\fP
+.fi
+.RE
+
+.SS sock_send
+.LP
+Send data to the socket.
+.RS
+.nf
+\fBsock_send(sock, "hello world")\fP
+.fi
+.RE
+
+.SS sock_recv
+.LP
+Receive up to 4096 bytes from the socket.
+.RS
+.nf
+\fBx = sock_recv(sock)\fP
+.fi
+.RE
+
+.SS sock_sendline
+.LP
+Send a string to the socket. A newline is automatically appended to the string.
+.RS
+.nf
+\fBsock_sendline(sock, line)\fP
+.fi
+.RE
+
+.SS sock_recvline
+.LP
+Receive a line from the socket. The line includes the newline.
+.RS
+.nf
+\fBx = sock_recvline(sock)\fP
+.fi
+.RE
+
+.SS sock_recvall
+.LP
+Receive all data from the socket until EOF.
+.RS
+.nf
+\fBx = sock_recvall(sock)\fP
+.fi
+.RE
+
+.SS sock_recvline_contains
+.LP
+Receive lines from the server until a line contains the needle, then return
+this line.
+.RS
+.nf
+\fBx = sock_recvline_contains(sock, needle)\fP
+.fi
+.RE
+
+.SS sock_recvline_regex
+.LP
+Receive lines from the server until a line matches the regex, then return this
+line.
+.RS
+.nf
+\fBx = sock_recvline_regex(sock, "^250 ")\fP
+.fi
+.RE
+
+.SS sock_recvn
+.LP
+Receive exactly n bytes from the socket.
+.RS
+.nf
+\fBx = sock_recvn(sock, 4)\fP
+.fi
+.RE
+
+.SS sock_recvuntil
+.LP
+Receive until the needle is found, then return all data including the needle.
+.RS
+.nf
+\fBx = sock_recvuntil(sock, needle)\fP
+.fi
+.RE
+
+.SS sock_sendafter
+.LP
+Receive until the needle is found, then write data to the socket.
+.RS
+.nf
+\fBsock_sendafter(sock, needle, data)\fP
+.fi
+.RE
+
+.SS sock_newline
+.LP
+Overwrite the default `\\n` newline.
+.RS
+.nf
+\fBsock_newline(sock, "\\r\\n")\fP
 .fi
 .RE
 

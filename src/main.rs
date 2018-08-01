@@ -13,7 +13,7 @@ use badtouch::fsck;
 use badtouch::utils;
 use badtouch::config::Config;
 use badtouch::pb::ProgressBar;
-use badtouch::scheduler::{Scheduler, Attempt, Msg};
+use badtouch::scheduler::{Scheduler, Attempt, Creds, Msg};
 use badtouch::keyboard::{Keyboard, Key};
 use badtouch::ulimit::{Resource, getrlimit, setrlimit};
 
@@ -40,9 +40,16 @@ impl Report {
         }
     }
 
-    pub fn write(&mut self, user: &str, password: &str, script: &str) -> Result<()> {
+    pub fn write_creds(&mut self, user: &str, password: &str, script: &str) -> Result<()> {
         if let Report::Some(ref mut f) = *self {
             writeln!(f, "{}:{}:{}", script, user, password)?;
+        }
+        Ok(())
+    }
+
+    pub fn write_enum(&mut self, user: &str, script: &str) -> Result<()> {
+        if let Report::Some(ref mut f) = *self {
+            writeln!(f, "{}:{}", script, user)?;
         }
         Ok(())
     }
@@ -103,23 +110,54 @@ fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds, config
     Ok(attempts)
 }
 
+fn setup_enum_attack(pool: &mut Scheduler, args: args::Enum, config: &Arc<Config>) -> Result<usize> {
+    let users = utils::load_list(&args.users).chain_err(|| "failed to load users")?;
+    tinfo!("[+]", "loaded {} users", users.len());
+    let scripts = utils::load_scripts(args.scripts, &config).chain_err(|| "failed to load scripts")?;
+    tinfo!("[+]", "loaded {} scripts", scripts.len());
+
+    let attempts = users.len() * scripts.len();
+    tinfo!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, pool.max_count());
+
+    for user in &users {
+        for script in &scripts {
+            let attempt = Attempt::enumerate(user, script);
+            pool.run(attempt);
+        }
+    }
+
+    Ok(attempts)
+}
+
 fn run_oneshot(oneshot: args::Oneshot, config: Arc<Config>) -> Result<()> {
     let script = Script::load(&oneshot.script, config)?;
     let user = oneshot.user;
-    let password = oneshot.password;
 
-    let valid = script.run_once(&user, &password)?;
+    let valid = match oneshot.password {
+        Some(ref password) => script.run_creds(&user, &password)?,
+        None => script.run_enum(&user)?,
+    };
 
     if valid {
-        println!("{}", format_valid(script.descr(), &user, &password));
+        match oneshot.password {
+            Some(ref password) => println!("{}", format_valid_creds(script.descr(), &user, &password)),
+            None => println!("{}", format_valid_enum(script.descr(), &user)),
+        }
+    } else if oneshot.exitcode {
+        std::process::exit(2);
     }
 
     Ok(())
 }
 
-fn format_valid(script: &str, user: &str, password: &str) -> String {
+fn format_valid_creds(script: &str, user: &str, password: &str) -> String {
     format!("{} {}({}) => {:?}:{:?}", "[+]".bold(), "valid".green(),
         script.yellow(), user, password)
+}
+
+fn format_valid_enum(script: &str, user: &str) -> String {
+    format!("{} {}({}) => {:?}", "[+]".bold(), "valid".green(),
+        script.yellow(), user)
 }
 
 fn set_nofile(config: &Config) -> Result<()> {
@@ -161,6 +199,7 @@ fn run() -> Result<()> {
     let attempts = match args.subcommand {
         args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict, &config)?,
         args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds, &config)?,
+        args::SubCommand::Enum(enumerate) => setup_enum_attack(&mut pool, enumerate, &config)?,
         args::SubCommand::Oneshot(oneshot) => return run_oneshot(oneshot, config),
         args::SubCommand::Fsck(fsck) => return fsck::run_fsck(&fsck),
     };
@@ -212,12 +251,23 @@ fn run() -> Result<()> {
                 match result {
                     Ok(is_valid) => {
                         if is_valid {
-                            let user = attempt.user();
-                            let password = attempt.password();
-                            let script = attempt.script.descr();
+                            match attempt.creds {
+                                Creds::Enum(_) => {
+                                    let user = attempt.user();
+                                    let script = attempt.script.descr();
 
-                            pb.writeln(format_valid(script, user, password));
-                            report.write(user, password, script)?;
+                                    pb.writeln(format_valid_enum(script, user));
+                                    report.write_enum(user, script)?;
+                                },
+                                _ => {
+                                    let user = attempt.user();
+                                    let password = attempt.password();
+                                    let script = attempt.script.descr();
+
+                                    pb.writeln(format_valid_creds(script, user, password));
+                                    report.write_creds(user, password, script)?;
+                                },
+                            };
                             valid += 1;
                         }
                         pb.inc();
@@ -258,7 +308,7 @@ fn run() -> Result<()> {
 
 fn main() {
     if let Err(ref e) = run() {
-        eprintln!("{}", e.display_chain());
+        eprint!("{}", e.display_chain());
         std::process::exit(1);
     }
 }

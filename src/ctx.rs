@@ -1,4 +1,4 @@
-use hlua;
+use hlua::{self, AnyLuaValue};
 use errors::{Result, Error};
 use runtime;
 
@@ -220,7 +220,7 @@ impl Script {
     }
     */
 
-    pub fn run_once(&self, user: &str, password: &str) -> Result<bool> {
+    pub fn run_once(&self, user: AnyLuaValue, password: AnyLuaValue) -> Result<bool> {
         debug!("executing {:?} with {:?}:{:?}", self.descr(), user, password);
 
         let (mut lua, state) = Script::ctx(&self.config);
@@ -248,6 +248,20 @@ impl Script {
             x => Err(format!("lua returned wrong type: {:?}", x).into()),
         }
     }
+
+    #[inline]
+    pub fn run_creds(&self, user: &str, password: &str) -> Result<bool> {
+        let user = AnyLuaValue::LuaString(user.to_string());
+        let password = AnyLuaValue::LuaString(password.to_string());
+        self.run_once(user, password)
+    }
+
+    #[inline]
+    pub fn run_enum(&self, user: &str) -> Result<bool> {
+        let user = AnyLuaValue::LuaString(user.to_string());
+        let password = AnyLuaValue::LuaNil;
+        self.run_once(user, password)
+    }
 }
 
 #[cfg(test)]
@@ -268,7 +282,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("foo", "bar").expect("test script failed");
+        let result = script.run_creds("foo", "bar").expect("test script failed");
         assert!(!result);
     }
 
@@ -282,7 +296,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("foo", "bar").expect("test script failed");
+        let result = script.run_creds("foo", "bar").expect("test script failed");
         assert!(result);
     }
 
@@ -297,7 +311,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x");
+        let result = script.run_creds("x", "x");
         assert!(result.is_err());
     }
 
@@ -313,7 +327,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x").expect("test script failed");
+        let result = script.run_creds("x", "x").expect("test script failed");
         assert!(result);
     }
 
@@ -328,7 +342,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("foo", "bar").expect("test script failed");
+        let result = script.run_creds("foo", "bar").expect("test script failed");
         assert!(result);
     }
 
@@ -342,7 +356,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("foo", "buzz").expect("test script failed");
+        let result = script.run_creds("foo", "buzz").expect("test script failed");
         assert!(result);
     }
 
@@ -356,7 +370,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("invalid", "wrong").expect("test script failed");
+        let result = script.run_creds("invalid", "wrong").expect("test script failed");
         assert!(!result);
     }
 
@@ -371,7 +385,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x").expect("test script failed");
+        let result = script.run_creds("x", "x").expect("test script failed");
         assert!(result);
     }
 
@@ -386,7 +400,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x").expect("test script failed");
+        let result = script.run_creds("x", "x").expect("test script failed");
         assert!(result);
     }
 
@@ -410,7 +424,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x").expect("test script failed");
+        let result = script.run_creds("x", "x").expect("test script failed");
         assert!(result);
     }
 
@@ -436,7 +450,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x").expect("test script failed");
+        let result = script.run_creds("x", "x").expect("test script failed");
         assert!(result);
     }
 
@@ -451,7 +465,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x").expect("test script failed");
+        let result = script.run_creds("x", "x").expect("test script failed");
         assert!(result);
     }
 
@@ -466,7 +480,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x");
+        let result = script.run_creds("x", "x");
         assert!(result.is_err());
     }
 
@@ -482,7 +496,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x").expect("test script failed");
+        let result = script.run_creds("x", "x").expect("test script failed");
         assert!(result);
     }
 
@@ -498,7 +512,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x").expect("test script failed");
+        let result = script.run_creds("x", "x").expect("test script failed");
         assert!(result);
     }
 
@@ -514,7 +528,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x").expect("test script failed");
+        let result = script.run_creds("x", "x").expect("test script failed");
         assert!(result);
     }
 
@@ -530,7 +544,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x").expect("test script failed");
+        let result = script.run_creds("x", "x").expect("test script failed");
         assert!(result);
     }
 
@@ -546,7 +560,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x").expect("test script failed");
+        let result = script.run_creds("x", "x").expect("test script failed");
         assert!(result);
     }
 
@@ -562,7 +576,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "x").expect("test script failed");
+        let result = script.run_creds("x", "x").expect("test script failed");
         assert!(result);
     }
 
@@ -576,7 +590,7 @@ mod tests {
         end
         "#.as_bytes(), empty_config()).unwrap();
 
-        let result = script.run_once("x", "hunter2").expect("test script failed");
+        let result = script.run_creds("x", "hunter2").expect("test script failed");
         assert!(result);
     }
 }
