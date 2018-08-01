@@ -22,6 +22,20 @@ magically provided by the badtouch runtime.
 
 [![asciicast](https://asciinema.org/a/Ke5rHVsz5sJePNUK1k0ASAvuZ.png)](https://asciinema.org/a/Ke5rHVsz5sJePNUK1k0ASAvuZ)
 
+## Installation
+
+If you are on an archlinux based system, use
+
+    pacman -S badtouch
+
+To build from source, make sure you have [rust](https://rustup.rs/) and `libssl-dev` installed and run
+
+    cargo install
+
+Verify your setup is complete with
+
+    badtouch --help
+
 ## Reference
 - [base64_decode](#base64_decode)
 - [base64_encode](#base64_encode)
