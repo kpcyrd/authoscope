@@ -60,12 +60,13 @@ with every script.
 .SS Oneshot
 .LP
 Test a single username-password combination using a specific script. This
-command is also useful when developing a new script.
+command is also useful when developing a new script. If the password argument
+is omitted, the script is executed in enumerate mode.
 .RS
 \fBbadtouch oneshot\fR
 <\fBscript\fR>
 <\fBuser\fR>
-<\fBpassword\fR>
+[\fBpassword\fR]
 
 .SH RUNTIME REFERENCE
 The badtouch runtime provides a number of functions that can be used to test

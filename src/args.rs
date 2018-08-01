@@ -79,7 +79,7 @@ pub struct Oneshot {
     #[structopt(help="Username to test")]
     pub user: String,
     #[structopt(help="Password to test")]
-    pub password: String,
+    pub password: Option<String>,
 }
 
 #[derive(StructOpt, Debug)]

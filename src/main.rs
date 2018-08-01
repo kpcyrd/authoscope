@@ -132,12 +132,17 @@ fn setup_enum_attack(pool: &mut Scheduler, args: args::Enum, config: &Arc<Config
 fn run_oneshot(oneshot: args::Oneshot, config: Arc<Config>) -> Result<()> {
     let script = Script::load(&oneshot.script, config)?;
     let user = oneshot.user;
-    let password = oneshot.password;
 
-    let valid = script.run_creds(&user, &password)?;
+    let valid = match oneshot.password {
+        Some(ref password) => script.run_creds(&user, &password)?,
+        None => script.run_enum(&user)?,
+    };
 
     if valid {
-        println!("{}", format_valid_creds(script.descr(), &user, &password));
+        match oneshot.password {
+            Some(ref password) => println!("{}", format_valid_creds(script.descr(), &user, &password)),
+            None => println!("{}", format_valid_enum(script.descr(), &user)),
+        }
     }
 
     Ok(())
