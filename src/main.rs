@@ -190,6 +190,7 @@ fn run() -> Result<()> {
     }
 
     let config = Arc::new(Config::load()?);
+    #[cfg(target_os="linux")]
     set_nofile(&config)
         .chain_err(|| "failed to set RLIMIT_NOFILE")?;
 
