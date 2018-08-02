@@ -61,6 +61,7 @@ function verify(user, password)
         form={
             user=user,
             password=password,
+            csrf=token
         }
     })
     resp = http_send(req)
