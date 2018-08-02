@@ -36,6 +36,46 @@ Verify your setup is complete with
 
     badtouch --help
 
+## Scripting
+
+A simple script could look like this:
+
+```lua
+descr = "example.com"
+
+function verify(user, password)
+    session = http_mksession()
+
+    -- get csrf token
+    req = http_request(session, 'GET', 'https://example.com/login', {})
+    resp = http_send(req)
+    if last_err() then return end
+
+    -- parse token from html
+    html = resp['text']
+    csrf = html_select(html, 'input[name="csrf"]')
+    token = csrf["attrs"]["value"]
+
+    -- send login
+    req = http_request(session, 'POST', 'https://example.com/login', {
+        form={
+            user=user,
+            password=password,
+        }
+    })
+    resp = http_send(req)
+    if last_err() then return end
+
+    -- search response for successful login
+    html = resp['text']
+    return html:find('Login successful') != nil
+end
+```
+
+Please see the reference and [examples](/scripts) for all available functions.
+Keep in mind that you can use `print(x)` and `badtouch oneshot` to debug your
+script.
+
 ## Reference
 - [base64_decode](#base64_decode)
 - [base64_encode](#base64_encode)
