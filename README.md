@@ -28,6 +28,10 @@ If you are on an archlinux based system, use
 
     pacman -S badtouch
 
+If you are on Mac OSX, use
+
+    brew install badtouch
+
 To build from source, make sure you have [rust](https://rustup.rs/) and `libssl-dev` installed and run
 
     cargo install
