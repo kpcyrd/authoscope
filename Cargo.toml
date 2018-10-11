@@ -50,6 +50,7 @@ mysql = "14.0.0"
 ldap3 = "0.6"
 kuchiki = "0.7"
 twox-hash = "1.1"
+dirs = "1.0.4"
 
 [target."cfg(unix)".dependencies]
 termios = "0.3"
