@@ -3,3 +3,4 @@
 **/*.rs.bk
 *.txt
 *.sw[op]
+/docs/_build/

@@ -196,8 +196,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'ReadtheDocsTemplate.tex', u'Read the Docs Template Documentation',
-   u'Read the Docs', 'manual'),
+  ('index', 'badtouch.tex', u'badtouch Documentation',
+   u'kpcyrd', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
