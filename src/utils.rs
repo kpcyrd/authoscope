@@ -1,4 +1,4 @@
-use errors::{Result, ResultExt};
+use errors::*;
 
 use std::str;
 use std::fs::{self, File};
@@ -35,12 +35,12 @@ pub fn load_creds(path: &str) -> Result<Vec<Arc<Vec<u8>>>> {
 
         // ensure line is valid utf8
         str::from_utf8(&buf)
-            .chain_err(|| "failed to decode utf8")?;
+            .context("Failed to decode utf8")?;
 
         if buf.iter().any(|x| *x == b':') {
             creds.push(Arc::new(buf.clone()));
         } else {
-            return Err(format!("invalid list format: {:?}", buf).into())
+            return Err(format_err!("Invalid list format: {:?}", buf))
         }
 
         buf.clear();

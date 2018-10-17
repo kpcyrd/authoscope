@@ -1,10 +1,9 @@
-use errors::{Result, ResultExt};
+use errors::*;
 use structs::LuaMap;
 
 use reqwest;
-use reqwest::header::Headers;
-use reqwest::header::Cookie;
-use reqwest::header::UserAgent;
+use reqwest::Method;
+use reqwest::header::{HeaderName, HeaderValue, COOKIE, SET_COOKIE, USER_AGENT};
 use hlua::AnyLuaValue;
 use serde_json;
 use json::LuaJsonValue;
@@ -105,42 +104,40 @@ impl HttpRequest {
         let client = reqwest::Client::builder()
             .redirect(reqwest::RedirectPolicy::none()) // TODO: this should be configurable
             .build().unwrap();
-        let method = self.method.parse()
-                        .chain_err(|| "Invalid http method")?;
+        let method = self.method.parse::<Method>()
+                        .context("Invalid http method")?;
         let mut req = client.request(method, &self.url);
 
-        let mut cookie = Cookie::new();
-        for (key, value) in self.cookies.iter() {
-            cookie.append(key.clone(), value.clone());
+        if let Some(cookies) = self.cookies.assemble_cookie_header() {
+            debug!("Adding cookies to request: {:?}", cookies);
+            req = req.header(COOKIE, HeaderValue::from_str(&cookies)?);
         }
-        req.header(cookie);
 
         if let Some(ref agent) = self.user_agent {
-            req.header(UserAgent::new(agent.clone()));
+            req = req.header(USER_AGENT, agent.as_str());
         }
 
         if let Some(ref auth) = self.basic_auth {
             let &(ref user, ref password) = auth;
-            req.basic_auth(user.clone(), Some(password.clone()));
+            req = req.basic_auth(user, Some(password));
         }
 
         if let Some(ref headers) = self.headers {
-            let mut hdrs = Headers::new();
             for (k, v) in headers {
-                hdrs.set_raw(k.clone(), v.clone());
+                let k = HeaderName::from_bytes(k.as_bytes())?;
+                req = req.header(k, HeaderValue::from_str(v)?);
             }
-            req.headers(hdrs);
         }
 
         if let Some(ref query) = self.query {
-            req.query(query);
+            req = req.query(query);
         }
 
-        match self.body {
-            Some(Body::Raw(ref x))  => { req.body(x.clone()); },
-            Some(Body::Form(ref x)) => { req.form(x); },
-            Some(Body::Json(ref x)) => { req.json(x); },
-            None => (),
+        req = match self.body {
+            Some(Body::Raw(ref x))  => { req.body(x.clone()) },
+            Some(Body::Form(ref x)) => { req.form(x) },
+            Some(Body::Json(ref x)) => { req.json(x) },
+            None => req,
         };
 
         info!("http req: {:?}", req);
@@ -151,13 +148,15 @@ impl HttpRequest {
         let status = res.status();
         resp.insert_num("status", f64::from(status.as_u16()));
 
-        if let Some(cookies) = res.headers().get_raw("set-cookie") {
-            HttpRequest::register_cookies_on_state(&self.session, state, cookies);
+        {
+            let cookies = res.headers().get_all(SET_COOKIE);
+            HttpRequest::register_cookies_on_state(&self.session, state, &cookies)
+                .context("Failed to process http response cookies")?;
         }
 
         let mut headers = LuaMap::new();
-        for header in res.headers().iter() {
-            headers.insert_str(header.name().to_lowercase(), header.value_string());
+        for (name, value) in res.headers().iter() {
+            headers.insert_str(name.as_str().to_lowercase(), value.to_str()?);
         }
         resp.insert("headers", headers);
 
@@ -168,16 +167,18 @@ impl HttpRequest {
         Ok(resp)
     }
 
-    fn register_cookies_on_state(session: &str, state: &State, cookies: &reqwest::header::Raw) {
+    fn register_cookies_on_state(session: &str, state: &State, cookies: &reqwest::header::GetAll<HeaderValue>) -> Result<()> {
         let mut jar = Vec::new();
 
-        for cookie in cookies {
+        for cookie in cookies.iter() {
+            let cookie = cookie.to_str()?;
+
             let mut key = String::new();
             let mut value = String::new();
             let mut in_key = true;
 
-            for c in cookie.iter() {
-                match *c as char {
+            for c in cookie.chars() {
+                match c {
                     '=' if in_key => in_key = false,
                     ';' => break,
                     c if in_key => key.push(c),
@@ -189,6 +190,8 @@ impl HttpRequest {
         }
 
         state.register_in_jar(session, jar);
+
+        Ok(())
     }
 }
 
@@ -217,6 +220,38 @@ impl CookieJar {
         for (key, value) in cookies {
             self.0.insert(key, value);
         }
+    }
+
+    pub fn assemble_cookie_header(&self) -> Option<String> {
+        if self.is_empty() {
+            return None;
+        }
+
+        let mut cookies: Vec<String> = Vec::new();
+        for (key, value) in self.iter() {
+            let value = if value.contains(' ') || value.contains(';') {
+                self.escape_cookie_value(&value)
+            } else {
+                value.to_owned()
+            };
+
+            let cookie = format!("{}={}", key, value);
+            debug!("Adding cookie: {:?}", cookie);
+            cookies.push(cookie);
+        }
+
+        Some(cookies.join("; "))
+    }
+
+    fn escape_cookie_value(&self, value: &str) -> String {
+        value.chars()
+            .fold(String::new(), |mut s, c| {
+                match c {
+                    ';' => s.push_str("\\073"),
+                    c => s.push(c),
+                }
+                s
+            })
     }
 }
 

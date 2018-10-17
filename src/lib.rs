@@ -14,9 +14,10 @@ extern crate nix;
 extern crate libc;
 extern crate bufstream;
 extern crate regex;
+extern crate dirs;
 #[macro_use] extern crate log;
 #[macro_use] extern crate serde_derive;
-#[macro_use] extern crate error_chain;
+#[macro_use] extern crate failure;
 #[macro_use] extern crate structopt;
 
 extern crate md5;
@@ -55,30 +56,6 @@ pub mod utils;
 
 
 pub mod errors {
-    use std;
-    use hlua;
-    use serde_json;
-    use reqwest;
-    use base64;
-    use toml;
-    use nix;
-    use bcrypt;
-    use mysql;
-    use regex;
-
-    error_chain! {
-        foreign_links {
-            Io(std::io::Error);
-            Lua(hlua::LuaError);
-            Json(serde_json::Error);
-            Reqwest(reqwest::Error);
-            BufWrite(std::io::IntoInnerError<std::io::BufWriter<std::io::Stdout>>);
-            Base64Decode(base64::DecodeError);
-            Toml(toml::de::Error);
-            Nix(nix::Error);
-            Bcrypt(bcrypt::BcryptError);
-            Mysql(mysql::Error);
-            Regex(regex::Error);
-        }
-    }
+    pub use failure::{Error, ResultExt};
+    pub type Result<T> = ::std::result::Result<T, Error>;
 }

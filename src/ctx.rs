@@ -46,11 +46,12 @@ impl State {
         *lock = None;
     }
 
-    pub fn set_error(&self, err: Error) -> Error {
+    pub fn set_error<I: Into<Error>>(&self, err: I) -> Error {
+        let err = err.into();
         let mut mtx = self.error.lock().unwrap();
         let cp = err.to_string();
         *mtx = Some(err);
-        cp.into()
+        format_err!("{}", cp) // TODO: refactor
     }
 
     fn random_id(&self) -> String {
@@ -133,13 +134,13 @@ impl Script {
         lua.execute::<()>(&code)?;
 
         let descr = {
-            let descr: Result<_> = lua.get("descr").ok_or_else(|| "descr undefined".into());
+            let descr: Result<_> = lua.get("descr").ok_or_else(|| format_err!("descr undefined"));
             let descr: hlua::StringInLua<_> = descr?;
             (*descr).to_owned()
         };
 
         {
-            let verify: Result<_> = lua.get("verify").ok_or_else(|| "verify undefined".into());
+            let verify: Result<_> = lua.get("verify").ok_or_else(|| format_err!("verify undefined"));
             let _: hlua::LuaFunction<_> = verify?;
         };
 
@@ -226,14 +227,13 @@ impl Script {
         let (mut lua, state) = Script::ctx(&self.config);
         lua.execute::<()>(&self.code)?;
 
-        let verify: Result<_> = lua.get("verify").ok_or_else(|| "verify undefined".into());
+        let verify: Result<_> = lua.get("verify").ok_or_else(|| format_err!("verify undefined"));
         let mut verify: hlua::LuaFunction<_> = verify?;
 
         let result: hlua::AnyLuaValue = match verify.call_with_args((user, password)) {
             Ok(res) => res,
             Err(err) => {
-                let err = format!("execution failed: {:?}", err);
-                return Err(err.into())
+                bail!("execution failed: {:?}", err);
             },
         };
 
@@ -244,8 +244,8 @@ impl Script {
         use hlua::AnyLuaValue::*;
         match result {
             LuaBoolean(x) => Ok(x),
-            LuaString(x) => Err(format!("error: {:?}", x).into()),
-            x => Err(format!("lua returned wrong type: {:?}", x).into()),
+            LuaString(x) => Err(format_err!("error: {:?}", x)),
+            x => Err(format_err!("lua returned wrong type: {:?}", x)),
         }
     }
 
@@ -372,6 +372,46 @@ mod tests {
 
         let result = script.run_creds("invalid", "wrong").expect("test script failed");
         assert!(!result);
+    }
+
+    #[test]
+    fn verify_cookies() {
+        let script = Script::load_from(r#"
+        descr = "cookies httpbin.org"
+
+        function verify(user, password)
+            session = http_mksession()
+
+            req = http_request(session, 'GET', 'https://httpbin.org/cookies/set/foo/; as=df', {})
+            resp = http_send(req)
+            if last_err() then return end
+
+            req = http_request(session, 'GET', 'https://httpbin.org/cookies/set/fizz/buzz', {})
+            resp = http_send(req)
+            if last_err() then return end
+
+            req = http_request(session, 'GET', 'https://httpbin.org/cookies', {})
+            resp = http_send(req)
+            if last_err() then return end
+
+            o = json_decode(resp['text'])
+            if last_err() then return end
+            print(o)
+
+            if o['cookies']['foo'] ~= '; as=df' then
+                return 'Unexpected value for foo cookie'
+            end
+
+            if o['cookies']['fizz'] ~= 'buzz' then
+                return 'Unexpected value for fizz cookie'
+            end
+
+            return true
+        end
+        "#.as_bytes(), empty_config()).unwrap();
+
+        let result = script.run_creds("invalid", "wrong").expect("test script failed");
+        assert!(result);
     }
 
     #[test]

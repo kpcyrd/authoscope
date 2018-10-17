@@ -46,7 +46,7 @@ pub fn html_select(html: &str, selector: &str) -> Result<Element> {
     let doc = kuchiki::parse_html().one(html);
     match doc.select_first(selector) {
         Ok(x) => Ok(transform_element(&x)),
-        Err(_) => Err("css selector failed".into()),
+        Err(_) => bail!("css selector failed"),
     }
 }
 
@@ -55,7 +55,7 @@ pub fn html_select_list(html: &str, selector: &str) -> Result<Vec<Element>> {
 
     match doc.select(selector) {
         Ok(x) => Ok(x.into_iter().map(|x| transform_element(&x)).collect()),
-        Err(_) => Err("css selector failed".into()),
+        Err(_) => bail!("css selector failed"),
     }
 }
 
