@@ -4,7 +4,6 @@ extern crate env_logger;
 extern crate colored;
 extern crate humantime;
 extern crate atty;
-extern crate error_chain;
 #[macro_use] extern crate log;
 
 use badtouch::args;
@@ -17,7 +16,6 @@ use badtouch::scheduler::{Scheduler, Attempt, Creds, Msg};
 use badtouch::keyboard::{Keyboard, Key};
 use badtouch::ulimit::{Resource, getrlimit, setrlimit};
 
-use error_chain::ChainedError;
 use colored::*;
 use std::thread;
 use std::fs::File;
@@ -68,11 +66,14 @@ macro_rules! tinfo {
 }
 
 fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict, config: &Arc<Config>) -> Result<usize> {
-    let users = utils::load_list(&args.users).chain_err(|| "failed to load users")?;
+    let users = utils::load_list(&args.users)
+        .context("Failed to load users")?;
     tinfo!("[+]", "loaded {} users", users.len());
-    let passwords = utils::load_list(&args.passwords).chain_err(|| "failed to load passwords")?;
+    let passwords = utils::load_list(&args.passwords)
+        .context("Failed to load passwords")?;
     tinfo!("[+]", "loaded {} passwords", passwords.len());
-    let scripts = utils::load_scripts(args.scripts, &config).chain_err(|| "failed to load scripts")?;
+    let scripts = utils::load_scripts(args.scripts, &config)
+        .context("Failed to load scripts")?;
     tinfo!("[+]", "loaded {} scripts", scripts.len());
 
     let attempts = users.len() * passwords.len() * scripts.len();
@@ -93,7 +94,8 @@ fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict, config: &Arc<
 fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds, config: &Arc<Config>) -> Result<usize> {
     let creds = utils::load_creds(&args.creds)?;
     tinfo!("[+]", "loaded {} credentials", creds.len());
-    let scripts = utils::load_scripts(args.scripts, &config).chain_err(|| "failed to load scripts")?;
+    let scripts = utils::load_scripts(args.scripts, &config)
+        .context("Failed to load scripts")?;
     tinfo!("[+]", "loaded {} scripts", scripts.len());
 
     let attempts = creds.len() * scripts.len();
@@ -111,9 +113,11 @@ fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds, config
 }
 
 fn setup_enum_attack(pool: &mut Scheduler, args: args::Enum, config: &Arc<Config>) -> Result<usize> {
-    let users = utils::load_list(&args.users).chain_err(|| "failed to load users")?;
+    let users = utils::load_list(&args.users)
+        .context("Failed to load users")?;
     tinfo!("[+]", "loaded {} users", users.len());
-    let scripts = utils::load_scripts(args.scripts, &config).chain_err(|| "failed to load scripts")?;
+    let scripts = utils::load_scripts(args.scripts, &config)
+        .context("Failed to load scripts")?;
     tinfo!("[+]", "loaded {} scripts", scripts.len());
 
     let attempts = users.len() * scripts.len();
@@ -192,7 +196,7 @@ fn run() -> Result<()> {
     let config = Arc::new(Config::load()?);
     #[cfg(target_os="linux")]
     set_nofile(&config)
-        .chain_err(|| "failed to set RLIMIT_NOFILE")?;
+        .context("Failed to set RLIMIT_NOFILE")?;
 
     let mut pool = Scheduler::new(args.workers);
     let mut report = Report::open(args.output)?;
@@ -308,8 +312,11 @@ fn run() -> Result<()> {
 }
 
 fn main() {
-    if let Err(ref e) = run() {
-        eprint!("{}", e.display_chain());
+    if let Err(err) = run() {
+        eprintln!("Error: {}", err);
+        for cause in err.iter_chain().skip(1) {
+            eprintln!("Because: {}", cause);
+        }
         std::process::exit(1);
     }
 }

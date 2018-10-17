@@ -1,4 +1,4 @@
-use errors::{Result, ResultExt};
+use errors::*;
 
 use bufstream::BufStream;
 use regex::Regex;
@@ -76,7 +76,7 @@ impl Socket {
         let needle = self.newline.clone();
         let buf = self.recvuntil(needle.as_bytes())?;
         let line = String::from_utf8(buf)
-            .chain_err(|| "failed to decode utf8")?;
+            .context("Failed to decode utf8")?;
         Ok(line)
     }
 

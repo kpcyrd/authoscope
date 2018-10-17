@@ -1,7 +1,6 @@
-extern crate dirs;
+use errors::*;
 
-use errors::{Result, ResultExt};
-
+use dirs;
 use std::fs::File;
 use std::path::Path;
 use std::io::prelude::*;
@@ -26,7 +25,7 @@ pub struct RuntimeConfig {
 impl Config {
     pub fn load() -> Result<Config> {
         let home = dirs::home_dir()
-                        .chain_err(|| "home folder not found")?;
+                        .ok_or_else(|| format_err!("home folder not found"))?;
 
         let path = home.join(".config/badtouch.toml");
 

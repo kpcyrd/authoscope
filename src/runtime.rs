@@ -2,7 +2,7 @@ use hlua;
 use hlua::{AnyLuaValue, AnyHashableLuaValue, AnyLuaString};
 use hlua::AnyLuaValue::LuaString;
 use structs::LuaMap;
-use errors::{Result, ResultExt};
+use errors::*;
 use json;
 use db;
 
@@ -10,13 +10,14 @@ use md5;
 use sha1;
 use sha2;
 use sha3::{self, Digest};
-use digest::{Input, BlockInput, FixedOutput};
+use digest::{Input, BlockInput, FixedOutput, Reset};
 use digest::generic_array::ArrayLength;
 use hmac::{Hmac, Mac};
 use base64;
 use bcrypt;
 
 use reqwest;
+use reqwest::header::WWW_AUTHENTICATE;
 use ldap3;
 use mysql;
 use rand;
@@ -42,12 +43,12 @@ fn byte_array(bytes: AnyLuaValue) -> Result<Vec<u8>> {
                     AnyLuaValue::LuaNumber(num) if num <= 255.0 && num >= 0.0 && (num % 1.0 == 0.0) =>
                             Ok(num as u8),
                     AnyLuaValue::LuaNumber(num) =>
-                            Err(format!("number is out of range: {:?}", num).into()),
-                    _ => Err(format!("unexpected type: {:?}", num).into()),
+                            Err(format_err!("number is out of range: {:?}", num)),
+                    _ => Err(format_err!("unexpected type: {:?}", num)),
                 })
                 .collect::<Result<_>>()?)
         },
-        _ => Err(format!("invalid type: {:?}", bytes).into()),
+        _ => Err(format_err!("Invalid type: {:?}", bytes)),
     }
 }
 
@@ -59,7 +60,7 @@ fn lua_bytes(bytes: &[u8]) -> AnyLuaValue {
 pub fn base64_decode(lua: &mut hlua::Lua, state: State) {
     lua.set("base64_decode", hlua::function1(move |bytes: String| -> Result<AnyLuaValue> {
         base64::decode(&bytes)
-            .map_err(|err| state.set_error(err.into()))
+            .map_err(|err| state.set_error(err))
             .map(|bytes| lua_bytes(&bytes))
     }))
 }
@@ -75,14 +76,14 @@ pub fn base64_encode(lua: &mut hlua::Lua, state: State) {
 pub fn bcrypt(lua: &mut hlua::Lua, state: State) {
     lua.set("bcrypt", hlua::function2(move |password: String, cost: u32| -> Result<String> {
         bcrypt::hash(&password, cost)
-            .map_err(|err| state.set_error(err.into()))
+            .map_err(|err| state.set_error(err))
     }))
 }
 
 pub fn bcrypt_verify(lua: &mut hlua::Lua, state: State) {
     lua.set("bcrypt_verify", hlua::function2(move |password: String, hashed: String| -> Result<bool> {
         bcrypt::verify(&password, &hashed)
-            .map_err(|err| state.set_error(err.into()))
+            .map_err(|err| state.set_error(err))
     }))
 }
 
@@ -104,14 +105,14 @@ pub fn execve(lua: &mut hlua::Lua, state: State) {
         let status = match Command::new(prog)
                         .args(&args)
                         .status()
-                        .chain_err(|| "failed to spawn program") {
+                        .context("Failed to spawn program") {
             Ok(status) => status,
             Err(err) => return Err(state.set_error(err)),
         };
 
         let code = match status.code() {
             Some(code) => code,
-            None => return Err(state.set_error("process didn't return exit code".into())),
+            None => return Err(state.set_error(format_err!("Process didn't return exit code"))),
         };
 
         Ok(code)
@@ -136,15 +137,16 @@ pub fn hex(lua: &mut hlua::Lua, state: State) {
 
 fn hmac<D>(secret: AnyLuaValue, msg: AnyLuaValue) -> Result<AnyLuaValue>
     where
-        D: Input + BlockInput + FixedOutput + Default + Clone,
-        D::BlockSize: ArrayLength<u8>,
+        D: Input + BlockInput + FixedOutput + Reset + Default + Clone,
+        D::BlockSize: ArrayLength<u8> + Clone,
+        D::OutputSize: ArrayLength<u8>,
 {
     let secret = byte_array(secret)?;
     let msg = byte_array(msg)?;
 
     let mut mac = match Hmac::<D>::new_varkey(&secret) {
         Ok(mac) => mac,
-        Err(_) => return Err("invalid key length".into()),
+        Err(_) => bail!("Invalid key length"),
     };
     mac.input(&msg);
     let result = mac.result();
@@ -216,12 +218,12 @@ pub fn http_basic_auth(lua: &mut hlua::Lua, state: State) {
         client.get(&url)
             .basic_auth(user, Some(password))
             .send()
-            .chain_err(|| "http request failed")
+            .context("http request failed")
             .map_err(|err| state.set_error(err))
             .map(|response| {
                 info!("http_basic_auth: {:?}", response);
-                response.headers().get_raw("www-authenticate").is_none() &&
-                    response.status() != reqwest::StatusCode::Unauthorized
+                response.headers().get(WWW_AUTHENTICATE).is_none() &&
+                    response.status() != reqwest::StatusCode::UNAUTHORIZED
             })
     }))
 }
@@ -235,7 +237,7 @@ pub fn http_mksession(lua: &mut hlua::Lua, state: State) {
 pub fn http_request(lua: &mut hlua::Lua, state: State) {
     lua.set("http_request", hlua::function4(move |session: String, method: String, url: String, options: AnyLuaValue| -> Result<AnyLuaValue> {
         RequestOptions::try_from(options)
-            .chain_err(|| "invalid request options")
+            .context("Invalid request options")
             .map_err(|err| state.set_error(err))
             .map(|options| {
                 state.http_request(&session, method, url, options).into()
@@ -246,7 +248,7 @@ pub fn http_request(lua: &mut hlua::Lua, state: State) {
 pub fn http_send(lua: &mut hlua::Lua, state: State) {
     lua.set("http_send", hlua::function1(move |request: AnyLuaValue| -> Result<HashMap<AnyHashableLuaValue, AnyLuaValue>> {
         let req = match HttpRequest::try_from(request)
-                                .chain_err(|| "invalid http request object") {
+                                .context("Invalid http request object") {
             Ok(req) => req,
             Err(err) => return Err(state.set_error(err)),
         };
@@ -283,13 +285,13 @@ pub fn last_err(lua: &mut hlua::Lua, state: State) {
 pub fn ldap_bind(lua: &mut hlua::Lua, state: State) {
     lua.set("ldap_bind", hlua::function3(move |url: String, dn: String, password: String| -> Result<bool> {
         let sock = match ldap3::LdapConn::new(&url)
-                        .chain_err(|| "ldap connection failed") {
+                        .context("ldap connection failed") {
             Ok(sock) => sock,
             Err(err) => return Err(state.set_error(err)),
         };
 
         sock.simple_bind(&dn, &password)
-            .chain_err(|| "fatal error during simple_bind")
+            .context("Fatal error during simple_bind")
             .map_err(|err| state.set_error(err))
             .map(|result| {
                 debug!("ldap_bind: {:?}", result);
@@ -306,46 +308,37 @@ pub fn ldap_escape(lua: &mut hlua::Lua, _: State) {
 
 pub fn ldap_search_bind(lua: &mut hlua::Lua, state: State) {
     lua.set("ldap_search_bind", hlua::function6(move |url: String, search_user: String, search_pw: String, base_dn: String, user: String, password: String| -> Result<bool> {
+        let sock = ldap3::LdapConn::new(&url)
+            .context("ldap connection failed")
+            .map_err(|err| state.set_error(err))?;
 
-        let sock = match ldap3::LdapConn::new(&url)
-                        .chain_err(|| "ldap connection failed") {
-            Ok(sock) => sock,
-            Err(err) => return Err(state.set_error(err)),
-        };
 
-        let result = match sock.simple_bind(&search_user, &search_pw)
-                            .chain_err(|| "fatal error during simple_bind with search user") {
-            Ok(result) => result,
-            Err(err) => return Err(state.set_error(err)),
-        };
+        let result = sock.simple_bind(&search_user, &search_pw)
+            .context("Fatal error during simple_bind with search user")
+            .map_err(|err| state.set_error(err))?;
 
         if result.success().is_err() {
-            return Err("login with search user failed".into());
+            return Err(state.set_error(format_err!("Login with search user failed")));
         }
 
         let search = format!("uid={}", ldap3::dn_escape(user));
-        let result = match sock.search(&base_dn, ldap3::Scope::Subtree, &search, vec!["*"])
-                            .chain_err(|| "fatal error during ldap search") {
-            Ok(result) => result,
-            Err(err) => return Err(state.set_error(err)),
-        };
+        let result = sock.search(&base_dn, ldap3::Scope::Subtree, &search, vec!["*"])
+            .context("Fatal error during ldap search")
+            .map_err(|err| state.set_error(err))?;
 
-        let entries = match result.success()
-                            .chain_err(|| "ldap search failed") {
-            Ok(result) => result.0,
-            Err(err) => return Err(state.set_error(err)),
-        };
+        let entries = result.success()
+            .context("ldap search failed")
+            .map(|result| result.0)
+            .map_err(|err| state.set_error(err))?;
 
         // take the first result
         if let Some(entry) = entries.into_iter().next() {
             let entry = ldap3::SearchEntry::construct(entry);
 
             // we got the DN, try to login
-            let result = match sock.simple_bind(&entry.dn, &password)
-                                .chain_err(|| "fatal error during simple_bind") {
-                Ok(result) => result,
-                Err(err) => return Err(state.set_error(err)),
-            };
+            let result = sock.simple_bind(&entry.dn, &password)
+                .context("Fatal error during simple_bind")
+                .map_err(|err| state.set_error(err))?;
 
             // println!("{:?}", result);
 
@@ -374,8 +367,7 @@ pub fn mysql_connect(lua: &mut hlua::Lua, state: State) {
                .pass(Some(password));
 
         mysql::Conn::new(builder)
-            // TODO: setting an error here means we can't bruteforce mysql anymore
-            .map_err(|err| state.set_error(err.into()))
+            .map_err(|err| state.set_error(err))
             .map(|sock| state.mysql_register(sock))
     }))
 }
@@ -386,7 +378,9 @@ pub fn mysql_query(lua: &mut hlua::Lua, state: State) {
 
         let sock = state.mysql_session(&session);
         let mut sock = sock.lock().unwrap();
-        let rows = sock.prep_exec(query, params)?; // TODO: handle error
+        let rows = sock.prep_exec(query, params)
+            .context("Failed to execute query")
+            .map_err(|err| state.set_error(err))?;
 
         let mut result = Vec::new();
         let column_names = rows.column_indexes();

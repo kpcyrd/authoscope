@@ -1,4 +1,4 @@
-use errors::{Result, ResultExt};
+use errors::*;
 
 use std::iter::FromIterator;
 use std::collections::HashMap;
@@ -8,7 +8,7 @@ use serde_json::{self, Value, Number, Map};
 
 pub fn decode(x: &str) -> Result<AnyLuaValue> {
     let v: Value = serde_json::from_str(&x)
-                        .chain_err(|| "deserialize failed")?;
+                        .context("deserialize failed")?;
     let v: LuaJsonValue = v.into();
     Ok(v.into())
 }
@@ -16,8 +16,9 @@ pub fn decode(x: &str) -> Result<AnyLuaValue> {
 pub fn encode(v: AnyLuaValue) -> Result<String> {
     let v: LuaJsonValue = v.into();
     let v: Value = v.into();
-    serde_json::to_string(&v)
-        .chain_err(|| "serialize failed")
+    let s = serde_json::to_string(&v)
+        .context("Serialize failed")?;
+    Ok(s)
 }
 
 pub fn lua_array_is_list(array: &[(AnyLuaValue, AnyLuaValue)]) -> bool {

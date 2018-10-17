@@ -6,8 +6,8 @@ function verify(user, password)
     -- set cookies
     req = http_request(session, 'GET', 'https://httpbin.org/cookies/set', {
         query={
-            cookie='success',
-            foo='bar'
+            fizz='buzz',
+            foo='; as=df'
         }
     })
     resp = http_send(req)
@@ -27,5 +27,13 @@ function verify(user, password)
     if last_err() then return end
     -- print(json)
 
-    return json['cookies']['foo'] == 'bar'
+    if json['cookies']['foo'] ~= '; as=df' then
+        return 'Unexpected value for foo cookie'
+    end
+
+    if json['cookies']['fizz'] ~= 'buzz' then
+        return 'Unexpected value for fizz cookie'
+    end
+
+    return true
 end
