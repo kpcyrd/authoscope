@@ -10,7 +10,7 @@ use md5;
 use sha1;
 use sha2;
 use sha3::{self, Digest};
-use digest::{Input, BlockInput, FixedOutput};
+use digest::{Input, BlockInput, FixedOutput, Reset};
 use digest::generic_array::ArrayLength;
 use hmac::{Hmac, Mac};
 use base64;
@@ -137,8 +137,9 @@ pub fn hex(lua: &mut hlua::Lua, state: State) {
 
 fn hmac<D>(secret: AnyLuaValue, msg: AnyLuaValue) -> Result<AnyLuaValue>
     where
-        D: Input + BlockInput + FixedOutput + Default + Clone,
-        D::BlockSize: ArrayLength<u8>,
+        D: Input + BlockInput + FixedOutput + Reset + Default + Clone,
+        D::BlockSize: ArrayLength<u8> + Clone,
+        D::OutputSize: ArrayLength<u8>,
 {
     let secret = byte_array(secret)?;
     let msg = byte_array(msg)?;
