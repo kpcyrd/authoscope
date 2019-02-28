@@ -40,6 +40,23 @@ Verify your setup is complete with
 
     badtouch --help
 
+### Debian
+1. Install essential build tools
+```
+sudo apt-get update && sudo apt-get dist-upgrade
+sudo apt-get install build-essential libssl-dev pkg-config
+```
+2. Install rust
+```
+curl -sf -L https://static.rust-lang.org/rustup.sh | sh
+source $HOME/.cargo/env
+```
+3. Install badtouch
+```
+cd /path/to/badtouch
+cargo install
+```
+
 ## Scripting
 
 A simple script could look like this:
