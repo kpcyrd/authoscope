@@ -1,4 +1,4 @@
-use errors::*;
+use crate::errors::*;
 
 use bufstream::BufStream;
 use regex::Regex;

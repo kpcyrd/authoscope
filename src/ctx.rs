@@ -1,6 +1,6 @@
-use hlua::{self, AnyLuaValue};
-use errors::{Result, Error};
-use runtime;
+use crate::hlua::{self, AnyLuaValue};
+use crate::errors::{Result, Error};
+use crate::runtime;
 
 use std::fs::File;
 use std::sync::{Arc, Mutex};
@@ -8,12 +8,12 @@ use std::io::prelude::*;
 use std::collections::HashMap;
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
-use http::{HttpSession,
+use crate::http::{HttpSession,
            HttpRequest,
            RequestOptions};
-use config::Config;
+use crate::config::Config;
 use mysql;
-use sockets::Socket;
+use crate::sockets::Socket;
 
 
 #[derive(Debug, Clone)]
@@ -241,7 +241,7 @@ impl Script {
             return Err(err);
         }
 
-        use hlua::AnyLuaValue::*;
+        use crate::hlua::AnyLuaValue::*;
         match result {
             LuaBoolean(x) => Ok(x),
             LuaString(x) => Err(format_err!("error: {:?}", x)),

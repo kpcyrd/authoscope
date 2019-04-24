@@ -1,9 +1,8 @@
 #![warn(unused_extern_crates)]
-extern crate badtouch;
-extern crate env_logger;
-extern crate colored;
-extern crate humantime;
-extern crate atty;
+use env_logger;
+use colored;
+use humantime;
+use atty;
 #[macro_use] extern crate log;
 
 use badtouch::args;

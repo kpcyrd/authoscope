@@ -1,10 +1,10 @@
-use hlua::{AnyHashableLuaValue, AnyLuaValue};
+use crate::hlua::{AnyHashableLuaValue, AnyLuaValue};
 use mysql;
 
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
 use twox_hash::XxHash;
-use structs::LuaMap;
+use crate::structs::LuaMap;
 
 
 impl From<mysql::Params> for LuaMap {

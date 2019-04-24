@@ -1,36 +1,30 @@
-use hlua;
-use hlua::{AnyLuaValue, AnyHashableLuaValue, AnyLuaString};
-use hlua::AnyLuaValue::LuaString;
-use structs::LuaMap;
-use errors::*;
-use json;
-use db;
+use crate::hlua;
+use crate::hlua::{AnyLuaValue, AnyHashableLuaValue, AnyLuaString};
+use crate::hlua::AnyLuaValue::LuaString;
+use crate::structs::LuaMap;
+use crate::errors::*;
+use crate::json;
+use crate::db;
 
-use md5;
-use sha1;
-use sha2;
-use sha3::{self, Digest};
-use digest::{Input, BlockInput, FixedOutput, Reset};
+use digest::{Digest, Input, BlockInput, FixedOutput, Reset};
 use digest::generic_array::ArrayLength;
 use hmac::{Hmac, Mac};
 use base64;
-use bcrypt;
 
 use reqwest;
 use reqwest::header::WWW_AUTHENTICATE;
 use ldap3;
 use mysql;
-use rand;
 use rand::RngCore;
 
 use std::thread;
 use std::time::Duration;
 use std::process::Command;
 use std::collections::HashMap;
-use ctx::State;
-use http::HttpRequest;
-use http::RequestOptions;
-use html;
+use crate::ctx::State;
+use crate::http::HttpRequest;
+use crate::http::RequestOptions;
+use crate::html;
 
 
 fn byte_array(bytes: AnyLuaValue) -> Result<Vec<u8>> {

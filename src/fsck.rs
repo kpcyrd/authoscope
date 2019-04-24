@@ -1,5 +1,5 @@
-use errors::Result;
-use args::Fsck;
+use crate::errors::Result;
+use crate::args::Fsck;
 
 use std::fs::File;
 use std::io;

@@ -1,13 +1,13 @@
-use errors::*;
+use crate::errors::*;
 
 use std::str;
 use std::fs::{self, File};
 use std::sync::Arc;
 use std::io::{self, BufReader};
 use std::io::prelude::*;
-use config::Config;
+use crate::config::Config;
 
-use ctx;
+use crate::ctx;
 
 
 pub fn load_list(path: &str) -> Result<Vec<Arc<String>>> {
