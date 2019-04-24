@@ -85,7 +85,7 @@ dependencies = [
 
 [[package]]
 name = "badtouch"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
  "atty 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
