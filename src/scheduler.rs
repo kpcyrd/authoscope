@@ -1,8 +1,8 @@
 use std::str;
-use ctx::Script;
+use crate::ctx::Script;
 use threadpool::ThreadPool;
-use keyboard;
-use errors::Result;
+use crate::keyboard;
+use crate::errors::Result;
 use std::sync::{mpsc, Arc, Mutex, Condvar};
 
 #[derive(Debug)]

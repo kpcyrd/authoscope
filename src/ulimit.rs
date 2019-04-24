@@ -2,7 +2,7 @@
 // https://github.com/nix-rust/nix/pull/879
 use std::mem;
 use libc::{self, c_int, rlimit, RLIM_INFINITY, rlim_t};
-use errors::Result;
+use crate::errors::Result;
 use nix::errno::Errno;
 
 

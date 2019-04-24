@@ -1,19 +1,19 @@
-use errors::*;
-use structs::LuaMap;
+use crate::errors::*;
+use crate::structs::LuaMap;
 
 use reqwest;
 use reqwest::Method;
 use reqwest::header::{HeaderName, HeaderValue, COOKIE, SET_COOKIE, USER_AGENT};
-use hlua::AnyLuaValue;
+use crate::hlua::AnyLuaValue;
 use serde_json;
-use json::LuaJsonValue;
+use crate::json::LuaJsonValue;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
-use config::Config;
-use ctx::State;
+use crate::config::Config;
+use crate::ctx::State;
 
 
 #[derive(Debug)]

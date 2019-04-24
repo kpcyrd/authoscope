@@ -1,4 +1,4 @@
-use hlua::{AnyHashableLuaValue, AnyLuaValue};
+use crate::hlua::{AnyHashableLuaValue, AnyLuaValue};
 
 use std::collections;
 use std::collections::HashMap;

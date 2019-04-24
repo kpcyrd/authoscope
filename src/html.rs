@@ -1,10 +1,10 @@
-use errors::Result;
+use crate::errors::Result;
 
 use kuchiki;
 use kuchiki::traits::TendrilSink;
 use std::collections::HashMap;
-use hlua::AnyLuaValue;
-use structs::LuaMap;
+use crate::hlua::AnyLuaValue;
+use crate::structs::LuaMap;
 
 
 #[derive(Debug, PartialEq)]
