@@ -104,9 +104,8 @@ impl From<AnyLuaValue> for LuaJsonValue {
     }
 }
 
-impl Into<serde_json::Value> for LuaJsonValue {
-    fn into(self) -> serde_json::Value {
-        use serde_json::Value;
+impl Into<Value> for LuaJsonValue {
+    fn into(self) -> Value {
         match self {
             LuaJsonValue::Null => Value::Null,
             LuaJsonValue::Bool(v) => Value::Bool(v),
@@ -123,9 +122,8 @@ impl Into<serde_json::Value> for LuaJsonValue {
     }
 }
 
-impl From<serde_json::Value> for LuaJsonValue {
-    fn from(x: serde_json::Value) -> LuaJsonValue {
-        use serde_json::Value;
+impl From<Value> for LuaJsonValue {
+    fn from(x: Value) -> LuaJsonValue {
         match x {
             Value::Null => LuaJsonValue::Null,
             Value::Bool(v) => LuaJsonValue::Bool(v),
