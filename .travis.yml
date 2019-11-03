@@ -1,14 +1,18 @@
 language: rust
 
-os:
-  - linux
-  - osx
-
 jobs:
   include:
-  - rust: stable
+  - os: linux
+    rust: stable
     env: BUILD_MODE=build
-  - rust: stable
+  - os: linux
+    rust: stable
+    env: BUILD_MODE=integration
+  - os: osx
+    rust: stable
+    env: BUILD_MODE=build
+  - os: osx
+    rust: stable
     env: BUILD_MODE=integration
 
 before_install:
