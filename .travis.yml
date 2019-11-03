@@ -1,15 +1,21 @@
 language: rust
 
-matrix:
+os:
+  - linux
+  - osx
+
+jobs:
   include:
-  - os: linux
-    rust: stable
+  - rust: stable
     env: BUILD_MODE=build
-  - os: linux
-    rust: stable
+  - rust: stable
     env: BUILD_MODE=integration
 
 before_install:
-- sudo ci/dependencies.sh
+- >
+  if [[ "$TRAVIS_OS_NAME" == "linux" ]];then
+    sudo ci/dependencies.sh;
+  fi
+
 script:
 - ci/run.sh
