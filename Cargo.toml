@@ -55,3 +55,6 @@ dirs = "2.0"
 
 [target."cfg(unix)".dependencies]
 termios = "0.3"
+
+[target.'cfg(target_os="linux")'.dependencies]
+rlimit = "0.3"

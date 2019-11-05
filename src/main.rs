@@ -1,10 +1,4 @@
 #![warn(unused_extern_crates)]
-use env_logger;
-use colored;
-use humantime;
-use atty;
-#[macro_use] extern crate log;
-
 use badtouch::args;
 use badtouch::ctx::Script;
 use badtouch::fsck;
@@ -13,7 +7,6 @@ use badtouch::config::Config;
 use badtouch::pb::ProgressBar;
 use badtouch::scheduler::{Scheduler, Attempt, Creds, Msg};
 use badtouch::keyboard::{Keyboard, Key};
-use badtouch::ulimit::{Resource, getrlimit, setrlimit};
 
 use colored::*;
 use std::thread;
@@ -163,20 +156,6 @@ fn format_valid_enum(script: &str, user: &str) -> String {
         script.yellow(), user)
 }
 
-fn set_nofile(config: &Config) -> Result<()> {
-    let (soft_limit, hard_limit) = getrlimit(Resource::RLIMIT_NOFILE)?;
-    debug!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
-
-    let hard_limit = config.runtime.rlimit_nofile.or(hard_limit);
-    info!("setting soft_limit to {:?}", hard_limit);
-    setrlimit(Resource::RLIMIT_NOFILE, hard_limit, hard_limit)?;
-
-    let (soft_limit, hard_limit) = getrlimit(Resource::RLIMIT_NOFILE)?;
-    debug!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
-
-    Ok(())
-}
-
 fn run() -> Result<()> {
     let args = args::parse();
 
@@ -194,7 +173,7 @@ fn run() -> Result<()> {
 
     let config = Arc::new(Config::load()?);
     #[cfg(target_os="linux")]
-    set_nofile(&config)
+    badtouch::ulimit::set_nofile(&config)
         .context("Failed to set RLIMIT_NOFILE")?;
 
     let mut pool = Scheduler::new(args.workers);

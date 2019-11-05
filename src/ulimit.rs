@@ -1,34 +1,18 @@
-// temporary solution until nix has ulimit support
-// https://github.com/nix-rust/nix/pull/879
-use std::mem;
-use libc::{self, c_uint, rlimit, RLIM_INFINITY, rlim_t};
+use rlimit::Resource;
 use crate::errors::Result;
-use nix::errno::Errno;
+use crate::config::Config;
 
 
-#[derive(Debug)]
-#[allow(non_camel_case_types)]
-#[repr(u32)]
-pub enum Resource {
-    RLIMIT_NOFILE = libc::RLIMIT_NOFILE,
-}
+pub fn set_nofile(config: &Config) -> Result<()> {
+    let (soft_limit, hard_limit) = rlimit::getrlimit(Resource::NOFILE)?;
+    debug!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
 
-pub fn getrlimit(resource: Resource) -> Result<(Option<rlim_t>, Option<rlim_t>)> {
-    let mut rlim: rlimit = unsafe { mem::uninitialized() };
-    let res = unsafe { libc::getrlimit(resource as c_uint, &mut rlim as *mut _) };
-    let rlim = Errno::result(res).map(|_| {
-        (if rlim.rlim_cur != RLIM_INFINITY { Some(rlim.rlim_cur) } else { None },
-         if rlim.rlim_max != RLIM_INFINITY { Some(rlim.rlim_max) } else { None })
-    })?;
-    Ok(rlim)
-}
+    let new_hard_limit = config.runtime.rlimit_nofile.unwrap_or(hard_limit);
+    info!("setting NOFILE limit to {:?}", new_hard_limit);
+    rlimit::setrlimit(Resource::NOFILE, new_hard_limit, new_hard_limit)?;
 
-pub fn setrlimit(resource: Resource, soft_limit: Option<rlim_t>, hard_limit: Option<rlim_t>) -> Result<()> {
-    let mut rlim: rlimit = unsafe { mem::uninitialized() };
-    rlim.rlim_cur = soft_limit.unwrap_or(RLIM_INFINITY);
-    rlim.rlim_max = hard_limit.unwrap_or(RLIM_INFINITY);
+    let (soft_limit, hard_limit) = rlimit::getrlimit(Resource::NOFILE)?;
+    debug!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
 
-    let res = unsafe { libc::setrlimit(resource as c_uint, &rlim as *const _) };
-    Errno::result(res).map(drop)?;
     Ok(())
 }
