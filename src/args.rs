@@ -1,105 +1,100 @@
 use structopt::StructOpt;
 use structopt::clap::AppSettings;
 
-#[derive(StructOpt, Debug)]
-#[structopt(author = "",
-            raw(global_settings = "&[AppSettings::ColoredHelp]"))]
+#[derive(Debug, StructOpt)]
+#[structopt(global_settings = &[AppSettings::ColoredHelp])]
 pub struct Args {
-    #[structopt(short = "v", long = "verbose",
-                raw(global = "true"), parse(from_occurrences),
-                help="Verbose output")]
+    /// Verbose output
+    #[structopt(short="v", long="verbose",
+                global=true, parse(from_occurrences))]
     pub verbose: u8,
-    #[structopt(short = "n", long = "workers", default_value = "16",
-                help="Concurrent workers")]
+    /// Concurrent workers
+    #[structopt(short = "n", long = "workers", default_value = "16")]
     pub workers: usize,
-    #[structopt(short = "o", long = "output",
-                help="Write results to file")]
+    /// Write results to file
+    #[structopt(short = "o", long = "output")]
     pub output: Option<String>,
     #[structopt(subcommand)]
     pub subcommand: SubCommand,
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(Debug, StructOpt)]
 pub enum SubCommand {
-    #[structopt(author = "",
-                name="dict",
-                about="Dictionary attack")]
+    /// Dictionary attack
+    #[structopt(name="dict")]
     Dict(Dict),
-    #[structopt(author = "",
-                name="creds",
-                about="Credential confirmation attack")]
+    /// Credential confirmation attack
+    #[structopt(name="creds")]
     Creds(Creds),
-    #[structopt(author = "",
-                name="enum",
-                about="Enumerate users")]
+    /// Enumerate users
+    #[structopt(name="enum")]
     Enum(Enum),
-    #[structopt(author = "",
-                name="oneshot",
-                about="Test a single username-password combination")]
+    /// Test a single username-password combination
+    #[structopt(name="oneshot")]
     Oneshot(Oneshot),
-    #[structopt(author = "",
-                name="fsck",
-                about="Verify and fix encoding of a list")]
+    /// Verify and fix encoding of a list
+    #[structopt(name="fsck")]
     Fsck(Fsck),
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(Debug, StructOpt)]
 pub struct Dict {
-    #[structopt(help="Username list path")]
+    /// Username list path
     pub users: String,
-    #[structopt(help="Password list path")]
+    /// Password list path
     pub passwords: String,
-    #[structopt(raw(required="true"),
-                help="Scripts to run")]
+    /// Scripts to run
+    #[structopt(required=true)]
     pub scripts: Vec<String>,
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(Debug, StructOpt)]
 pub struct Creds {
-    #[structopt(help="Credential list path")]
+    /// Credential list path
     pub creds: String,
-    #[structopt(raw(required="true"),
-                help="Scripts to run")]
+    /// Scripts to run
+    #[structopt(required=true)]
     pub scripts: Vec<String>,
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(Debug, StructOpt)]
 pub struct Enum {
-    #[structopt(help="Username list path")]
+    /// Username list path
     pub users: String,
-    #[structopt(raw(required="true"),
-                help="Scripts to run")]
+    /// Scripts to run
+    #[structopt(required=true)]
     pub scripts: Vec<String>,
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(Debug, StructOpt)]
 pub struct Oneshot {
-    #[structopt(help="Script to run")]
+    /// Script to run
     pub script: String,
-    #[structopt(help="Username to test")]
+    /// Username to test
     pub user: String,
-    #[structopt(help="Password to test")]
+    /// Password to test
     pub password: Option<String>,
-    #[structopt(short = "x", long = "exitcode",
-                help="Set the exitcode to 2 if the credentials are invalid")]
+    /// Set the exitcode to 2 if the credentials are invalid
+    #[structopt(short = "x", long = "exitcode")]
     pub exitcode: bool,
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(Debug, StructOpt)]
 pub struct Fsck {
-    #[structopt(short = "q", long = "quiet",
-                help="Do not show invalid lines")]
+    /// Do not show invalid lines
+    #[structopt(short = "q", long = "quiet")]
     pub quiet: bool,
-    #[structopt(short = "s", long = "silent",
-                help="Do not show valid lines")]
+    /// Do not show valid lines
+    #[structopt(short = "s", long = "silent")]
     pub silent: bool,
-    #[structopt(short = "c", long = "colon",
-                help="Require one colon per line")]
+    /// Require one colon per line
+    #[structopt(short = "c", long = "colon")]
     pub require_colon: bool,
-    #[structopt(help="Files to read")]
+    /// Files to read
     pub paths: Vec<String>,
 }
 
+#[inline]
 pub fn parse() -> Args {
     Args::from_args()
 }
