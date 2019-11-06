@@ -1,4 +1,5 @@
 language: rust
+dist: bionic
 
 matrix:
   include:
@@ -8,8 +9,11 @@ matrix:
   - os: linux
     rust: stable
     env: BUILD_MODE=integration
+  - os: osx
+    rust: stable
+    env: BUILD_MODE=build
 
 before_install:
-- sudo ci/dependencies.sh
+- ci/dependencies.sh
 script:
 - ci/run.sh
