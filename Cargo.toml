@@ -17,12 +17,12 @@ travis-ci = { repository = "kpcyrd/badtouch" }
 #hlua-badtouch = { path="../hlua/hlua" }
 hlua-badtouch = "0.4.2"
 log = "0.4"
-env_logger = "0.6"
+env_logger = "0.7"
 pbr = "1.0"
 threadpool = "1.7"
 colored = "1.6"
 humantime = "1.1"
-structopt = "0.2"
+structopt = "0.3"
 failure = "0.1"
 time = "0.1.35"
 atty = "0.2"
@@ -43,11 +43,11 @@ sha2 = "0.8"
 sha3 = "0.8"
 digest = "0.8"
 hmac = "0.7"
-base64 = "0.10"
-bcrypt = "0.5"
+base64 = "0.11"
+bcrypt = "0.6"
 
 reqwest = "0.9"
-mysql = "16.0.1"
+mysql = "17"
 ldap3 = "0.6"
 kuchiki = "0.7"
 twox-hash = "1.1"
@@ -55,3 +55,6 @@ dirs = "2.0"
 
 [target."cfg(unix)".dependencies]
 termios = "0.3"
+
+[target.'cfg(target_os="linux")'.dependencies]
+rlimit = "0.3"

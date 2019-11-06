@@ -20,6 +20,7 @@ pub mod runtime;
 pub mod scheduler;
 pub mod sockets;
 pub mod structs;
+#[cfg(target_os="linux")]
 pub mod ulimit;
 pub mod utils;
 
