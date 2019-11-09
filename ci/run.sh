@@ -2,13 +2,13 @@
 set -exu
 case "$BUILD_MODE" in
     build)
-        cargo build --verbose --all
-        cargo build --verbose --examples
-        cargo test --verbose --all
+        cargo build --locked --verbose --all
+        cargo build --locked --verbose --examples
+        cargo test --locked --verbose --all
         ;;
     integration)
         echo "[*] building badtouch"
-        cargo build --verbose --all
+        cargo build --locked --verbose --all
 
         echo "[*] testing smtp"
         docker build -t badtouch-smtpd ci/smtp/
