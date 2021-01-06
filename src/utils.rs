@@ -1,14 +1,23 @@
+use crate::config::Config;
+use crate::ctx;
 use crate::errors::*;
-
 use std::str;
 use std::fs::{self, File};
 use std::sync::Arc;
 use std::io::{self, BufReader};
 use std::io::prelude::*;
-use crate::config::Config;
+use std::iter;
+use rand::{Rng, thread_rng};
+use rand::distributions::Alphanumeric;
 
-use crate::ctx;
-
+pub fn random_string(len: usize) -> String {
+    let mut rng = thread_rng();
+    iter::repeat(())
+        .map(|()| rng.sample(Alphanumeric))
+        .map(char::from)
+        .take(len)
+        .collect()
+}
 
 pub fn load_list(path: &str) -> Result<Vec<Arc<String>>> {
     let f = File::open(path)?;

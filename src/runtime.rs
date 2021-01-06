@@ -6,15 +6,12 @@ use crate::errors::*;
 use crate::json;
 use crate::db;
 
-use digest::{Digest, Input, BlockInput, FixedOutput, Reset};
+use digest::{Digest, Update, BlockInput, FixedOutput, Reset};
 use digest::generic_array::ArrayLength;
-use hmac::{Hmac, Mac};
-use base64;
+use hmac::{Hmac, NewMac, Mac};
+use mysql::prelude::Queryable;
 
-use reqwest;
 use reqwest::header::WWW_AUTHENTICATE;
-use ldap3;
-use mysql;
 use rand::RngCore;
 
 use std::thread;
@@ -131,7 +128,7 @@ pub fn hex(lua: &mut hlua::Lua, state: State) {
 
 fn hmac<D>(secret: AnyLuaValue, msg: AnyLuaValue) -> Result<AnyLuaValue>
     where
-        D: Input + BlockInput + FixedOutput + Reset + Default + Clone,
+        D: Update + BlockInput + FixedOutput + Reset + Default + Clone,
         D::BlockSize: ArrayLength<u8> + Clone,
         D::OutputSize: ArrayLength<u8>,
 {
@@ -142,9 +139,9 @@ fn hmac<D>(secret: AnyLuaValue, msg: AnyLuaValue) -> Result<AnyLuaValue>
         Ok(mac) => mac,
         Err(_) => bail!("Invalid key length"),
     };
-    mac.input(&msg);
-    let result = mac.result();
-    Ok(lua_bytes(&result.code()))
+    mac.update(&msg);
+    let result = mac.finalize();
+    Ok(lua_bytes(&result.into_bytes()))
 }
 
 pub fn hmac_md5(lua: &mut hlua::Lua, state: State) {
@@ -207,7 +204,7 @@ pub fn html_select_list(lua: &mut hlua::Lua, state: State) {
 
 pub fn http_basic_auth(lua: &mut hlua::Lua, state: State) {
     lua.set("http_basic_auth", hlua::function3(move |url: String, user: String, password: String| -> Result<bool> {
-        let client = reqwest::Client::new();
+        let client = reqwest::blocking::Client::new();
 
         client.get(&url)
             .basic_auth(user, Some(password))
@@ -278,7 +275,7 @@ pub fn last_err(lua: &mut hlua::Lua, state: State) {
 
 pub fn ldap_bind(lua: &mut hlua::Lua, state: State) {
     lua.set("ldap_bind", hlua::function3(move |url: String, dn: String, password: String| -> Result<bool> {
-        let sock = match ldap3::LdapConn::new(&url)
+        let mut sock = match ldap3::LdapConn::new(&url)
                         .context("ldap connection failed") {
             Ok(sock) => sock,
             Err(err) => return Err(state.set_error(err)),
@@ -302,7 +299,7 @@ pub fn ldap_escape(lua: &mut hlua::Lua, _: State) {
 
 pub fn ldap_search_bind(lua: &mut hlua::Lua, state: State) {
     lua.set("ldap_search_bind", hlua::function6(move |url: String, search_user: String, search_pw: String, base_dn: String, user: String, password: String| -> Result<bool> {
-        let sock = ldap3::LdapConn::new(&url)
+        let mut sock = ldap3::LdapConn::new(&url)
             .context("ldap connection failed")
             .map_err(|err| state.set_error(err))?;
 
@@ -353,12 +350,12 @@ pub fn md5(lua: &mut hlua::Lua, state: State) {
 
 pub fn mysql_connect(lua: &mut hlua::Lua, state: State) {
     lua.set("mysql_connect", hlua::function4(move |host: String, port: u16, user: String, password: String| -> Result<String> {
-        let mut builder = mysql::OptsBuilder::new();
-        builder.ip_or_hostname(Some(host))
-               .tcp_port(port)
-               .prefer_socket(false)
-               .user(Some(user))
-               .pass(Some(password));
+        let builder = mysql::OptsBuilder::new()
+            .ip_or_hostname(Some(host))
+            .tcp_port(port)
+            .prefer_socket(false)
+            .user(Some(user))
+            .pass(Some(password));
 
         mysql::Conn::new(builder)
             .map_err(|err| state.set_error(err))
@@ -372,19 +369,24 @@ pub fn mysql_query(lua: &mut hlua::Lua, state: State) {
 
         let sock = state.mysql_session(&session);
         let mut sock = sock.lock().unwrap();
-        let rows = sock.prep_exec(query, params)
+        let rows = sock.exec_iter(query, params)
             .context("Failed to execute query")
             .map_err(|err| state.set_error(err))?;
 
-        let mut result = Vec::new();
-        let column_names = rows.column_indexes();
+        let columns = rows.columns();
+        let mut columns_results = Vec::new();
+        for column in columns.as_ref() {
+            let column = column.name_str().to_string();
+            columns_results.push(column);
+        }
 
+        let mut result = Vec::new();
         for row in rows {
             let row = row?; // TODO: handle error
 
             let mut map = LuaMap::new();
-            for (k, i) in &column_names {
-                map.insert(k.as_str(), db::mysql::mysql_value_to_lua(row[*i].clone()));
+            for (i, column) in columns_results.iter().enumerate() {
+                map.insert(column, db::mysql::mysql_value_to_lua(row[i].clone()));
             }
 
             result.push(map.into());

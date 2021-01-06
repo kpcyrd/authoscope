@@ -1,12 +1,9 @@
 use crate::errors::*;
-
-use dirs;
+use serde::{Serialize, Deserialize};
 use std::fs::File;
 use std::path::Path;
 use std::io::prelude::*;
 use libc::rlim_t;
-use toml;
-
 
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Config {
@@ -24,7 +21,7 @@ pub struct RuntimeConfig {
 
 impl Config {
     pub fn load() -> Result<Config> {
-        let home = dirs::home_dir()
+        let home = dirs_next::home_dir()
                         .ok_or_else(|| format_err!("home folder not found"))?;
 
         let path = home.join(".config/badtouch.toml");

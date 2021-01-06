@@ -1,6 +1,7 @@
 #![warn(unused_extern_crates)]
 use badtouch::args;
 use badtouch::ctx::Script;
+use badtouch::errors::*;
 use badtouch::fsck;
 use badtouch::utils;
 use badtouch::config::Config;
@@ -14,8 +15,6 @@ use std::fs::File;
 use std::sync::Arc;
 use std::time::Instant;
 use std::io::prelude::*;
-use badtouch::errors::{Result, ResultExt};
-
 
 enum Report {
     Some(File),
@@ -156,7 +155,7 @@ fn format_valid_enum(script: &str, user: &str) -> String {
         script.yellow(), user)
 }
 
-fn run() -> Result<()> {
+fn main() -> Result<()> {
     let args = args::parse();
 
     let env = env_logger::Env::default();
@@ -287,14 +286,4 @@ fn run() -> Result<()> {
     Keyboard::reset();
 
     Ok(())
-}
-
-fn main() {
-    if let Err(err) = run() {
-        eprintln!("Error: {}", err);
-        for cause in err.iter_chain().skip(1) {
-            eprintln!("Because: {}", cause);
-        }
-        std::process::exit(1);
-    }
 }

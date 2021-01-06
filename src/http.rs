@@ -1,20 +1,19 @@
 use crate::errors::*;
 use crate::structs::LuaMap;
 
-use reqwest;
 use reqwest::Method;
 use reqwest::header::{HeaderName, HeaderValue, COOKIE, SET_COOKIE, USER_AGENT};
+use reqwest::redirect;
 use crate::hlua::AnyLuaValue;
 use serde_json;
 use crate::json::LuaJsonValue;
+use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
-use rand::{Rng, thread_rng};
-use rand::distributions::Alphanumeric;
 use crate::config::Config;
 use crate::ctx::State;
-
+use crate::utils;
 
 #[derive(Debug)]
 pub struct HttpSession {
@@ -24,7 +23,7 @@ pub struct HttpSession {
 
 impl HttpSession {
     pub fn new() -> (String, HttpSession) {
-        let id: String = thread_rng().sample_iter(&Alphanumeric).take(16).collect();
+        let id = utils::random_string(16);
         (id.clone(), HttpSession {
             id,
             cookies: CookieJar::default(),
@@ -101,8 +100,8 @@ impl HttpRequest {
     pub fn send(&self, state: &State) -> Result<LuaMap> {
         debug!("http send: {:?}", self);
 
-        let client = reqwest::Client::builder()
-            .redirect(reqwest::RedirectPolicy::none()) // TODO: this should be configurable
+        let client = reqwest::blocking::Client::builder()
+            .redirect(redirect::Policy::none()) // TODO: this should be configurable
             .build().unwrap();
         let method = self.method.parse::<Method>()
                         .context("Invalid http method")?;
@@ -141,7 +140,7 @@ impl HttpRequest {
         };
 
         info!("http req: {:?}", req);
-        let mut res = req.send()?;
+        let res = req.send()?;
         info!("http res: {:?}", res);
 
         let mut resp = LuaMap::new();
