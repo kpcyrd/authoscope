@@ -1,5 +1,5 @@
 #![warn(unused_extern_crates)]
-use badtouch::args;
+use badtouch::args::{self, SubCommand};
 use badtouch::ctx::Script;
 use badtouch::errors::*;
 use badtouch::fsck;
@@ -179,11 +179,12 @@ fn main() -> Result<()> {
     let mut report = Report::open(args.output)?;
 
     let attempts = match args.subcommand {
-        args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict, &config)?,
-        args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds, &config)?,
-        args::SubCommand::Enum(enumerate) => setup_enum_attack(&mut pool, enumerate, &config)?,
-        args::SubCommand::Oneshot(oneshot) => return run_oneshot(oneshot, config),
-        args::SubCommand::Fsck(fsck) => return fsck::run_fsck(&fsck),
+        SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict, &config)?,
+        SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds, &config)?,
+        SubCommand::Enum(enumerate) => setup_enum_attack(&mut pool, enumerate, &config)?,
+        SubCommand::Oneshot(oneshot) => return run_oneshot(oneshot, config),
+        SubCommand::Fsck(fsck) => return fsck::run_fsck(&fsck),
+        SubCommand::Completions(completions) => return completions.gen(),
     };
 
     let tx = pool.tx();
