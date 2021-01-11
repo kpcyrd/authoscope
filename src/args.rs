@@ -1,5 +1,7 @@
+use crate::errors::*;
+use std::io::stdout;
 use structopt::StructOpt;
-use structopt::clap::AppSettings;
+use structopt::clap::{AppSettings, Shell};
 
 #[derive(Debug, StructOpt)]
 #[structopt(global_settings = &[AppSettings::ColoredHelp])]
@@ -35,6 +37,7 @@ pub enum SubCommand {
     /// Verify and fix encoding of a list
     #[structopt(name="fsck")]
     Fsck(Fsck),
+    Completions(Completions),
 }
 
 #[derive(Debug, StructOpt)]
@@ -92,6 +95,20 @@ pub struct Fsck {
     pub require_colon: bool,
     /// Files to read
     pub paths: Vec<String>,
+}
+
+/// Generate shell completions
+#[derive(Debug, StructOpt)]
+pub struct Completions {
+    #[structopt(possible_values=&Shell::variants())]
+    pub shell: Shell,
+}
+
+impl Completions {
+    pub fn gen(&self) -> Result<()> {
+        Args::clap().gen_completions_to("badtouch", self.shell, &mut stdout());
+        Ok(())
+    }
 }
 
 #[inline]

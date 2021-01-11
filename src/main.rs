@@ -1,6 +1,7 @@
 #![warn(unused_extern_crates)]
-use badtouch::args;
+use badtouch::args::{self, SubCommand};
 use badtouch::ctx::Script;
+use badtouch::errors::*;
 use badtouch::fsck;
 use badtouch::utils;
 use badtouch::config::Config;
@@ -14,8 +15,6 @@ use std::fs::File;
 use std::sync::Arc;
 use std::time::Instant;
 use std::io::prelude::*;
-use badtouch::errors::{Result, ResultExt};
-
 
 enum Report {
     Some(File),
@@ -156,7 +155,7 @@ fn format_valid_enum(script: &str, user: &str) -> String {
         script.yellow(), user)
 }
 
-fn run() -> Result<()> {
+fn main() -> Result<()> {
     let args = args::parse();
 
     let env = env_logger::Env::default();
@@ -172,7 +171,7 @@ fn run() -> Result<()> {
     }
 
     let config = Arc::new(Config::load()?);
-    #[cfg(target_os="linux")]
+    #[cfg(unix)]
     badtouch::ulimit::set_nofile(&config)
         .context("Failed to set RLIMIT_NOFILE")?;
 
@@ -180,11 +179,12 @@ fn run() -> Result<()> {
     let mut report = Report::open(args.output)?;
 
     let attempts = match args.subcommand {
-        args::SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict, &config)?,
-        args::SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds, &config)?,
-        args::SubCommand::Enum(enumerate) => setup_enum_attack(&mut pool, enumerate, &config)?,
-        args::SubCommand::Oneshot(oneshot) => return run_oneshot(oneshot, config),
-        args::SubCommand::Fsck(fsck) => return fsck::run_fsck(&fsck),
+        SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict, &config)?,
+        SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds, &config)?,
+        SubCommand::Enum(enumerate) => setup_enum_attack(&mut pool, enumerate, &config)?,
+        SubCommand::Oneshot(oneshot) => return run_oneshot(oneshot, config),
+        SubCommand::Fsck(fsck) => return fsck::run_fsck(&fsck),
+        SubCommand::Completions(completions) => return completions.gen(),
     };
 
     let tx = pool.tx();
@@ -287,14 +287,4 @@ fn run() -> Result<()> {
     Keyboard::reset();
 
     Ok(())
-}
-
-fn main() {
-    if let Err(err) = run() {
-        eprintln!("Error: {}", err);
-        for cause in err.iter_chain().skip(1) {
-            eprintln!("Because: {}", cause);
-        }
-        std::process::exit(1);
-    }
 }

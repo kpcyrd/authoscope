@@ -15,7 +15,7 @@ use colored::Colorize;
 use std::fmt::Display;
 use std::io::prelude::*;
 use std::io::{self, Stdout};
-use time::{self, SteadyTime, Duration};
+use time::{self, Instant, Duration};
 
 
 macro_rules! printfl {
@@ -28,7 +28,7 @@ macro_rules! printfl {
 pub struct ProgressBar {
     pb: pbr::ProgressBar<Stdout>,
     current: u64,
-    last_refresh_time: SteadyTime,
+    last_refresh_time: Instant,
     max_refresh_rate: Option<time::Duration>,
     atty: bool,
 }
@@ -39,7 +39,7 @@ impl ProgressBar {
         let mut pb = pbr::ProgressBar::new(total);
         pb.format("(=> )");
 
-        let now = SteadyTime::now();
+        let now = Instant::now();
         let refresh_rate = Duration::milliseconds(250);
         let atty = atty::is(atty::Stream::Stdout);
 
@@ -75,7 +75,7 @@ impl ProgressBar {
 
     #[inline]
     pub fn tick(&mut self) {
-        let now = SteadyTime::now();
+        let now = Instant::now();
         if let Some(mrr) = self.max_refresh_rate {
             if now - self.last_refresh_time < mrr {
                 return;
@@ -84,7 +84,7 @@ impl ProgressBar {
 
         self.draw();
 
-        self.last_refresh_time = SteadyTime::now();
+        self.last_refresh_time = Instant::now();
     }
 
     #[inline]
@@ -93,7 +93,7 @@ impl ProgressBar {
             return;
         }
 
-        let now = SteadyTime::now();
+        let now = Instant::now();
         if let Some(mrr) = self.max_refresh_rate {
             if now - self.last_refresh_time < mrr {
                 self.current += 1;
@@ -103,7 +103,7 @@ impl ProgressBar {
 
         self.pb.set(self.current);
 
-        self.last_refresh_time = SteadyTime::now();
+        self.last_refresh_time = Instant::now();
     }
 
     #[inline]

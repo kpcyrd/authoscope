@@ -9,52 +9,45 @@ categories = ["command-line-utilities"]
 readme = "README.md"
 edition = "2018"
 
-[badges]
-travis-ci = { repository = "kpcyrd/badtouch" }
-
 [dependencies]
 #hlua = "0.4"
 #hlua-badtouch = { path="../hlua/hlua" }
 hlua-badtouch = "0.4.2"
 log = "0.4"
-env_logger = "0.7"
+env_logger = "0.8"
 pbr = "1.0"
 threadpool = "1.7"
-colored = "1.6"
-humantime = "1.1"
+colored = "2"
+humantime = "2"
 structopt = "0.3"
-failure = "0.1"
-time = "0.1.35"
+anyhow = "1"
+time = "0.2"
 atty = "0.2"
-rand = "0.7"
+rand = "0.8"
 getch = "0.2"
 toml = "0.5"
-libc = "0.2"
-nix = "0.15"
-serde = "1.0"
+nix = "0.19"
+serde = { version="1.0", features=["derive"] }
 serde_json = "1.0"
-serde_derive = "1.0"
 bufstream = "0.1.3"
 regex = "1.0.1"
 
-md-5 = "0.8"
-sha-1 = "0.8"
-sha2 = "0.8"
-sha3 = "0.8"
-digest = "0.8"
-hmac = "0.7"
-base64 = "0.11"
-bcrypt = "0.6"
+md-5 = "0.9"
+sha-1 = "0.9"
+sha2 = "0.9"
+sha3 = "0.9"
+digest = "0.9"
+hmac = "0.10"
+base64 = "0.13"
+bcrypt = "0.9"
 
-reqwest = "0.9"
-mysql = "17"
-ldap3 = "0.6"
-kuchiki = "0.7"
+reqwest = { version="0.11", features=["blocking", "json"] }
+mysql = "20"
+ldap3 = "0.9"
+kuchiki = "0.8"
 twox-hash = "1.1"
-dirs = "2.0"
+dirs-next = "2.0"
 
 [target."cfg(unix)".dependencies]
 termios = "0.3"
-
-[target.'cfg(target_os="linux")'.dependencies]
-rlimit = "0.3"
+rlimit = "0.5"

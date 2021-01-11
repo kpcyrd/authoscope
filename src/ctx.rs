@@ -1,19 +1,18 @@
 use crate::hlua::{self, AnyLuaValue};
-use crate::errors::{Result, Error};
+use crate::errors::*;
 use crate::runtime;
 
 use std::fs::File;
 use std::sync::{Arc, Mutex};
 use std::io::prelude::*;
 use std::collections::HashMap;
-use rand::{Rng, thread_rng};
-use rand::distributions::Alphanumeric;
 use crate::http::{HttpSession,
            HttpRequest,
            RequestOptions};
 use crate::config::Config;
-use mysql;
 use crate::sockets::Socket;
+use crate::utils;
+use mysql;
 
 
 #[derive(Debug, Clone)]
@@ -54,8 +53,9 @@ impl State {
         format_err!("{}", cp) // TODO: refactor
     }
 
+    #[inline]
     fn random_id(&self) -> String {
-        thread_rng().sample_iter(&Alphanumeric).take(16).collect()
+        utils::random_string(16)
     }
 
     pub fn register_in_jar(&self, session: &str, cookies: Vec<(String, String)>) {

@@ -1,7 +1,5 @@
-# badtouch [![Build Status][travis-img]][travis] [![Crates.io][crates-img]][crates]
+# badtouch [![Crates.io][crates-img]][crates]
 
-[travis-img]:   https://travis-ci.org/kpcyrd/badtouch.svg?branch=master
-[travis]:       https://travis-ci.org/kpcyrd/badtouch
 [crates-img]:   https://img.shields.io/crates/v/badtouch.svg
 [crates]:       https://crates.io/crates/badtouch
 

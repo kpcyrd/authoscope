@@ -49,7 +49,7 @@ fn lua_to_mysql_value(value: AnyLuaValue) -> mysql::Value {
         AnyLuaValue::LuaNumber(v) => if v % 1f64 == 0f64 {
             mysql::Value::Int(v as i64)
         } else {
-            mysql::Value::Float(v)
+            mysql::Value::Float(v as f32)
         },
         AnyLuaValue::LuaBoolean(x) => mysql::Value::Int(if x { 1 } else { 0 }),
         AnyLuaValue::LuaArray(_x) => unimplemented!(),
@@ -65,7 +65,8 @@ pub fn mysql_value_to_lua(value: mysql::Value) -> AnyLuaValue {
         Bytes(bytes) => AnyLuaValue::LuaString(String::from_utf8(bytes).unwrap()),
         Int(i) => AnyLuaValue::LuaNumber(i as f64),
         UInt(i) => AnyLuaValue::LuaNumber(i as f64),
-        Float(i) => AnyLuaValue::LuaNumber(i),
+        Float(i) => AnyLuaValue::LuaNumber(i as f64),
+        Double(i) => AnyLuaValue::LuaNumber(i as f64),
         Date(_, _, _, _, _, _, _) => unimplemented!(),
         Time(_, _, _, _, _, _) => unimplemented!(),
     }
