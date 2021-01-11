@@ -3,7 +3,6 @@ use serde::{Serialize, Deserialize};
 use std::fs::File;
 use std::path::Path;
 use std::io::prelude::*;
-use libc::rlim_t;
 
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Config {
@@ -16,7 +15,7 @@ pub struct RuntimeConfig {
     #[serde(default)]
     pub user_agent: Option<String>,
     #[serde(default)]
-    pub rlimit_nofile: Option<rlim_t>,
+    pub rlimit_nofile: Option<usize>,
 }
 
 impl Config {

@@ -8,7 +8,7 @@ pub fn set_nofile(config: &Config) -> Result<()> {
     debug!("soft_limit={:?}, hard_limit={:?}", soft_limit, hard_limit);
 
     let new_hard_limit = if let Some(limit) = config.runtime.rlimit_nofile {
-        Rlim::from_raw(limit)
+        Rlim::from_usize(limit)
     } else {
         hard_limit
     };

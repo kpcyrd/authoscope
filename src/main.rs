@@ -171,7 +171,7 @@ fn main() -> Result<()> {
     }
 
     let config = Arc::new(Config::load()?);
-    #[cfg(target_os="linux")]
+    #[cfg(unix)]
     badtouch::ulimit::set_nofile(&config)
         .context("Failed to set RLIMIT_NOFILE")?;
 

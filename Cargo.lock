@@ -89,7 +89,6 @@ dependencies = [
  "humantime",
  "kuchiki",
  "ldap3",
- "libc",
  "log",
  "md-5",
  "mysql",
