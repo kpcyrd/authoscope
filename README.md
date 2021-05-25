@@ -1,9 +1,9 @@
-# badtouch [![Crates.io][crates-img]][crates]
+# authoscope [![Crates.io][crates-img]][crates]
 
-[crates-img]:   https://img.shields.io/crates/v/badtouch.svg
-[crates]:       https://crates.io/crates/badtouch
+[crates-img]:   https://img.shields.io/crates/v/authoscope.svg
+[crates]:       https://crates.io/crates/authoscope
 
-badtouch is a scriptable network authentication cracker. While the space for
+authoscope is a scriptable network authentication cracker. While the space for
 common service bruteforce is already [very][ncrack] [well][hydra]
 [saturated][medusa], you may still end up writing your own python scripts when
 testing credentials for web applications.
@@ -12,17 +12,17 @@ testing credentials for web applications.
 [hydra]: https://github.com/vanhauser-thc/thc-hydra
 [medusa]: https://github.com/jmk-foofus/medusa
 
-The scope of badtouch is specifically cracking custom services. This is done by
-writing scripts that are loaded into a lua runtime. Those scripts represent a
-single service and provide a `verify(user, password)` function that returns
+The scope of authoscope is specifically cracking custom services. This is done
+by writing scripts that are loaded into a lua runtime. Those scripts represent
+a single service and provide a `verify(user, password)` function that returns
 either true or false. Concurrency, progress indication and reporting is
-magically provided by the badtouch runtime.
+magically provided by the authoscope runtime.
 
 [![asciicast](https://asciinema.org/a/Ke5rHVsz5sJePNUK1k0ASAvuZ.png)](https://asciinema.org/a/Ke5rHVsz5sJePNUK1k0ASAvuZ)
 
 ## Installation
 
-If you are on an archlinux based system, use
+If you are on an Arch Linux based system, use
 
     pacman -S badtouch
 
@@ -36,7 +36,7 @@ To build from source, make sure you have [rust](https://rustup.rs/) and `libssl-
 
 Verify your setup is complete with
 
-    badtouch --help
+    authoscope --help
 
 ### Debian
 1. Install essential build tools
@@ -49,9 +49,9 @@ sudo apt-get install build-essential libssl-dev pkg-config
 curl -sf -L https://static.rust-lang.org/rustup.sh | sh
 source $HOME/.cargo/env
 ```
-3. Install badtouch
+3. Install authoscope
 ```
-cd /path/to/badtouch
+cd /path/to/authoscope
 cargo install
 ```
 
@@ -93,7 +93,7 @@ end
 ```
 
 Please see the reference and [examples](/scripts) for all available functions.
-Keep in mind that you can use `print(x)` and `badtouch oneshot` to debug your
+Keep in mind that you can use `print(x)` and `authoscope oneshot` to debug your
 script.
 
 ## Reference
@@ -514,7 +514,8 @@ sock_newline(sock, "\r\n")
 
 ## Configuration
 
-You can place a config file at `~/.config/badtouch.toml` to set some defaults.
+You can place a config file at `~/.config/authoscope.toml` to set some
+defaults.
 
 ### Global user agent
 
@@ -528,14 +529,14 @@ user_agent = "w3m/0.5.3+git20180125"
 ```toml
 [runtime]
 # requires CAP_SYS_RESOURCE
-# sudo setcap 'CAP_SYS_RESOURCE=+ep' /usr/bin/badtouch
+# sudo setcap 'CAP_SYS_RESOURCE=+ep' /usr/bin/authoscope
 rlimit_nofile = 64000
 ```
 
 ## Wrapping python scripts
 
-The badtouch runtime is still very bare bones, so you might have to shell
-out to your regular python script occasionally. Your wrapper may look like this:
+The authoscope runtime is still very bare bones, so you might have to shell out
+to your regular python script occasionally. Your wrapper may look like this:
 
 ```lua
 descr = "example.com"

@@ -19,7 +19,7 @@ Try each password for each user with every script.
 
 .. code-block:: bash
 
-    badtouch dict <users> <passwords> [scripts]...
+    authoscope dict <users> <passwords> [scripts]...
 
 Credential confirmation
 -----------------------
@@ -29,7 +29,7 @@ with every script.
 
 .. code-block:: bash
 
-    badtouch creds <credentials> [scripts]...
+    authoscope creds <credentials> [scripts]...
 
 Username enumeration
 --------------------
@@ -41,7 +41,7 @@ for nil to detect in which mode the script is executed.
 
 .. code-block:: bash
 
-    badtouch enum <users> [scripts]...
+    authoscope enum <users> [scripts]...
 
 Oneshot
 -------
@@ -54,4 +54,4 @@ are invalid.
 
 .. code-block:: bash
 
-    badtouch oneshot [-x] <script> <user> [password]
+    authoscope oneshot [-x] <script> <user> [password]

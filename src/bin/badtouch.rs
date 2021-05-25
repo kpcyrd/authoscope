@@ -1,5 +1,5 @@
 #![warn(unused_extern_crates)]
-use authoscope::args::{self, Args, SubCommand};
+use authoscope::args::{self, SubCommand};
 use authoscope::ctx::Script;
 use authoscope::errors::*;
 use authoscope::fsck;
@@ -15,7 +15,6 @@ use std::fs::File;
 use std::sync::Arc;
 use std::time::Instant;
 use std::io::prelude::*;
-use structopt::StructOpt;
 
 enum Report {
     Some(File),
@@ -157,7 +156,7 @@ fn format_valid_enum(script: &str, user: &str) -> String {
 }
 
 fn main() -> Result<()> {
-    let args = Args::from_args();
+    let args = args::parse();
 
     let env = env_logger::Env::default();
     let env = match args.verbose {
@@ -166,6 +165,8 @@ fn main() -> Result<()> {
         _ => env.filter_or("RUST_LOG", "debug"),
     };
     env_logger::init_from_env(env);
+
+    warn!("badtouch has been renamed to authoscope, please use the new binary name instead");
 
     if atty::isnt(atty::Stream::Stdout) {
         colored::control::SHOULD_COLORIZE.set_override(false);

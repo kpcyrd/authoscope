@@ -106,7 +106,7 @@ pub struct Completions {
 
 impl Completions {
     pub fn gen(&self) -> Result<()> {
-        Args::clap().gen_completions_to("badtouch", self.shell, &mut stdout());
+        Args::clap().gen_completions_to("authoscope", self.shell, &mut stdout());
         Ok(())
     }
 }

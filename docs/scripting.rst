@@ -37,7 +37,7 @@ A simple script could look like this:
     end
 
 Please see the reference and [examples](/scripts) for all available functions.
-Keep in mind that you can use `print(x)` and `badtouch oneshot` to debug your
+Keep in mind that you can use `print(x)` and `authoscope oneshot` to debug your
 script.
 
 base64_decode
@@ -546,7 +546,7 @@ Overwrite the default `\n` newline.
 Wrapping python scripts
 -----------------------
 
-The badtouch runtime is still very bare bones, so you might have to shell
+The authoscope runtime is still very bare bones, so you might have to shell
 out to your regular python script occasionally. Your wrapper may look like this:
 
 .. code-block:: lua

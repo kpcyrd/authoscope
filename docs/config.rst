@@ -1,7 +1,7 @@
 Configuration
 =============
 
-You can place a config file at ``~/.config/badtouch.toml`` to set some defaults.
+You can place a config file at ``~/.config/authoscope.toml`` to set some defaults.
 
 Global user agent
 -----------------
@@ -18,5 +18,5 @@ RLIMIT_NOFILE
 
     [runtime]
     # requires CAP_SYS_RESOURCE
-    # sudo setcap 'CAP_SYS_RESOURCE=+ep' /usr/bin/badtouch
+    # sudo setcap 'CAP_SYS_RESOURCE=+ep' /usr/bin/authoscope
     rlimit_nofile = 64000

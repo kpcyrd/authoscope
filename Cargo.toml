@@ -1,10 +1,10 @@
 [package]
-name = "badtouch"
+name = "authoscope"
 version = "0.7.3"
 description = "Scriptable network authentication cracker"
 authors = ["kpcyrd <git@rxv.cc>"]
 license = "GPL-3.0"
-repository = "https://github.com/kpcyrd/badtouch"
+repository = "https://github.com/kpcyrd/authoscope"
 categories = ["command-line-utilities"]
 readme = "README.md"
 edition = "2018"

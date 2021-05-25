@@ -1,12 +1,12 @@
-FROM alpine:edge
-RUN apk add --no-cache libressl-dev
-RUN apk add --no-cache --virtual .build-rust rust cargo
-WORKDIR /usr/src/badtouch
+FROM rust:alpine3.13
+ENV RUSTFLAGS="-C target-feature=-crt-static"
+#RUN apk add --no-cache libressl-dev
+WORKDIR /app
 COPY . .
 RUN cargo build --release --locked --verbose
-RUN strip target/release/badtouch
+RUN strip target/release/authoscope
 
-FROM alpine:edge
+FROM alpine:3.13
 RUN apk add --no-cache libgcc
-COPY --from=0 /usr/src/badtouch/target/release/badtouch /usr/local/bin/badtouch
-ENTRYPOINT ["badtouch"]
+COPY --from=0 /app/target/release/authoscope /usr/local/bin/authoscope
+ENTRYPOINT ["authoscope"]
