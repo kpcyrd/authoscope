@@ -58,10 +58,10 @@ macro_rules! tinfo {
 }
 
 fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict, config: &Arc<Config>) -> Result<usize> {
-    let users = utils::load_list(&args.users)
+    let users = utils::load_list(&args.users_path)
         .context("Failed to load users")?;
     tinfo!("[+]", "loaded {} users", users.len());
-    let passwords = utils::load_list(&args.passwords)
+    let passwords = utils::load_list(&args.passwords_path)
         .context("Failed to load passwords")?;
     tinfo!("[+]", "loaded {} passwords", passwords.len());
     let scripts = utils::load_scripts(args.scripts, &config)
@@ -83,8 +83,8 @@ fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict, config: &Arc<
     Ok(attempts)
 }
 
-fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds, config: &Arc<Config>) -> Result<usize> {
-    let creds = utils::load_creds(&args.creds)?;
+fn setup_combolist_attack(pool: &mut Scheduler, args: args::Combo, config: &Arc<Config>) -> Result<usize> {
+    let creds = utils::load_combolist(&args.path)?;
     tinfo!("[+]", "loaded {} credentials", creds.len());
     let scripts = utils::load_scripts(args.scripts, &config)
         .context("Failed to load scripts")?;
@@ -125,7 +125,7 @@ fn setup_enum_attack(pool: &mut Scheduler, args: args::Enum, config: &Arc<Config
     Ok(attempts)
 }
 
-fn run_oneshot(oneshot: args::Oneshot, config: Arc<Config>) -> Result<()> {
+fn run_oneshot(oneshot: args::Run, config: Arc<Config>) -> Result<()> {
     let script = Script::load(&oneshot.script, config)?;
     let user = oneshot.user;
 
@@ -181,9 +181,9 @@ fn main() -> Result<()> {
 
     let attempts = match args.subcommand {
         SubCommand::Dict(dict) => setup_dictionary_attack(&mut pool, dict, &config)?,
-        SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds, &config)?,
+        SubCommand::Combo(creds) => setup_combolist_attack(&mut pool, creds, &config)?,
         SubCommand::Enum(enumerate) => setup_enum_attack(&mut pool, enumerate, &config)?,
-        SubCommand::Oneshot(oneshot) => return run_oneshot(oneshot, config),
+        SubCommand::Run(oneshot) => return run_oneshot(oneshot, config),
         SubCommand::Fsck(fsck) => return fsck::run_fsck(&fsck),
         SubCommand::Completions(completions) => return completions.gen(),
     };

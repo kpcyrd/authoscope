@@ -7,6 +7,7 @@ use std::sync::Arc;
 use std::io::{self, BufReader};
 use std::io::prelude::*;
 use std::iter;
+use std::path::Path;
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 
@@ -19,7 +20,7 @@ pub fn random_string(len: usize) -> String {
         .collect()
 }
 
-pub fn load_list(path: &str) -> Result<Vec<Arc<String>>> {
+pub fn load_list<P: AsRef<Path>>(path: P) -> Result<Vec<Arc<String>>> {
     let f = File::open(path)?;
     let file = BufReader::new(&f);
     let lines: io::Result<_> = file.lines()
@@ -28,7 +29,7 @@ pub fn load_list(path: &str) -> Result<Vec<Arc<String>>> {
     Ok(lines?)
 }
 
-pub fn load_creds(path: &str) -> Result<Vec<Arc<Vec<u8>>>> {
+pub fn load_combolist<P: AsRef<Path>>(path: P) -> Result<Vec<Arc<Vec<u8>>>> {
     let f = File::open(path)?;
     let mut file = BufReader::new(&f);
 

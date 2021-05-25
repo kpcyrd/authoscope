@@ -1,21 +1,129 @@
-#![warn(unused_extern_crates)]
-use authoscope::args::{self, SubCommand};
+use authoscope::args;
+use authoscope::config::Config;
 use authoscope::ctx::Script;
 use authoscope::errors::*;
 use authoscope::fsck;
-use authoscope::utils;
-use authoscope::config::Config;
-use authoscope::pb::ProgressBar;
-use authoscope::scheduler::{Scheduler, Attempt, Creds, Msg};
 use authoscope::keyboard::{Keyboard, Key};
-
+use authoscope::pb::ProgressBar;
+use authoscope::scheduler::{self, Scheduler, Attempt, Msg};
+use authoscope::utils;
 use colored::*;
-use std::thread;
 use std::fs::File;
-use std::sync::Arc;
-use std::time::Instant;
 use std::io::prelude::*;
+use std::io::stdout;
+use std::sync::Arc;
+use std::thread;
+use std::time::Instant;
+use structopt::StructOpt;
+use structopt::clap::{AppSettings, Shell};
 
+#[derive(Debug, StructOpt)]
+#[structopt(global_settings = &[AppSettings::ColoredHelp])]
+pub struct Args {
+    /// Verbose output
+    #[structopt(short="v", long="verbose",
+                global=true, parse(from_occurrences))]
+    pub verbose: u8,
+    /// Concurrent workers
+    #[structopt(short = "n", long = "workers", default_value = "16")]
+    pub workers: usize,
+    /// Write results to file
+    #[structopt(short = "o", long = "output")]
+    pub output: Option<String>,
+    #[structopt(subcommand)]
+    pub subcommand: SubCommand,
+}
+
+#[derive(Debug, StructOpt)]
+pub enum SubCommand {
+    /// Dictionary attack
+    #[structopt(name="dict")]
+    Dict(Dict),
+    /// Credential confirmation attack
+    #[structopt(name="creds")]
+    Creds(Creds),
+    /// Enumerate users
+    #[structopt(name="enum")]
+    Enum(Enum),
+    /// Test a single username-password combination
+    #[structopt(name="oneshot")]
+    Oneshot(Oneshot),
+    /// Verify and fix encoding of a list
+    #[structopt(name="fsck")]
+    Fsck(Fsck),
+    Completions(Completions),
+}
+
+#[derive(Debug, StructOpt)]
+pub struct Dict {
+    /// Username list path
+    pub users: String,
+    /// Password list path
+    pub passwords: String,
+    /// Scripts to run
+    #[structopt(required=true)]
+    pub scripts: Vec<String>,
+}
+
+#[derive(Debug, StructOpt)]
+pub struct Creds {
+    /// Credential list path
+    pub creds: String,
+    /// Scripts to run
+    #[structopt(required=true)]
+    pub scripts: Vec<String>,
+}
+
+#[derive(Debug, StructOpt)]
+pub struct Enum {
+    /// Username list path
+    pub users: String,
+    /// Scripts to run
+    #[structopt(required=true)]
+    pub scripts: Vec<String>,
+}
+
+#[derive(Debug, StructOpt)]
+pub struct Oneshot {
+    /// Script to run
+    pub script: String,
+    /// Username to test
+    pub user: String,
+    /// Password to test
+    pub password: Option<String>,
+    /// Set the exitcode to 2 if the credentials are invalid
+    #[structopt(short = "x", long = "exitcode")]
+    pub exitcode: bool,
+}
+
+#[derive(Debug, StructOpt)]
+pub struct Fsck {
+    /// Do not show invalid lines
+    #[structopt(short = "q", long = "quiet")]
+    pub quiet: bool,
+    /// Do not show valid lines
+    #[structopt(short = "s", long = "silent")]
+    pub silent: bool,
+    /// Require one colon per line
+    #[structopt(short = "c", long = "colon")]
+    pub require_colon: bool,
+    /// Files to read
+    pub paths: Vec<String>,
+}
+
+/// Generate shell completions
+#[derive(Debug, StructOpt)]
+pub struct Completions {
+    #[structopt(possible_values=&Shell::variants())]
+    pub shell: Shell,
+}
+
+impl Completions {
+    pub fn gen(&self) -> Result<()> {
+        Args::clap().gen_completions_to("authoscope", self.shell, &mut stdout());
+        Ok(())
+    }
+}
 enum Report {
     Some(File),
     None
@@ -56,7 +164,7 @@ macro_rules! tinfo {
     );
 }
 
-fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict, config: &Arc<Config>) -> Result<usize> {
+fn setup_dictionary_attack(pool: &mut Scheduler, args: Dict, config: &Arc<Config>) -> Result<usize> {
     let users = utils::load_list(&args.users)
         .context("Failed to load users")?;
     tinfo!("[+]", "loaded {} users", users.len());
@@ -82,8 +190,8 @@ fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict, config: &Arc<
     Ok(attempts)
 }
 
-fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds, config: &Arc<Config>) -> Result<usize> {
-    let creds = utils::load_creds(&args.creds)?;
+fn setup_credential_confirmation(pool: &mut Scheduler, args: Creds, config: &Arc<Config>) -> Result<usize> {
+    let creds = utils::load_combolist(&args.creds)?;
     tinfo!("[+]", "loaded {} credentials", creds.len());
     let scripts = utils::load_scripts(args.scripts, &config)
         .context("Failed to load scripts")?;
@@ -103,7 +211,7 @@ fn setup_credential_confirmation(pool: &mut Scheduler, args: args::Creds, config
     Ok(attempts)
 }
 
-fn setup_enum_attack(pool: &mut Scheduler, args: args::Enum, config: &Arc<Config>) -> Result<usize> {
+fn setup_enum_attack(pool: &mut Scheduler, args: Enum, config: &Arc<Config>) -> Result<usize> {
     let users = utils::load_list(&args.users)
         .context("Failed to load users")?;
     tinfo!("[+]", "loaded {} users", users.len());
@@ -124,7 +232,7 @@ fn setup_enum_attack(pool: &mut Scheduler, args: args::Enum, config: &Arc<Config
     Ok(attempts)
 }
 
-fn run_oneshot(oneshot: args::Oneshot, config: Arc<Config>) -> Result<()> {
+fn run_oneshot(oneshot: Oneshot, config: Arc<Config>) -> Result<()> {
     let script = Script::load(&oneshot.script, config)?;
     let user = oneshot.user;
 
@@ -156,7 +264,7 @@ fn format_valid_enum(script: &str, user: &str) -> String {
 }
 
 fn main() -> Result<()> {
-    let args = args::parse();
+    let args = Args::from_args();
 
     let env = env_logger::Env::default();
     let env = match args.verbose {
@@ -185,7 +293,12 @@ fn main() -> Result<()> {
         SubCommand::Creds(creds) => setup_credential_confirmation(&mut pool, creds, &config)?,
         SubCommand::Enum(enumerate) => setup_enum_attack(&mut pool, enumerate, &config)?,
         SubCommand::Oneshot(oneshot) => return run_oneshot(oneshot, config),
-        SubCommand::Fsck(fsck) => return fsck::run_fsck(&fsck),
+        SubCommand::Fsck(fsck) => return fsck::run_fsck(&args::Fsck {
+            paths: fsck.paths,
+            quiet: fsck.quiet,
+            require_colon: fsck.require_colon,
+            silent: fsck.silent,
+        }),
         SubCommand::Completions(completions) => return completions.gen(),
     };
 
@@ -237,7 +350,7 @@ fn main() -> Result<()> {
                     Ok(is_valid) => {
                         if is_valid {
                             match attempt.creds {
-                                Creds::Enum(_) => {
+                                scheduler::Creds::Enum(_) => {
                                     let user = attempt.user();
                                     let script = attempt.script.descr();
 

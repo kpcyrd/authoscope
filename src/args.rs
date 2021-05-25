@@ -1,5 +1,6 @@
 use crate::errors::*;
 use std::io::stdout;
+use std::path::PathBuf;
 use structopt::StructOpt;
 use structopt::clap::{AppSettings, Shell};
 
@@ -22,20 +23,15 @@ pub struct Args {
 
 #[derive(Debug, StructOpt)]
 pub enum SubCommand {
-    /// Dictionary attack
-    #[structopt(name="dict")]
+    /// For each user try every password from a dictionary/wordlist
     Dict(Dict),
-    /// Credential confirmation attack
-    #[structopt(name="creds")]
-    Creds(Creds),
-    /// Enumerate users
-    #[structopt(name="enum")]
+    /// Run a credential stuffing attack with a combolist
+    Combo(Combo),
+    /// For each user enumerate if an account exists with that name/email
     Enum(Enum),
-    /// Test a single username-password combination
-    #[structopt(name="oneshot")]
-    Oneshot(Oneshot),
-    /// Verify and fix encoding of a list
-    #[structopt(name="fsck")]
+    /// Run a script with a single username and password
+    Run(Run),
+    /// Verify a given input file is properly encoded and all entries have valid formatting
     Fsck(Fsck),
     Completions(Completions),
 }
@@ -43,18 +39,18 @@ pub enum SubCommand {
 #[derive(Debug, StructOpt)]
 pub struct Dict {
     /// Username list path
-    pub users: String,
+    pub users_path: PathBuf,
     /// Password list path
-    pub passwords: String,
+    pub passwords_path: PathBuf,
     /// Scripts to run
     #[structopt(required=true)]
     pub scripts: Vec<String>,
 }
 
 #[derive(Debug, StructOpt)]
-pub struct Creds {
-    /// Credential list path
-    pub creds: String,
+pub struct Combo {
+    /// Path to combolist
+    pub path: PathBuf,
     /// Scripts to run
     #[structopt(required=true)]
     pub scripts: Vec<String>,
@@ -70,7 +66,7 @@ pub struct Enum {
 }
 
 #[derive(Debug, StructOpt)]
-pub struct Oneshot {
+pub struct Run {
     /// Script to run
     pub script: String,
     /// Username to test
@@ -109,9 +105,4 @@ impl Completions {
         Args::clap().gen_completions_to("authoscope", self.shell, &mut stdout());
         Ok(())
     }
-}
-
-#[inline]
-pub fn parse() -> Args {
-    Args::from_args()
 }
