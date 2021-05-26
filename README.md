@@ -55,6 +55,10 @@ cd /path/to/authoscope
 cargo install
 ```
 
+### Other Package Managers
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/badtouch.svg)](https://repology.org/project/badtouch/versions)
+
 ## Scripting
 
 A simple script could look like this:
