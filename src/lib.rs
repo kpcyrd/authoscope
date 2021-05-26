@@ -1,4 +1,4 @@
-#![warn(unused_extern_crates)]
+#![allow(clippy::mutex_atomic)]
 
 use hlua_badtouch as hlua;
 

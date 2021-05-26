@@ -74,16 +74,16 @@ impl From<Vec<(AnyLuaValue, AnyLuaValue)>> for LuaMap {
     }
 }
 
-impl Into<HashMap<AnyHashableLuaValue, AnyLuaValue>> for LuaMap {
-    fn into(self: LuaMap) -> HashMap<AnyHashableLuaValue, AnyLuaValue> {
-        self.0
+impl From<LuaMap> for HashMap<AnyHashableLuaValue, AnyLuaValue> {
+    fn from(x: LuaMap) -> HashMap<AnyHashableLuaValue, AnyLuaValue> {
+        x.0
     }
 }
 
-impl Into<AnyLuaValue> for LuaMap {
-    fn into(self: LuaMap) -> AnyLuaValue {
+impl From<LuaMap> for AnyLuaValue {
+    fn from(x: LuaMap) -> AnyLuaValue {
         AnyLuaValue::LuaArray(
-            self.into_iter()
+            x.into_iter()
                 .filter_map(|(k, v)| {
                     match k {
                         AnyHashableLuaValue::LuaString(x) => Some((AnyLuaValue::LuaString(x), v)),

@@ -5,7 +5,7 @@ use authoscope::errors::*;
 fn main() -> Result<()> {
     env_logger::init();
 
-    let path = env::args().skip(1).next()
+    let path = env::args().nth(1)
         .context("Missing argument")?;
 
     let start = Instant::now();

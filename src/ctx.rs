@@ -12,8 +12,6 @@ use crate::http::{HttpSession,
 use crate::config::Config;
 use crate::sockets::Socket;
 use crate::utils;
-use mysql;
-
 
 #[derive(Debug, Clone)]
 pub struct State {

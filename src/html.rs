@@ -1,6 +1,5 @@
 use crate::errors::*;
 
-use kuchiki;
 use kuchiki::traits::TendrilSink;
 use std::collections::HashMap;
 use crate::hlua::AnyLuaValue;
@@ -13,12 +12,12 @@ pub struct Element {
     text: String,
 }
 
-impl Into<AnyLuaValue> for Element {
-    fn into(self) -> AnyLuaValue {
+impl From<Element> for AnyLuaValue {
+    fn from(x: Element) -> AnyLuaValue {
         let mut map = LuaMap::new();
 
-        map.insert_str("text", self.text);
-        map.insert("attrs", LuaMap::from(self.attrs));
+        map.insert_str("text", x.text);
+        map.insert("attrs", LuaMap::from(x.attrs));
 
         map.into()
     }
