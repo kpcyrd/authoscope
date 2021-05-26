@@ -268,7 +268,7 @@ fn main() -> Result<()> {
 
     let env = env_logger::Env::default();
     let env = match args.verbose {
-        0 => env,
+        0 => env.filter_or("RUST_LOG", "warn"),
         1 => env.filter_or("RUST_LOG", "info"),
         _ => env.filter_or("RUST_LOG", "debug"),
     };

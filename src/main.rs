@@ -10,6 +10,7 @@ use authoscope::scheduler::{Scheduler, Attempt, Creds, Msg};
 use authoscope::keyboard::{Keyboard, Key};
 
 use colored::*;
+use env_logger::Env;
 use std::thread;
 use std::fs::File;
 use std::sync::Arc;
@@ -156,16 +157,19 @@ fn format_valid_enum(script: &str, user: &str) -> String {
         script.yellow(), user)
 }
 
+fn log_filter(args: &Args) -> &'static str {
+    match args.verbose {
+        0 => "warn",
+        1 => "info",
+        _ => "debug",
+    }
+}
+
 fn main() -> Result<()> {
     let args = Args::from_args();
 
-    let env = env_logger::Env::default();
-    let env = match args.verbose {
-        0 => env,
-        1 => env.filter_or("RUST_LOG", "info"),
-        _ => env.filter_or("RUST_LOG", "debug"),
-    };
-    env_logger::init_from_env(env);
+    env_logger::init_from_env(Env::default()
+        .default_filter_or(log_filter(&args)));
 
     if atty::isnt(atty::Stream::Stdout) {
         colored::control::SHOULD_COLORIZE.set_override(false);
