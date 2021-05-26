@@ -26,7 +26,7 @@ magically provided by the authoscope runtime.
 
 If you are on an Arch Linux based system, use
 
-    pacman -S badtouch
+    pacman -S authoscope
 
 If you are on Mac OSX, use
 
