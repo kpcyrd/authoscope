@@ -22,6 +22,8 @@ magically provided by the authoscope runtime.
 
 ## Installation
 
+<a href="https://repology.org/project/authoscope/versions"><img align="right" src="https://repology.org/badge/vertical-allrepos/authoscope.svg" alt="Packaging status"></a>
+
 If you are on an Arch Linux based system, use
 
     pacman -S badtouch
@@ -54,10 +56,6 @@ source $HOME/.cargo/env
 cd /path/to/authoscope
 cargo install
 ```
-
-### Other Package Managers
-
-[![Packaging status](https://repology.org/badge/vertical-allrepos/badtouch.svg)](https://repology.org/project/badtouch/versions)
 
 ## Scripting
 
