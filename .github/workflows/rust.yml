@@ -30,7 +30,7 @@ jobs:
         docker run --name authoscope-smtpd -d --rm -p 127.0.0.1:25:25 authoscope-smtpd
 
         echo root@example.com:foo > /tmp/authoscope-smtp-input.txt
-        target/debug/authoscope -o authoscope-smtp-output.txt creds /tmp/authoscope-smtp-input.txt scripts/smtp.lua
+        target/debug/authoscope -o authoscope-smtp-output.txt combo /tmp/authoscope-smtp-input.txt scripts/smtp.lua
         docker stop authoscope-smtpd
     - name: Verify integration test (smtp)
       if: matrix.os == 'ubuntu-latest'
