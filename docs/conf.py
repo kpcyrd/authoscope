@@ -43,7 +43,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'badtouch'
+project = u'authoscope'
 copyright = u'2018, kpcyrd'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -196,7 +196,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'badtouch.tex', u'badtouch Documentation',
+  ('index', 'authoscope.tex', u'authoscope Documentation',
    u'kpcyrd', 'manual'),
 ]
 
@@ -226,7 +226,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man', 'badtouch', u'Scriptable network authentication cracker',
+    ('man', 'authoscope', u'Scriptable network authentication cracker',
      [u'kpcyrd'], 1)
 ]
 

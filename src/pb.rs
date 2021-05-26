@@ -9,8 +9,6 @@
 //
 // https://github.com/a8m/pb/pull/62
 
-use pbr;
-use atty;
 use colored::Colorize;
 use std::fmt::Display;
 use std::io::prelude::*;

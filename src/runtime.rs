@@ -31,7 +31,7 @@ fn byte_array(bytes: AnyLuaValue) -> Result<Vec<u8>> {
         AnyLuaValue::LuaArray(bytes) => {
             Ok(bytes.into_iter()
                 .map(|num| match num.1 {
-                    AnyLuaValue::LuaNumber(num) if num <= 255.0 && num >= 0.0 && (num % 1.0 == 0.0) =>
+                    AnyLuaValue::LuaNumber(num) if (0.0..=255.0).contains(&num) && (num % 1.0 == 0.0) =>
                             Ok(num as u8),
                     AnyLuaValue::LuaNumber(num) =>
                             Err(format_err!("number is out of range: {:?}", num)),
@@ -135,7 +135,7 @@ fn hmac<D>(secret: AnyLuaValue, msg: AnyLuaValue) -> Result<AnyLuaValue>
     let secret = byte_array(secret)?;
     let msg = byte_array(msg)?;
 
-    let mut mac = match Hmac::<D>::new_varkey(&secret) {
+    let mut mac = match Hmac::<D>::new_from_slice(&secret) {
         Ok(mac) => mac,
         Err(_) => bail!("Invalid key length"),
     };
@@ -335,7 +335,7 @@ pub fn ldap_search_bind(lua: &mut hlua::Lua, state: State) {
 
             Ok(result.success().is_ok())
         } else {
-            return Ok(false);
+            Ok(false)
         }
     }))
 }
@@ -404,7 +404,7 @@ fn format_lua(out: &mut String, x: &AnyLuaValue) {
         AnyLuaValue::LuaAnyString(ref x) => out.push_str(&format!("{:?}", x.0)),
         AnyLuaValue::LuaBoolean(ref x) => out.push_str(&format!("{:?}", x)),
         AnyLuaValue::LuaArray(ref x) => {
-            out.push_str("{");
+            out.push('{');
             let mut first = true;
 
             for &(ref k, ref v) in x {
@@ -422,7 +422,7 @@ fn format_lua(out: &mut String, x: &AnyLuaValue) {
 
                 first = false;
             }
-            out.push_str("}");
+            out.push('}');
         },
         AnyLuaValue::LuaOther => out.push_str("LuaOther"),
     }
@@ -642,7 +642,7 @@ pub fn sock_sendafter(lua: &mut hlua::Lua, state: State) {
 }
 
 pub fn sock_newline(lua: &mut hlua::Lua, state: State) {
-    lua.set("sock_newline", hlua::function2(move |sock: String, newline: String| -> () {
+    lua.set("sock_newline", hlua::function2(move |sock: String, newline: String| {
         let sock = state.get_sock(&sock);
         let mut sock = sock.lock().unwrap();
 

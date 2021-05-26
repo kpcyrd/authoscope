@@ -1,10 +1,7 @@
 use crate::errors::*;
-
-use std::iter::FromIterator;
-use std::collections::HashMap;
 use crate::hlua::AnyLuaValue;
-use serde_json::{self, Value, Number, Map};
-
+use serde_json::{self, Value, Number};
+use std::collections::HashMap;
 
 pub fn decode(x: &str) -> Result<AnyLuaValue> {
     let v: Value = serde_json::from_str(&x)
@@ -24,11 +21,7 @@ pub fn encode(v: AnyLuaValue) -> Result<String> {
 pub fn lua_array_is_list(array: &[(AnyLuaValue, AnyLuaValue)]) -> bool {
     if !array.is_empty() {
         let first = &array[0];
-        if let AnyLuaValue::LuaNumber(_) = first.0 {
-            true
-        } else {
-            false
-        }
+        matches!(first.0, AnyLuaValue::LuaNumber(_))
     } else {
         // true // TODO: this breaks unserialize
         false
@@ -45,9 +38,9 @@ pub enum LuaJsonValue {
     Object(HashMap<String, LuaJsonValue>),
 }
 
-impl Into<AnyLuaValue> for LuaJsonValue {
-    fn into(self) -> AnyLuaValue {
-        match self {
+impl From<LuaJsonValue> for AnyLuaValue {
+    fn from(x: LuaJsonValue) -> AnyLuaValue {
+        match x {
             LuaJsonValue::Null => AnyLuaValue::LuaNil,
             LuaJsonValue::Bool(v) => AnyLuaValue::LuaBoolean(v),
             // TODO: not sure if this might fail
@@ -104,9 +97,9 @@ impl From<AnyLuaValue> for LuaJsonValue {
     }
 }
 
-impl Into<Value> for LuaJsonValue {
-    fn into(self) -> Value {
-        match self {
+impl From<LuaJsonValue> for Value {
+    fn from(x: LuaJsonValue) -> Value {
+        match x {
             LuaJsonValue::Null => Value::Null,
             LuaJsonValue::Bool(v) => Value::Bool(v),
             LuaJsonValue::Number(v) => Value::Number(v),
@@ -115,9 +108,10 @@ impl Into<Value> for LuaJsonValue {
                 .map(|x| x.into())
                 .collect()
             ),
-            LuaJsonValue::Object(v) => Value::Object(Map::from_iter(v.into_iter()
+            LuaJsonValue::Object(v) => Value::Object(v.into_iter()
                 .map(|(k, v)| (k, v.into()))
-            )),
+                .collect()
+            ),
         }
     }
 }
@@ -133,9 +127,10 @@ impl From<Value> for LuaJsonValue {
                 .map(|x| x.into())
                 .collect()
             ),
-            Value::Object(v) => LuaJsonValue::Object(HashMap::from_iter(v.into_iter()
+            Value::Object(v) => LuaJsonValue::Object(v.into_iter()
                 .map(|(k, v)| (k, v.into()))
-            )),
+                .collect()
+            ),
         }
     }
 }

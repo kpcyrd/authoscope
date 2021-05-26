@@ -1,5 +1,4 @@
 use crate::hlua::{AnyHashableLuaValue, AnyLuaValue};
-use mysql;
 
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
@@ -22,14 +21,14 @@ impl From<mysql::Params> for LuaMap {
     }
 }
 
-impl Into<mysql::Params> for LuaMap {
-    fn into(self) -> mysql::Params {
-        if self.is_empty() {
+impl From<LuaMap> for mysql::Params {
+    fn from(x: LuaMap) -> mysql::Params {
+        if x.is_empty() {
             mysql::Params::Empty
         } else {
             let mut params: HashMap<String, mysql::Value, BuildHasherDefault<XxHash>> = HashMap::default();
 
-            for (k, v) in self {
+            for (k, v) in x {
                 if let AnyHashableLuaValue::LuaString(k) = k {
                     params.insert(k, lua_to_mysql_value(v));
                 } else {

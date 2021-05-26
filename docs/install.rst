@@ -8,21 +8,21 @@ Archlinux
 
 .. code-block:: bash
 
-    $ pacman -S badtouch
+    $ pacman -S authoscope
 
 Mac OSX
 -------
 
 .. code-block:: bash
 
-    $ brew install badtouch
+    $ brew install authoscope
 
 Docker
 ------
 
 .. code-block:: bash
 
-    $ docker run --rm kpcyrd/badtouch --help
+    $ docker run --rm kpcyrd/authoscope --help
 
 Source
 ------
@@ -33,6 +33,6 @@ To build from source, make sure you have rust_ and ``libssl-dev`` installed.
 
 .. code-block:: bash
 
-    $ git clone https://github.com/kpcyrd/badtouch
-    $ cd badtouch
+    $ git clone https://github.com/kpcyrd/authoscope
+    $ cd authoscope
     $ cargo build

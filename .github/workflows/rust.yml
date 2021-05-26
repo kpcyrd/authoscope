@@ -19,21 +19,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build (badtouch)
-      run: cargo build --verbose
-    - name: Build (examples)
-      run: cargo build --verbose --examples
+    - name: Build
+      run: cargo build --verbose --all-targets
     - name: Run tests
       run: cargo test --verbose
     - name: Run integration test (smtp)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        docker build -t badtouch-smtpd ci/smtp/
-        docker run --name badtouch-smtpd -d --rm -p 127.0.0.1:25:25 badtouch-smtpd
+        docker build -t authoscope-smtpd ci/smtp/
+        docker run --name authoscope-smtpd -d --rm -p 127.0.0.1:25:25 authoscope-smtpd
 
-        echo root@example.com:foo > /tmp/badtouch-smtp-input.txt
-        target/debug/badtouch -o badtouch-smtp-output.txt creds /tmp/badtouch-smtp-input.txt scripts/smtp.lua
-        docker stop badtouch-smtpd
+        echo root@example.com:foo > /tmp/authoscope-smtp-input.txt
+        target/debug/authoscope -o authoscope-smtp-output.txt creds /tmp/authoscope-smtp-input.txt scripts/smtp.lua
+        docker stop authoscope-smtpd
     - name: Verify integration test (smtp)
       if: matrix.os == 'ubuntu-latest'
-      run: grep -q root@example.com badtouch-smtp-output.txt
+      run: grep -q root@example.com authoscope-smtp-output.txt

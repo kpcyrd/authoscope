@@ -21,15 +21,16 @@ pub struct RuntimeConfig {
 impl Config {
     pub fn load() -> Result<Config> {
         let home = dirs_next::home_dir()
-                        .ok_or_else(|| format_err!("home folder not found"))?;
+            .ok_or_else(|| format_err!("home folder not found"))?;
 
-        let path = home.join(".config/badtouch.toml");
-
-        if path.exists() {
-            Config::from_file(path)
-        } else {
-            Ok(Config::default())
+        for name in &["authoscope", "badtouch"] {
+            let path = home.join(&format!(".config/{}.toml", name));
+            if path.exists() {
+                return Config::from_file(path);
+            }
         }
+
+        Ok(Config::default())
     }
 
     #[inline]

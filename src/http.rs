@@ -5,7 +5,6 @@ use reqwest::Method;
 use reqwest::header::{HeaderName, HeaderValue, COOKIE, SET_COOKIE, USER_AGENT};
 use reqwest::redirect;
 use crate::hlua::AnyLuaValue;
-use serde_json;
 use crate::json::LuaJsonValue;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
@@ -202,9 +201,9 @@ impl HttpRequest {
     }
 }
 
-impl Into<AnyLuaValue> for HttpRequest {
-    fn into(self) -> AnyLuaValue {
-        let v = serde_json::to_value(&self).unwrap();
+impl From<HttpRequest> for AnyLuaValue {
+    fn from(x: HttpRequest) -> AnyLuaValue {
+        let v = serde_json::to_value(&x).unwrap();
         LuaJsonValue::from(v).into()
     }
 }

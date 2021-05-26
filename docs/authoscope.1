@@ -1,21 +1,21 @@
-.TH BADTOUCH "1" "August 2018" "badtouch 0.6.1" "User Commands"
+.TH AUTHOSCOPE "1" "August 2018" "authoscope 0.6.1" "User Commands"
 .SH NAME
-badtouch \- scriptable network authentication cracker
+authoscope \- scriptable network authentication cracker
 
 .SH SYNOPSIS
-.B badtouch
+.B authoscope
 [\fB\-nVh\fR] command
 
 .SH DESCRIPTION
-badtouch is a scriptable network authentication cracker. While the space for
+authoscope is a scriptable network authentication cracker. While the space for
 common service bruteforce is already very well saturated, you may still end up
 writing your own python scripts when testing credentials for web applications.
 
-The scope of badtouch is specifically cracking custom services. This is done by
-writing scripts that are loaded into a lua runtime. Those scripts represent a
-single service and provide a `verify(user, password)` function that returns
+The scope of authoscope is specifically cracking custom services. This is done
+by writing scripts that are loaded into a lua runtime. Those scripts represent
+a single service and provide a `verify(user, password)` function that returns
 either true or false. Concurrency, progress indication and reporting is
-magically provided by the badtouch runtime.
+magically provided by the authoscope runtime.
 
 .SH OPTIONS
 .TP
@@ -41,7 +41,7 @@ Pick one of the following subcommands.
 .LP
 Try each password for each user with every script.
 .RS
-\fBbadtouch dict\fR
+\fBauthoscope dict\fR
 <\fBusers\fR>
 <\fBpasswords\fR>
 [\fBscripts\fR]...
@@ -52,7 +52,7 @@ Try each password for each user with every script.
 Load a list of credentials with the format \fBuser:password\fR and verify them
 with every script.
 .RS
-\fBbadtouch creds\fR
+\fBauthoscope creds\fR
 <\fBcredentials\fR>
 [\fBscripts\fR]...
 .RE
@@ -64,7 +64,7 @@ executing the \fBverify\fR function with two arguments, but the password is set
 to \fBnil\fR. You may write a script that can do both by checking the password
 for nil to detect in which mode the script is executed.
 .RS
-\fBbadtouch enum\fR
+\fBauthoscope enum\fR
 <\fBusers\fR>
 [\fBscripts\fR]...
 .RE
@@ -77,14 +77,14 @@ is omitted, the script is executed in enumerate mode. If you want to use this
 command in scripts, set \-x so the exitcode is set to 2 if the credentials are
 invalid.
 .RS
-\fBbadtouch oneshot\fR
+\fBauthoscope oneshot\fR
 [\fB\-x\fR]
 <\fBscript\fR>
 <\fBuser\fR>
 [\fBpassword\fR]
 
 .SH RUNTIME REFERENCE
-The badtouch runtime provides a number of functions that can be used to test
+The authoscope runtime provides a number of functions that can be used to test
 target systems.
 
 .SS base64_decode
@@ -604,5 +604,5 @@ This program was originally written and is currently maintained by kpcyrd.
 Bugs and patches are welcome on github:
 .LP
 .RS
-.I https://github.com/kpcyrd/badtouch
+.I https://github.com/kpcyrd/authoscope
 .RE
