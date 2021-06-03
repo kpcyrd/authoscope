@@ -30,7 +30,7 @@ If you are on an Arch Linux based system, use
 
 If you are on Mac OSX, use
 
-    brew install badtouch
+    brew install authoscope
 
 To build from source, make sure you have [rust](https://rustup.rs/) and `libssl-dev` installed and run
 
