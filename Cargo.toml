@@ -47,6 +47,7 @@ ldap3 = "0.9"
 kuchiki = "0.8"
 twox-hash = "1.1"
 dirs-next = "2.0"
+num-format = "0.4.0"
 
 [target."cfg(unix)".dependencies]
 termios = "0.3"

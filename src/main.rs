@@ -1,4 +1,3 @@
-#![warn(unused_extern_crates)]
 use authoscope::args::{self, Args, SubCommand};
 use authoscope::ctx::Script;
 use authoscope::errors::*;
@@ -11,10 +10,11 @@ use authoscope::keyboard::{Keyboard, Key};
 
 use colored::*;
 use env_logger::Env;
+use num_format::{Locale, ToFormattedString};
 use std::thread;
 use std::fs::File;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use std::io::prelude::*;
 use structopt::StructOpt;
 
@@ -280,13 +280,17 @@ fn main() -> Result<()> {
         }
     }
 
-    let elapsed = start.elapsed();
+    // truncate precision
+    let elapsed = Duration::from_millis(start.elapsed().as_millis() as u64);
+
     let average = elapsed / attempts as u32;
     pb.finish_replace(tinfof!("[+]", "found {} valid credentials with {} attempts and {} retries after {} and on average {} per attempt. {} attempts expired.\n",
-            valid, attempts, retries,
+            valid.to_formatted_string(&Locale::en),
+            attempts.to_formatted_string(&Locale::en),
+            retries.to_formatted_string(&Locale::en),
             humantime::format_duration(elapsed),
             humantime::format_duration(average),
-            expired,
+            expired.to_formatted_string(&Locale::en),
     ));
 
     Keyboard::reset();
