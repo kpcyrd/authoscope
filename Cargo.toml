@@ -14,19 +14,19 @@ edition = "2018"
 #hlua-badtouch = { path="../hlua/hlua" }
 hlua-badtouch = "0.4.2"
 log = "0.4"
-env_logger = "0.8"
+env_logger = "0.9"
 pbr = "1.0"
 threadpool = "1.7"
 colored = "2"
 humantime = "2"
 structopt = "0.3"
 anyhow = "1"
-time = "0.2"
+time = "0.3"
 atty = "0.2"
 rand = "0.8"
-getch = "0.2"
+getch = "0.3"
 toml = "0.5"
-nix = "0.20"
+nix = "0.23"
 serde = { version="1.0", features=["derive"] }
 serde_json = "1.0"
 bufstream = "0.1.3"
@@ -42,15 +42,14 @@ base64 = "0.13"
 bcrypt = "0.9"
 
 reqwest = { version="0.11", features=["blocking", "json"] }
-mysql = "20"
-ldap3 = "0.9"
+mysql = "22"
+ldap3 = "0.10"
 kuchiki = "0.8"
-twox-hash = "1.1"
-dirs-next = "2.0"
+dirs = "4"
 num-format = "0.4.0"
 
 [target."cfg(unix)".dependencies]
 termios = "0.3"
 
 [target.'cfg(target_os="linux")'.dependencies]
-rlimit = "0.5"
+rlimit = "0.7"
