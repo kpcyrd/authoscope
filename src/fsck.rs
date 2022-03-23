@@ -61,7 +61,7 @@ fn validate_file(path: &str, args: &Fsck) -> Result<()> {
 
 pub fn run_fsck(args: &Fsck) -> Result<()> {
     for path in &args.paths {
-        validate_file(path, &args)?;
+        validate_file(path, args)?;
     }
     Ok(())
 }

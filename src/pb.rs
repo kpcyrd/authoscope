@@ -18,7 +18,7 @@ use time::{self, Instant, Duration};
 
 macro_rules! printfl {
    ($w:expr, $($tt:tt)*) => {{
-        $w.write(&format!($($tt)*).as_bytes()).ok().expect("write() fail");
+        $w.write_all(&format!($($tt)*).as_bytes()).ok().expect("write_all() fail");
         $w.flush().ok().expect("flush() fail");
     }}
 }

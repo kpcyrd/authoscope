@@ -45,7 +45,7 @@ impl Config {
 
     #[inline]
     pub fn try_from_str(buf: &str) -> Result<Config> {
-        let config = toml::from_str(&buf)?;
+        let config = toml::from_str(buf)?;
         Ok(config)
     }
 }

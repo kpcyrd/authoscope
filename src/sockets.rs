@@ -47,7 +47,7 @@ impl Socket {
     }
 
     pub fn send(&mut self, data: &[u8]) -> Result<()> {
-        match str::from_utf8(&data) {
+        match str::from_utf8(data) {
             Ok(data) => debug!("send: {:?}", data),
             Err(_) => debug!("send: {:?}", data),
         };

@@ -228,7 +228,7 @@ impl CookieJar {
         let mut cookies: Vec<String> = Vec::new();
         for (key, value) in self.iter() {
             let value = if value.contains(' ') || value.contains(';') {
-                self.escape_cookie_value(&value)
+                self.escape_cookie_value(value)
             } else {
                 value.to_owned()
             };

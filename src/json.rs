@@ -4,8 +4,8 @@ use serde_json::{self, Value, Number};
 use std::collections::HashMap;
 
 pub fn decode(x: &str) -> Result<AnyLuaValue> {
-    let v: Value = serde_json::from_str(&x)
-                        .context("deserialize failed")?;
+    let v: Value = serde_json::from_str(x)
+        .context("deserialize failed")?;
     let v: LuaJsonValue = v.into();
     Ok(v.into())
 }
