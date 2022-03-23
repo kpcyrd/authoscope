@@ -6,6 +6,7 @@ authors = ["kpcyrd <git@rxv.cc>"]
 license = "GPL-3.0"
 repository = "https://github.com/kpcyrd/authoscope"
 categories = ["command-line-utilities"]
+default-run = "authoscope"
 readme = "README.md"
 edition = "2018"
 
