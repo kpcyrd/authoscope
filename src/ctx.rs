@@ -74,7 +74,7 @@ impl State {
         let mtx = self.http_sessions.lock().unwrap();
         let session = mtx.get(session_id).expect("invalid session reference"); // TODO
 
-        HttpRequest::new(&self.config, &session, method, url, options)
+        HttpRequest::new(&self.config, session, method, url, options)
     }
 
     pub fn mysql_register(&self, sock: mysql::Conn) -> String {

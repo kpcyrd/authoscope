@@ -15,12 +15,12 @@ pub struct RuntimeConfig {
     #[serde(default)]
     pub user_agent: Option<String>,
     #[serde(default)]
-    pub rlimit_nofile: Option<usize>,
+    pub rlimit_nofile: Option<u64>,
 }
 
 impl Config {
     pub fn load() -> Result<Config> {
-        let home = dirs_next::home_dir()
+        let home = dirs::home_dir()
             .ok_or_else(|| format_err!("home folder not found"))?;
 
         for name in &["authoscope", "badtouch"] {
@@ -45,7 +45,7 @@ impl Config {
 
     #[inline]
     pub fn try_from_str(buf: &str) -> Result<Config> {
-        let config = toml::from_str(&buf)?;
+        let config = toml::from_str(buf)?;
         Ok(config)
     }
 }

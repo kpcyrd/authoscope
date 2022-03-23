@@ -1,8 +1,6 @@
 use crate::hlua::{AnyHashableLuaValue, AnyLuaValue};
 
 use std::collections::HashMap;
-use std::hash::BuildHasherDefault;
-use twox_hash::XxHash;
 use crate::structs::LuaMap;
 
 
@@ -26,7 +24,7 @@ impl From<LuaMap> for mysql::Params {
         if x.is_empty() {
             mysql::Params::Empty
         } else {
-            let mut params: HashMap<String, mysql::Value, BuildHasherDefault<XxHash>> = HashMap::default();
+            let mut params = HashMap::default();
 
             for (k, v) in x {
                 if let AnyHashableLuaValue::LuaString(k) = k {

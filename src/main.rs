@@ -1,4 +1,3 @@
-#![warn(unused_extern_crates)]
 use authoscope::args::{self, Args, SubCommand};
 use authoscope::ctx::Script;
 use authoscope::errors::*;
@@ -11,10 +10,11 @@ use authoscope::keyboard::{Keyboard, Key};
 
 use colored::*;
 use env_logger::Env;
+use num_format::{Locale, ToFormattedString};
 use std::thread;
 use std::fs::File;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use std::io::prelude::*;
 use structopt::StructOpt;
 
@@ -65,12 +65,14 @@ fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict, config: &Arc<
     let passwords = utils::load_list(&args.passwords_path)
         .context("Failed to load passwords")?;
     tinfo!("[+]", "loaded {} passwords", passwords.len());
-    let scripts = utils::load_scripts(args.scripts, &config)
+    let scripts = utils::load_scripts(args.scripts, config)
         .context("Failed to load scripts")?;
     tinfo!("[+]", "loaded {} scripts", scripts.len());
 
     let attempts = users.len() * passwords.len() * scripts.len();
-    tinfo!("[*]", "submitting {} jobs to threadpool with {} workers", attempts, pool.max_count());
+    tinfo!("[*]", "submitting {} jobs to threadpool with {} workers",
+        attempts.to_formatted_string(&Locale::en),
+        pool.max_count());
 
     for user in &users {
         for password in &passwords {
@@ -87,7 +89,7 @@ fn setup_dictionary_attack(pool: &mut Scheduler, args: args::Dict, config: &Arc<
 fn setup_combolist_attack(pool: &mut Scheduler, args: args::Combo, config: &Arc<Config>) -> Result<usize> {
     let creds = utils::load_combolist(&args.path)?;
     tinfo!("[+]", "loaded {} credentials", creds.len());
-    let scripts = utils::load_scripts(args.scripts, &config)
+    let scripts = utils::load_scripts(args.scripts, config)
         .context("Failed to load scripts")?;
     tinfo!("[+]", "loaded {} scripts", scripts.len());
 
@@ -109,7 +111,7 @@ fn setup_enum_attack(pool: &mut Scheduler, args: args::Enum, config: &Arc<Config
     let users = utils::load_list(&args.users)
         .context("Failed to load users")?;
     tinfo!("[+]", "loaded {} users", users.len());
-    let scripts = utils::load_scripts(args.scripts, &config)
+    let scripts = utils::load_scripts(args.scripts, config)
         .context("Failed to load scripts")?;
     tinfo!("[+]", "loaded {} scripts", scripts.len());
 
@@ -131,13 +133,13 @@ fn run_oneshot(oneshot: args::Run, config: Arc<Config>) -> Result<()> {
     let user = oneshot.user;
 
     let valid = match oneshot.password {
-        Some(ref password) => script.run_creds(&user, &password)?,
+        Some(ref password) => script.run_creds(&user, password)?,
         None => script.run_enum(&user)?,
     };
 
     if valid {
         match oneshot.password {
-            Some(ref password) => println!("{}", format_valid_creds(script.descr(), &user, &password)),
+            Some(ref password) => println!("{}", format_valid_creds(script.descr(), &user, password)),
             None => println!("{}", format_valid_enum(script.descr(), &user)),
         }
     } else if oneshot.exitcode {
@@ -280,13 +282,17 @@ fn main() -> Result<()> {
         }
     }
 
-    let elapsed = start.elapsed();
+    // truncate precision
+    let elapsed = Duration::from_millis(start.elapsed().as_millis() as u64);
+
     let average = elapsed / attempts as u32;
     pb.finish_replace(tinfof!("[+]", "found {} valid credentials with {} attempts and {} retries after {} and on average {} per attempt. {} attempts expired.\n",
-            valid, attempts, retries,
+            valid.to_formatted_string(&Locale::en),
+            attempts.to_formatted_string(&Locale::en),
+            retries.to_formatted_string(&Locale::en),
             humantime::format_duration(elapsed),
             humantime::format_duration(average),
-            expired,
+            expired.to_formatted_string(&Locale::en),
     ));
 
     Keyboard::reset();

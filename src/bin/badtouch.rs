@@ -171,7 +171,7 @@ fn setup_dictionary_attack(pool: &mut Scheduler, args: Dict, config: &Arc<Config
     let passwords = utils::load_list(&args.passwords)
         .context("Failed to load passwords")?;
     tinfo!("[+]", "loaded {} passwords", passwords.len());
-    let scripts = utils::load_scripts(args.scripts, &config)
+    let scripts = utils::load_scripts(args.scripts, config)
         .context("Failed to load scripts")?;
     tinfo!("[+]", "loaded {} scripts", scripts.len());
 
@@ -193,7 +193,7 @@ fn setup_dictionary_attack(pool: &mut Scheduler, args: Dict, config: &Arc<Config
 fn setup_credential_confirmation(pool: &mut Scheduler, args: Creds, config: &Arc<Config>) -> Result<usize> {
     let creds = utils::load_combolist(&args.creds)?;
     tinfo!("[+]", "loaded {} credentials", creds.len());
-    let scripts = utils::load_scripts(args.scripts, &config)
+    let scripts = utils::load_scripts(args.scripts, config)
         .context("Failed to load scripts")?;
     tinfo!("[+]", "loaded {} scripts", scripts.len());
 
@@ -215,7 +215,7 @@ fn setup_enum_attack(pool: &mut Scheduler, args: Enum, config: &Arc<Config>) -> 
     let users = utils::load_list(&args.users)
         .context("Failed to load users")?;
     tinfo!("[+]", "loaded {} users", users.len());
-    let scripts = utils::load_scripts(args.scripts, &config)
+    let scripts = utils::load_scripts(args.scripts, config)
         .context("Failed to load scripts")?;
     tinfo!("[+]", "loaded {} scripts", scripts.len());
 
@@ -237,13 +237,13 @@ fn run_oneshot(oneshot: Oneshot, config: Arc<Config>) -> Result<()> {
     let user = oneshot.user;
 
     let valid = match oneshot.password {
-        Some(ref password) => script.run_creds(&user, &password)?,
+        Some(ref password) => script.run_creds(&user, password)?,
         None => script.run_enum(&user)?,
     };
 
     if valid {
         match oneshot.password {
-            Some(ref password) => println!("{}", format_valid_creds(script.descr(), &user, &password)),
+            Some(ref password) => println!("{}", format_valid_creds(script.descr(), &user, password)),
             None => println!("{}", format_valid_enum(script.descr(), &user)),
         }
     } else if oneshot.exitcode {
