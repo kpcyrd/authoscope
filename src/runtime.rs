@@ -6,9 +6,14 @@ use crate::errors::*;
 use crate::json;
 use crate::db;
 
-use digest::{Digest, Update, BlockInput, FixedOutput, Reset};
-use digest::generic_array::ArrayLength;
-use hmac::{Hmac, NewMac, Mac};
+use digest::{
+    Digest,
+    block_buffer::Eager,
+    core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore, UpdateCore},
+    typenum::{IsLess, Le, NonZero, U256},
+    HashMarker, Mac,
+};
+use hmac::Hmac;
 use mysql::prelude::Queryable;
 
 use reqwest::header::WWW_AUTHENTICATE;
@@ -128,9 +133,15 @@ pub fn hex(lua: &mut hlua::Lua, state: State) {
 
 fn hmac<D>(secret: AnyLuaValue, msg: AnyLuaValue) -> Result<AnyLuaValue>
     where
-        D: Update + BlockInput + FixedOutput + Reset + Default + Clone,
-        D::BlockSize: ArrayLength<u8> + Clone,
-        D::OutputSize: ArrayLength<u8>,
+        D: CoreProxy,
+        D::Core: HashMarker
+            + UpdateCore
+            + FixedOutputCore
+            + BufferKindUser<BufferKind = Eager>
+            + Default
+            + Clone,
+        <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
+        Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
 {
     let secret = byte_array(secret)?;
     let msg = byte_array(msg)?;
