@@ -1,27 +1,26 @@
 use crate::errors::*;
 use std::io::stdout;
+use clap::{ArgAction, CommandFactory, Parser};
+use clap_complete::Shell;
 use std::path::PathBuf;
-use structopt::StructOpt;
-use structopt::clap::{AppSettings, Shell};
 
-#[derive(Debug, StructOpt)]
-#[structopt(global_settings = &[AppSettings::ColoredHelp])]
+#[derive(Debug, Parser)]
+#[command(version)]
 pub struct Args {
     /// Verbose output
-    #[structopt(short="v", long="verbose",
-                global=true, parse(from_occurrences))]
+    #[arg(short, long, global = true, action(ArgAction::Count))]
     pub verbose: u8,
     /// Concurrent workers
-    #[structopt(short = "n", long = "workers", default_value = "16")]
+    #[arg(short = 'n', long, default_value = "16")]
     pub workers: usize,
     /// Write results to file
-    #[structopt(short = "o", long = "output")]
+    #[arg(short = 'o', long = "output")]
     pub output: Option<String>,
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     pub subcommand: SubCommand,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub enum SubCommand {
     /// For each user try every password from a dictionary/wordlist
     Dict(Dict),
@@ -36,36 +35,36 @@ pub enum SubCommand {
     Completions(Completions),
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct Dict {
     /// Username list path
     pub users_path: PathBuf,
     /// Password list path
     pub passwords_path: PathBuf,
     /// Scripts to run
-    #[structopt(required=true)]
+    #[arg(required=true)]
     pub scripts: Vec<String>,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct Combo {
     /// Path to combolist
     pub path: PathBuf,
     /// Scripts to run
-    #[structopt(required=true)]
+    #[arg(required=true)]
     pub scripts: Vec<String>,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct Enum {
     /// Username list path
     pub users: String,
     /// Scripts to run
-    #[structopt(required=true)]
+    #[arg(required=true)]
     pub scripts: Vec<String>,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct Run {
     /// Script to run
     pub script: String,
@@ -74,35 +73,32 @@ pub struct Run {
     /// Password to test
     pub password: Option<String>,
     /// Set the exitcode to 2 if the credentials are invalid
-    #[structopt(short = "x", long = "exitcode")]
+    #[arg(short = 'x', long)]
     pub exitcode: bool,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct Fsck {
     /// Do not show invalid lines
-    #[structopt(short = "q", long = "quiet")]
+    #[arg(short = 'q', long)]
     pub quiet: bool,
     /// Do not show valid lines
-    #[structopt(short = "s", long = "silent")]
+    #[arg(short = 's', long)]
     pub silent: bool,
     /// Require one colon per line
-    #[structopt(short = "c", long = "colon")]
+    #[arg(short = 'c', long = "colon")]
     pub require_colon: bool,
     /// Files to read
     pub paths: Vec<String>,
 }
 
 /// Generate shell completions
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct Completions {
-    #[structopt(possible_values=&Shell::variants())]
     pub shell: Shell,
 }
 
-impl Completions {
-    pub fn gen(&self) -> Result<()> {
-        Args::clap().gen_completions_to("authoscope", self.shell, &mut stdout());
-        Ok(())
-    }
+pub fn gen_completions(args: &Completions) -> Result<()> {
+    clap_complete::generate(args.shell, &mut Args::command(), "authoscope", &mut stdout());
+    Ok(())
 }

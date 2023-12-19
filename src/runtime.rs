@@ -13,6 +13,7 @@ use digest::{
     typenum::{IsLess, Le, NonZero, U256},
     HashMarker, Mac,
 };
+use data_encoding::BASE64;
 use hmac::Hmac;
 use mysql::prelude::Queryable;
 
@@ -55,7 +56,7 @@ fn lua_bytes(bytes: &[u8]) -> AnyLuaValue {
 
 pub fn base64_decode(lua: &mut hlua::Lua, state: State) {
     lua.set("base64_decode", hlua::function1(move |bytes: String| -> Result<AnyLuaValue> {
-        base64::decode(&bytes)
+        BASE64.decode(bytes.as_bytes())
             .map_err(|err| state.set_error(err))
             .map(|bytes| lua_bytes(&bytes))
     }))
@@ -65,20 +66,20 @@ pub fn base64_encode(lua: &mut hlua::Lua, state: State) {
     lua.set("base64_encode", hlua::function1(move |bytes: AnyLuaValue| -> Result<String> {
         byte_array(bytes)
             .map_err(|err| state.set_error(err))
-            .map(|bytes| base64::encode(&bytes))
+            .map(|bytes| BASE64.encode(&bytes))
     }))
 }
 
 pub fn bcrypt(lua: &mut hlua::Lua, state: State) {
     lua.set("bcrypt", hlua::function2(move |password: String, cost: u32| -> Result<String> {
-        bcrypt::hash(&password, cost)
+        bcrypt::hash(password, cost)
             .map_err(|err| state.set_error(err))
     }))
 }
 
 pub fn bcrypt_verify(lua: &mut hlua::Lua, state: State) {
     lua.set("bcrypt_verify", hlua::function2(move |password: String, hashed: String| -> Result<bool> {
-        bcrypt::verify(&password, &hashed)
+        bcrypt::verify(password, &hashed)
             .map_err(|err| state.set_error(err))
     }))
 }
@@ -217,7 +218,7 @@ pub fn http_basic_auth(lua: &mut hlua::Lua, state: State) {
     lua.set("http_basic_auth", hlua::function3(move |url: String, user: String, password: String| -> Result<bool> {
         let client = reqwest::blocking::Client::new();
 
-        client.get(&url)
+        client.get(url)
             .basic_auth(user, Some(password))
             .send()
             .context("http request failed")
@@ -355,7 +356,7 @@ pub fn md5(lua: &mut hlua::Lua, state: State) {
     lua.set("md5", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
         byte_array(bytes)
             .map_err(|err| state.set_error(err))
-            .map(|bytes| lua_bytes(&md5::Md5::digest(&bytes)))
+            .map(|bytes| lua_bytes(&md5::Md5::digest(bytes)))
     }))
 }
 
@@ -418,7 +419,7 @@ fn format_lua(out: &mut String, x: &AnyLuaValue) {
             out.push('{');
             let mut first = true;
 
-            for &(ref k, ref v) in x {
+            for (k, v) in x {
                 if !first {
                     out.push_str(", ");
                 }
@@ -470,7 +471,7 @@ pub fn sha1(lua: &mut hlua::Lua, state: State) {
     lua.set("sha1", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
         byte_array(bytes)
             .map_err(|err| state.set_error(err))
-            .map(|bytes| lua_bytes(&sha1::Sha1::digest(&bytes)))
+            .map(|bytes| lua_bytes(&sha1::Sha1::digest(bytes)))
     }))
 }
 
@@ -478,7 +479,7 @@ pub fn sha2_256(lua: &mut hlua::Lua, state: State) {
     lua.set("sha2_256", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
         byte_array(bytes)
             .map_err(|err| state.set_error(err))
-            .map(|bytes| lua_bytes(&sha2::Sha256::digest(&bytes)))
+            .map(|bytes| lua_bytes(&sha2::Sha256::digest(bytes)))
     }))
 }
 
@@ -486,7 +487,7 @@ pub fn sha2_512(lua: &mut hlua::Lua, state: State) {
     lua.set("sha2_512", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
         byte_array(bytes)
             .map_err(|err| state.set_error(err))
-            .map(|bytes| lua_bytes(&sha2::Sha512::digest(&bytes)))
+            .map(|bytes| lua_bytes(&sha2::Sha512::digest(bytes)))
     }))
 }
 
@@ -494,7 +495,7 @@ pub fn sha3_256(lua: &mut hlua::Lua, state: State) {
     lua.set("sha3_256", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
         byte_array(bytes)
             .map_err(|err| state.set_error(err))
-            .map(|bytes| lua_bytes(&sha3::Sha3_256::digest(&bytes)))
+            .map(|bytes| lua_bytes(&sha3::Sha3_256::digest(bytes)))
     }))
 }
 
@@ -502,7 +503,7 @@ pub fn sha3_512(lua: &mut hlua::Lua, state: State) {
     lua.set("sha3_512", hlua::function1(move |bytes: AnyLuaValue| -> Result<AnyLuaValue> {
         byte_array(bytes)
             .map_err(|err| state.set_error(err))
-            .map(|bytes| lua_bytes(&sha3::Sha3_512::digest(&bytes)))
+            .map(|bytes| lua_bytes(&sha3::Sha3_512::digest(bytes)))
     }))
 }
 

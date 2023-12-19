@@ -8,15 +8,16 @@ use authoscope::pb::ProgressBar;
 use authoscope::scheduler::{Scheduler, Attempt, Creds, Msg};
 use authoscope::keyboard::{Keyboard, Key};
 
+use clap::Parser;
 use colored::*;
 use env_logger::Env;
 use num_format::{Locale, ToFormattedString};
-use std::thread;
 use std::fs::File;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 use std::io::prelude::*;
-use structopt::StructOpt;
+use std::io::{self, IsTerminal};
+use std::sync::Arc;
+use std::thread;
+use std::time::{Duration, Instant};
 
 enum Report {
     Some(File),
@@ -168,12 +169,12 @@ fn log_filter(args: &Args) -> &'static str {
 }
 
 fn main() -> Result<()> {
-    let args = Args::from_args();
+    let args = Args::parse();
 
     env_logger::init_from_env(Env::default()
         .default_filter_or(log_filter(&args)));
 
-    if atty::isnt(atty::Stream::Stdout) {
+    if !io::stdout().is_terminal() {
         colored::control::SHOULD_COLORIZE.set_override(false);
     }
 
@@ -191,7 +192,7 @@ fn main() -> Result<()> {
         SubCommand::Enum(enumerate) => setup_enum_attack(&mut pool, enumerate, &config)?,
         SubCommand::Run(oneshot) => return run_oneshot(oneshot, config),
         SubCommand::Fsck(fsck) => return fsck::run_fsck(&fsck),
-        SubCommand::Completions(completions) => return completions.gen(),
+        SubCommand::Completions(completions) => return args::gen_completions(&completions),
     };
 
     let tx = pool.tx();

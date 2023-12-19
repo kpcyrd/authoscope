@@ -12,7 +12,7 @@
 use colored::Colorize;
 use std::fmt::Display;
 use std::io::prelude::*;
-use std::io::{self, Stdout};
+use std::io::{self, Stdout, IsTerminal};
 use time::{self, Instant, Duration};
 
 
@@ -39,7 +39,7 @@ impl ProgressBar {
 
         let now = Instant::now();
         let refresh_rate = Duration::milliseconds(250);
-        let atty = atty::is(atty::Stream::Stdout);
+        let atty = io::stdout().is_terminal();
 
         ProgressBar {
             pb,
