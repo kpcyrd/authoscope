@@ -13,6 +13,7 @@ use digest::{
     typenum::{IsLess, Le, NonZero, U256},
     HashMarker, Mac,
 };
+use data_encoding::BASE64;
 use hmac::Hmac;
 use mysql::prelude::Queryable;
 
@@ -55,7 +56,7 @@ fn lua_bytes(bytes: &[u8]) -> AnyLuaValue {
 
 pub fn base64_decode(lua: &mut hlua::Lua, state: State) {
     lua.set("base64_decode", hlua::function1(move |bytes: String| -> Result<AnyLuaValue> {
-        base64::decode(&bytes)
+        BASE64.decode(bytes.as_bytes())
             .map_err(|err| state.set_error(err))
             .map(|bytes| lua_bytes(&bytes))
     }))
@@ -65,7 +66,7 @@ pub fn base64_encode(lua: &mut hlua::Lua, state: State) {
     lua.set("base64_encode", hlua::function1(move |bytes: AnyLuaValue| -> Result<String> {
         byte_array(bytes)
             .map_err(|err| state.set_error(err))
-            .map(|bytes| base64::encode(&bytes))
+            .map(|bytes| BASE64.encode(&bytes))
     }))
 }
 

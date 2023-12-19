@@ -11,11 +11,12 @@ use authoscope::keyboard::{Keyboard, Key};
 use colored::*;
 use env_logger::Env;
 use num_format::{Locale, ToFormattedString};
-use std::thread;
 use std::fs::File;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 use std::io::prelude::*;
+use std::io::{self, IsTerminal};
+use std::sync::Arc;
+use std::thread;
+use std::time::{Duration, Instant};
 use structopt::StructOpt;
 
 enum Report {
@@ -173,7 +174,7 @@ fn main() -> Result<()> {
     env_logger::init_from_env(Env::default()
         .default_filter_or(log_filter(&args)));
 
-    if atty::isnt(atty::Stream::Stdout) {
+    if !io::stdout().is_terminal() {
         colored::control::SHOULD_COLORIZE.set_override(false);
     }
 

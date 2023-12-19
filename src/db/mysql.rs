@@ -10,7 +10,13 @@ impl From<mysql::Params> for LuaMap {
             mysql::Params::Empty => LuaMap::new(),
             mysql::Params::Named(map) => {
                 map.into_iter()
-                    .map(|(k, v)| (AnyHashableLuaValue::LuaString(k), mysql_value_to_lua(v)))
+                    .flat_map(|(k, v)| {
+                        String::from_utf8(k)
+                            .map(|k| (
+                                AnyHashableLuaValue::LuaString(k),
+                                mysql_value_to_lua(v)
+                            ))
+                    })
                     .collect::<HashMap<AnyHashableLuaValue, AnyLuaValue>>()
                     .into()
             },
@@ -28,7 +34,7 @@ impl From<LuaMap> for mysql::Params {
 
             for (k, v) in x {
                 if let AnyHashableLuaValue::LuaString(k) = k {
-                    params.insert(k, lua_to_mysql_value(v));
+                    params.insert(k.into_bytes(), lua_to_mysql_value(v));
                 } else {
                     panic!("unsupported keys in map");
                 }
