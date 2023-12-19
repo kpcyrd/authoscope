@@ -69,7 +69,7 @@ pub fn mysql_value_to_lua(value: mysql::Value) -> AnyLuaValue {
         Int(i) => AnyLuaValue::LuaNumber(i as f64),
         UInt(i) => AnyLuaValue::LuaNumber(i as f64),
         Float(i) => AnyLuaValue::LuaNumber(i as f64),
-        Double(i) => AnyLuaValue::LuaNumber(i as f64),
+        Double(i) => AnyLuaValue::LuaNumber(i),
         Date(_, _, _, _, _, _, _) => unimplemented!(),
         Time(_, _, _, _, _, _) => unimplemented!(),
     }
