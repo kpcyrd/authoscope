@@ -20,7 +20,8 @@ pbr = "1.0"
 threadpool = "1.7"
 colored = "2"
 humantime = "2"
-structopt = "0.3"
+clap = { version = "4", features = ["derive"] }
+clap_complete = "4.4.4"
 anyhow = "1"
 time = "0.3"
 rand = "0.8"
@@ -52,4 +53,4 @@ num-format = "0.4.0"
 termios = "0.3"
 
 [target.'cfg(target_os="linux")'.dependencies]
-rlimit = "0.7"
+rlimit = "0.10"
