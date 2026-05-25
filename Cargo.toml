@@ -10,10 +10,16 @@ default-run = "authoscope"
 readme = "README.md"
 edition = "2018"
 
+[features]
+default = ["hlua-badtouch"]
+# Run the Lua runtime on the pure-Rust lua-rs VM instead of the C hlua bindings.
+lua-rs = ["dep:lua-rs-hlua-shim"]
+
 [dependencies]
 #hlua = "0.4"
 #hlua-badtouch = { path="../hlua/hlua" }
-hlua-badtouch = "0.4.2"
+hlua-badtouch = { version = "0.4.2", optional = true }
+lua-rs-hlua-shim = { version = "0.0.4", optional = true }
 log = "0.4"
 env_logger = "0.9"
 pbr = "1.0"
