@@ -1,6 +1,9 @@
 #![allow(clippy::mutex_atomic)]
 
+#[cfg(not(feature = "lua-rs"))]
 use hlua_badtouch as hlua;
+#[cfg(feature = "lua-rs")]
+use lua_rs_hlua_shim as hlua;
 
 pub mod args;
 pub mod config;
