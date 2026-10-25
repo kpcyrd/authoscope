@@ -1,7 +1,5 @@
 #![allow(clippy::mutex_atomic)]
 
-use hlua_badtouch as hlua;
-
 pub mod args;
 pub mod config;
 pub mod ctx;

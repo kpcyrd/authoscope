@@ -135,7 +135,7 @@ dependencies = [
  "dirs",
  "env_logger",
  "getch",
- "hlua-badtouch",
+ "hlua",
  "hmac",
  "humantime",
  "kuchiki",
@@ -1094,10 +1094,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d77f7ec81a6d05a3abb01ab6eb7590f6083d08449fe5a1c8b1e620283546ccb7"
 
 [[package]]
-name = "hlua-badtouch"
-version = "0.4.2"
+name = "hlua"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7508a0706ab5bdb0382bb080eb2041d6289d371f59799fd5953d4143fbd5977"
+checksum = "c3c03a4912d51870b3ad70456a312f0527debce842f6230096938564bcf13bea"
 dependencies = [
  "libc",
  "lua52-sys",

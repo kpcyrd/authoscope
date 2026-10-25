@@ -1,6 +1,5 @@
-use crate::hlua;
-use crate::hlua::{AnyLuaValue, AnyHashableLuaValue, AnyLuaString};
-use crate::hlua::AnyLuaValue::LuaString;
+use hlua::{AnyLuaValue, AnyHashableLuaValue, AnyLuaString};
+use hlua::AnyLuaValue::LuaString;
 use crate::structs::LuaMap;
 use crate::errors::*;
 use crate::json;

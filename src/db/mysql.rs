@@ -1,8 +1,6 @@
-use crate::hlua::{AnyHashableLuaValue, AnyLuaValue};
-
-use std::collections::HashMap;
 use crate::structs::LuaMap;
-
+use hlua::{AnyHashableLuaValue, AnyLuaValue};
+use std::collections::HashMap;
 
 impl From<mysql::Params> for LuaMap {
     fn from(params: mysql::Params) -> LuaMap {

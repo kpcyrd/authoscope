@@ -1,10 +1,10 @@
 use crate::errors::*;
 use crate::structs::LuaMap;
 
+use hlua::AnyLuaValue;
 use reqwest::Method;
 use reqwest::header::{HeaderName, HeaderValue, COOKIE, SET_COOKIE, USER_AGENT};
 use reqwest::redirect;
-use crate::hlua::AnyLuaValue;
 use crate::json::LuaJsonValue;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;

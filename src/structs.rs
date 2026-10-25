@@ -1,8 +1,5 @@
-use crate::hlua::{AnyHashableLuaValue, AnyLuaValue};
-
-use std::collections;
-use std::collections::HashMap;
-
+use hlua::{AnyHashableLuaValue, AnyLuaValue};
+use std::collections::{self, HashMap};
 
 #[derive(Debug, Default)]
 pub struct LuaMap(HashMap<AnyHashableLuaValue, AnyLuaValue>);

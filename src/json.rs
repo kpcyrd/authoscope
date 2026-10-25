@@ -1,5 +1,5 @@
 use crate::errors::*;
-use crate::hlua::AnyLuaValue;
+use hlua::AnyLuaValue;
 use serde_json::{self, Value, Number};
 use std::collections::HashMap;
 

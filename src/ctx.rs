@@ -1,7 +1,7 @@
-use crate::hlua::{self, AnyLuaValue};
 use crate::errors::*;
 use crate::runtime;
 
+use hlua::{self, AnyLuaValue};
 use std::fs::File;
 use std::sync::{Arc, Mutex};
 use std::io::prelude::*;
@@ -151,6 +151,8 @@ impl Script {
 
     fn ctx<'a>(config: &Arc<Config>) -> (hlua::Lua<'a>, State) {
         let mut lua = hlua::Lua::new();
+        // Avoid breaking existing code today
+        #[allow(deprecated)]
         lua.open_string();
         let state = State::new(config.clone());
 
@@ -239,10 +241,9 @@ impl Script {
             return Err(err);
         }
 
-        use crate::hlua::AnyLuaValue::*;
         match result {
-            LuaBoolean(x) => Ok(x),
-            LuaString(x) => Err(format_err!("error: {:?}", x)),
+            AnyLuaValue::LuaBoolean(x) => Ok(x),
+            AnyLuaValue::LuaString(x) => Err(format_err!("error: {:?}", x)),
             x => Err(format_err!("lua returned wrong type: {:?}", x)),
         }
     }

@@ -11,9 +11,7 @@ readme = "README.md"
 edition = "2018"
 
 [dependencies]
-#hlua = "0.4"
-#hlua-badtouch = { path="../hlua/hlua" }
-hlua-badtouch = "0.4.2"
+hlua = "0.4.3"
 log = "0.4"
 env_logger = "0.10"
 pbr = "1.0"
