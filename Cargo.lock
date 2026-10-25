@@ -157,7 +157,6 @@ dependencies = [
  "sha3",
  "termios",
  "threadpool",
- "time",
  "toml",
 ]
 
@@ -2813,7 +2812,6 @@ dependencies = [
  "deranged",
  "num-conv",
  "powerfmt",
- "serde",
  "time-core",
  "time-macros",
 ]

@@ -23,7 +23,6 @@ humantime = "2"
 clap = { version = "4", features = ["derive"] }
 clap_complete = "4.4.4"
 anyhow = "1"
-time = "0.3"
 rand = "0.8"
 getch = "0.3"
 toml = "0.8"
