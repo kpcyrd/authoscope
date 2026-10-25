@@ -74,10 +74,10 @@ impl ProgressBar {
     #[inline]
     pub fn tick(&mut self) {
         let now = Instant::now();
-        if let Some(mrr) = self.max_refresh_rate {
-            if now - self.last_refresh_time < mrr {
-                return;
-            }
+        if let Some(mrr) = self.max_refresh_rate
+            && now - self.last_refresh_time < mrr
+        {
+            return;
         }
 
         self.draw();
@@ -92,11 +92,11 @@ impl ProgressBar {
         }
 
         let now = Instant::now();
-        if let Some(mrr) = self.max_refresh_rate {
-            if now - self.last_refresh_time < mrr {
-                self.current += 1;
-                return;
-            }
+        if let Some(mrr) = self.max_refresh_rate
+            && now - self.last_refresh_time < mrr
+        {
+            self.current += 1;
+            return;
         }
 
         self.pb.set(self.current);
