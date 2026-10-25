@@ -47,7 +47,7 @@ pub fn load_combolist<P: AsRef<Path>>(path: P) -> Result<Vec<Arc<Vec<u8>>>> {
         str::from_utf8(&buf)
             .context("Failed to decode utf8")?;
 
-        if buf.iter().any(|x| *x == b':') {
+        if buf.contains(&b':') {
             creds.push(Arc::new(buf.clone()));
         } else {
             return Err(format_err!("Invalid list format: {:?}", buf))

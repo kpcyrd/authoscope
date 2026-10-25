@@ -1,5 +1,3 @@
-#![allow(clippy::mutex_atomic)]
-
 pub mod args;
 pub mod config;
 pub mod ctx;
