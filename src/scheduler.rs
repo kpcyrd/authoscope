@@ -197,9 +197,9 @@ impl Scheduler {
         });
     }
 
-    #[inline]
-    pub fn recv(&mut self) -> Msg {
+    pub fn recv(&mut self) -> Option<Msg> {
+        let msg = self.rx.recv().ok()?;
         self.inflight -= 1;
-        self.rx.recv().unwrap()
+        Some(msg)
     }
 }

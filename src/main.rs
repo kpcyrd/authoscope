@@ -214,8 +214,8 @@ fn main() -> Result<()> {
     let mut valid = 0;
     let mut retries = 0;
     let mut expired = 0;
-    while pool.has_work() {
-        match pool.recv() {
+    while let Some(msg) = pool.recv() {
+        match msg {
             Msg::Key(key) => {
                 match key {
                     Key::H => pb.print_help(),
