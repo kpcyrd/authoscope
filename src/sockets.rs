@@ -25,7 +25,7 @@ impl Socket {
 
         for addr in addrs {
             debug!("connecting to {:?}", addr);
-            match TcpStream::connect(&addr) {
+            match TcpStream::connect(addr) {
                 Ok(socket) => {
                     debug!("successfully connected to {:?}", addr);
                     let stream = BufStream::new(socket);

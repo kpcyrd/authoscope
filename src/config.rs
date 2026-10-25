@@ -24,7 +24,7 @@ impl Config {
             .ok_or_else(|| format_err!("home folder not found"))?;
 
         for name in &["authoscope", "badtouch"] {
-            let path = home.join(&format!(".config/{}.toml", name));
+            let path = home.join(format!(".config/{}.toml", name));
             if path.exists() {
                 return Config::from_file(path);
             }

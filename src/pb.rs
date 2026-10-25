@@ -12,8 +12,8 @@
 use colored::Colorize;
 use std::fmt::Display;
 use std::io::prelude::*;
-use std::io::{self, Stdout};
-use time::{self, Instant, Duration};
+use std::io::{self, Stdout, IsTerminal};
+use std::time::{self, Instant, Duration};
 
 
 macro_rules! printfl {
@@ -38,8 +38,8 @@ impl ProgressBar {
         pb.format("(=> )");
 
         let now = Instant::now();
-        let refresh_rate = Duration::milliseconds(250);
-        let atty = atty::is(atty::Stream::Stdout);
+        let refresh_rate = Duration::from_millis(250);
+        let atty = io::stdout().is_terminal();
 
         ProgressBar {
             pb,

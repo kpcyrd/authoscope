@@ -29,7 +29,7 @@ fn validate_file(path: &str, args: &Fsck) -> Result<()> {
 
         match str::from_utf8(&buf) {
             Ok(line) => {
-                if !args.require_colon || buf.iter().any(|x| *x == b':') {
+                if !args.require_colon || buf.contains(&b':') {
                     if !args.silent {
                         out.write_all(line.as_bytes())?;
                     }

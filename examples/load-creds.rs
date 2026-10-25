@@ -10,7 +10,7 @@ fn main() -> Result<()> {
 
     let start = Instant::now();
 
-    let creds = authoscope::utils::load_combolist(&path)
+    let creds = authoscope::utils::load_combolist(path)
         .context("Failed to load creds")?;
 
     let elapsed = start.elapsed();

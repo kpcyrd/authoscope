@@ -131,14 +131,14 @@ impl Scheduler {
 
     #[inline]
     pub fn pause(&mut self) {
-        let &(ref lock, _) = &*self.pause_trigger;
+        let (lock, _) = &*self.pause_trigger;
         let mut paused = lock.lock().unwrap();
         *paused = true;
     }
 
     #[inline]
     pub fn resume(&mut self) {
-        let &(ref lock, ref cvar) = &*self.pause_trigger;
+        let (lock, cvar) = &*self.pause_trigger;
         let mut paused = lock.lock().unwrap();
         *paused = false;
         cvar.notify_all();
@@ -186,7 +186,7 @@ impl Scheduler {
         self.pool.execute(move || {
             // verify the pause trigger isn't enabled
             // if it is locked, block until it is unlocked
-            let &(ref lock, ref cvar) = &*pause_trigger;
+            let (lock, cvar) = &*pause_trigger;
             {
                 let mut paused = lock.lock().unwrap();
                 while *paused {
@@ -197,9 +197,9 @@ impl Scheduler {
         });
     }
 
-    #[inline]
-    pub fn recv(&mut self) -> Msg {
+    pub fn recv(&mut self) -> Option<Msg> {
+        let msg = self.rx.recv().ok()?;
         self.inflight -= 1;
-        self.rx.recv().unwrap()
+        Some(msg)
     }
 }

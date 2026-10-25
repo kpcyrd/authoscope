@@ -1,10 +1,10 @@
 use crate::errors::*;
 use crate::structs::LuaMap;
 
+use hlua::AnyLuaValue;
 use reqwest::Method;
 use reqwest::header::{HeaderName, HeaderValue, COOKIE, SET_COOKIE, USER_AGENT};
 use reqwest::redirect;
-use crate::hlua::AnyLuaValue;
 use crate::json::LuaJsonValue;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
@@ -116,7 +116,7 @@ impl HttpRequest {
         }
 
         if let Some(ref auth) = self.basic_auth {
-            let &(ref user, ref password) = auth;
+            let (user, password) = auth;
             req = req.basic_auth(user, Some(password));
         }
 
@@ -203,7 +203,7 @@ impl HttpRequest {
 
 impl From<HttpRequest> for AnyLuaValue {
     fn from(x: HttpRequest) -> AnyLuaValue {
-        let v = serde_json::to_value(&x).unwrap();
+        let v = serde_json::to_value(x).unwrap();
         LuaJsonValue::from(v).into()
     }
 }
